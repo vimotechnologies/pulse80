@@ -21,5 +21,6 @@ export const brand = {
     softTextOnNavy: "#E2E8F0",
     cardShadow: "rgba(7,22,51,0.05)",
     elevatedShadow: "rgba(7,22,51,0.08)",
+    primaryShadow: "rgba(74,170,234,0.26)",
   },
 } as const;
