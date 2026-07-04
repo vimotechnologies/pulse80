@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6fafd;
+  --foreground: #071633;
+  --primary-blue: #4aaaea;
+  --light-blue: #6ab9ef;
+  --pulse-red: #d51439;
+  --dark-navy: #071633;
+  --soft-background: #f6fafd;
+  --card-border: #e4eef7;
+  --success-green: #10b981;
+  --warning-amber: #f59e0b;
+  --surface: #ffffff;
+  --muted-text: #64748b;
+  --subtle-text: #475569;
+  --soft-text-on-navy: #e2e8f0;
+  --card-shadow: rgba(7, 22, 51, 0.05);
+  --elevated-shadow: rgba(7, 22, 51, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary-blue);
+  --color-primary-light: var(--light-blue);
+  --color-pulse-red: var(--pulse-red);
+  --color-navy: var(--dark-navy);
+  --color-soft-bg: var(--soft-background);
+  --color-card-border: var(--card-border);
+  --color-success: var(--success-green);
+  --color-warning: var(--warning-amber);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted-text);
+  --color-subtle: var(--subtle-text);
+  --color-navy-soft: var(--soft-text-on-navy);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary-blue) 28%, white);
+  color: var(--dark-navy);
+}
+
+.pulse-login-panel::before {
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      color-mix(in srgb, var(--primary-blue) 26%, transparent),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary-blue) 18%, transparent),
+      transparent 42%
+    );
 }

@@ -1,0 +1,25 @@
+export const brand = {
+  name: "Pulse80",
+  tagline: "Enterprise wellness intelligence",
+  assets: {
+    logoFull: "/brand/pulse80-logo-full.png",
+    logoNoTagline: "/brand/pulse80-logo-no-tagline.png",
+    mark: "/brand/pulse80-mark.png",
+  },
+  colors: {
+    primaryBlue: "#4AAAEA",
+    lightBlue: "#6AB9EF",
+    pulseRed: "#D51439",
+    darkNavy: "#071633",
+    softBackground: "#F6FAFD",
+    cardBorder: "#E4EEF7",
+    successGreen: "#10B981",
+    warningAmber: "#F59E0B",
+    surface: "#FFFFFF",
+    mutedText: "#64748B",
+    subtleText: "#475569",
+    softTextOnNavy: "#E2E8F0",
+    cardShadow: "rgba(7,22,51,0.05)",
+    elevatedShadow: "rgba(7,22,51,0.08)",
+  },
+} as const;
