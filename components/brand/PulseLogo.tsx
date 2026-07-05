@@ -43,6 +43,7 @@ export function PulseLogo({
       width={logo.width}
       height={logo.height}
       priority={priority}
+      unoptimized
       className={cn("h-auto w-auto object-contain", className)}
     />
   );

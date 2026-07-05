@@ -1,4 +1,4 @@
-import { Bell, Menu, Search } from "lucide-react";
+import { Bell, Menu, Search } from "@/components/icons/LucideIcons";
 import { PulseLogo } from "@/components/brand/PulseLogo";
 
 export function TopNav() {

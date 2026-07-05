@@ -1,4 +1,10 @@
-import { CalendarDays, ChevronDown, Clock, FileText, Sparkles } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Clock,
+  FileText,
+  Sparkles,
+} from "@/components/icons/LucideIcons";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { MetricCard } from "@/components/dashboard/MetricCard";

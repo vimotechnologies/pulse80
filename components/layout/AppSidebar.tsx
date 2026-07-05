@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Stethoscope,
   UsersRound,
-} from "lucide-react";
+} from "@/components/icons/LucideIcons";
 import { PulseLogo } from "@/components/brand/PulseLogo";
 import { cn } from "@/lib/utils/cn";
 

@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@/components/icons/LucideIcons";
 
 export type TrendDirection = "up" | "down" | "neutral";
 

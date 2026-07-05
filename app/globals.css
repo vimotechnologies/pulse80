@@ -18,6 +18,7 @@
   --card-shadow: rgba(7, 22, 51, 0.05);
   --elevated-shadow: rgba(7, 22, 51, 0.08);
   --primary-shadow: rgba(74, 170, 234, 0.26);
+  --deep-shadow: rgba(7, 22, 51, 0.12);
 }
 
 @theme inline {
@@ -56,22 +57,13 @@ body {
 
 .pulse-login-shell {
   background:
-    radial-gradient(
-      circle at 12% 12%,
-      color-mix(in srgb, var(--primary-blue) 18%, transparent),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 88% 18%,
-      color-mix(in srgb, var(--light-blue) 16%, transparent),
-      transparent 30%
-    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 76%, var(--light-blue)), var(--soft-background) 48%, color-mix(in srgb, var(--surface) 82%, var(--soft-background))),
     var(--soft-background);
 }
 
 .pulse-login-card {
   background:
-    linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, var(--light-blue)), var(--surface) 58%, color-mix(in srgb, var(--soft-background) 72%, var(--surface)));
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--light-blue)), var(--surface) 52%, color-mix(in srgb, var(--soft-background) 78%, var(--surface)));
 }
 
 .pulse-health-visual {
@@ -88,6 +80,17 @@ body {
     );
 }
 
+.pulse-health-visual::after {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--primary-blue) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--primary-blue) 10%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  content: "";
+  inset: 0;
+  opacity: 0.28;
+  position: absolute;
+}
+
 .pulse-health-visual::before {
   background:
     linear-gradient(
@@ -100,4 +103,9 @@ body {
   content: "";
   inset: 16px;
   position: absolute;
+}
+
+.pulse-sign-in {
+  background:
+    linear-gradient(135deg, var(--primary-blue), color-mix(in srgb, var(--primary-blue) 82%, var(--dark-navy)));
 }

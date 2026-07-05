@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from "@/components/icons/LucideIcons";
 import type { MetricCardData } from "@/types/dashboard";
 import { cn } from "@/lib/utils/cn";
 

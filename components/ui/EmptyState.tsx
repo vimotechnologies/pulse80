@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Inbox } from "lucide-react";
+import type { LucideIcon } from "@/components/icons/LucideIcons";
+import { Inbox } from "@/components/icons/LucideIcons";
 
 type EmptyStateProps = {
   title: string;

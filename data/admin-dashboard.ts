@@ -4,7 +4,7 @@ import {
   ClipboardCheck,
   FileBarChart,
   Stethoscope,
-} from "lucide-react";
+} from "@/components/icons/LucideIcons";
 import type {
   Activation,
   Alert,
