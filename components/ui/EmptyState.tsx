@@ -1,10 +1,10 @@
-import type { LucideIcon } from "@/components/icons/LucideIcons";
-import { Inbox } from "@/components/icons/LucideIcons";
+import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
+import { Inbox } from "@/components/icons/IconsaxIcons";
 
 type EmptyStateProps = {
   title: string;
   description: string;
-  icon?: LucideIcon;
+  icon?: IconsaxIcon;
 };
 
 export function EmptyState({

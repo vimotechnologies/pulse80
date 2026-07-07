@@ -19,6 +19,13 @@
   --elevated-shadow: rgba(7, 22, 51, 0.08);
   --primary-shadow: rgba(74, 170, 234, 0.26);
   --deep-shadow: rgba(7, 22, 51, 0.12);
+
+  /* Typography controls: edit text spacing and font settings here. */
+  --pulse-font-family: var(--font-axiforma), sans-serif;
+  --pulse-tracking-display: -0.03em;
+  --pulse-tracking-title: -0.02em;
+  --pulse-tracking-heading: -0.025em;
+  --pulse-tracking-eyebrow: -0.08em;
 }
 
 @theme inline {
@@ -36,18 +43,26 @@
   --color-muted: var(--muted-text);
   --color-subtle: var(--subtle-text);
   --color-navy-soft: var(--soft-text-on-navy);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-sans: var(--pulse-font-family);
+  --font-mono: var(--pulse-font-family);
 }
 
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--pulse-font-family);
 }
 
 * {
   box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 ::selection {
@@ -108,4 +123,30 @@ body {
 .pulse-sign-in {
   background:
     linear-gradient(135deg, var(--primary-blue), color-mix(in srgb, var(--primary-blue) 82%, var(--dark-navy)));
+}
+
+.pulse-login-field {
+  background: var(--surface);
+}
+
+.pulse-login-field:has(.pulse-login-input:-webkit-autofill) {
+  background: var(--surface);
+}
+
+.pulse-login-input {
+  appearance: none;
+  background-color: transparent;
+  background-image: none;
+}
+
+.pulse-login-input:-webkit-autofill,
+.pulse-login-input:-webkit-autofill:hover,
+.pulse-login-input:-webkit-autofill:focus,
+.pulse-login-input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--dark-navy) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  box-shadow: 0 0 0 1000px var(--surface) inset !important;
+  caret-color: var(--dark-navy);
 }

@@ -1,4 +1,4 @@
-import type { LucideIcon } from "@/components/icons/LucideIcons";
+import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 
 export type TrendDirection = "up" | "down" | "neutral";
 
@@ -7,7 +7,7 @@ export type MetricCardData = {
   value: string;
   change: string;
   trend: TrendDirection;
-  icon: LucideIcon;
+  icon: IconsaxIcon;
 };
 
 export type Activation = {

@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Stethoscope,
   UsersRound,
-} from "@/components/icons/LucideIcons";
+} from "@/components/icons/IconsaxIcons";
 import { PulseLogo } from "@/components/brand/PulseLogo";
 import { cn } from "@/lib/utils/cn";
 
