@@ -1,20 +1,28 @@
 import Image from "next/image";
-import { Bell, Search } from "@/components/icons/LucideIcons";
+import { Bell, Search } from "@/components/icons/IconsaxIcons";
+import { cn } from "@/lib/utils/cn";
 
 type PortalTopNavProps = {
   portalName: string;
   userLabel: string;
   userRole: string;
+  sidebarCollapsed?: boolean;
 };
 
 export function PortalTopNav({
   portalName,
   userLabel,
   userRole,
+  sidebarCollapsed = false,
 }: PortalTopNavProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-card-border bg-surface/95 backdrop-blur">
-      <div className="flex h-20 items-center gap-4 px-4 sm:px-6 lg:ml-72 lg:px-8">
+      <div
+        className={cn(
+          "flex h-20 items-center gap-4 px-4 transition-[margin] duration-300 sm:px-6 lg:px-8",
+          sidebarCollapsed ? "lg:ml-20" : "lg:ml-64",
+        )}
+      >
         <Image
           src="/brand/pulse80-mark.png"
           alt="Pulse80"

@@ -4,7 +4,7 @@ import {
   ClipboardCheck,
   FileBarChart,
   Stethoscope,
-} from "@/components/icons/LucideIcons";
+} from "@/components/icons/IconsaxIcons";
 import type {
   Activation,
   Alert,

@@ -1,11 +1,11 @@
-import type { LucideIcon } from "@/components/icons/LucideIcons";
+import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
 type PortalMetricCardProps = {
   label: string;
   value: string;
   detail: string;
-  icon: LucideIcon;
+  icon: IconsaxIcon;
   tone?: "primary" | "success" | "warning" | "danger" | "neutral";
 };
 
@@ -29,7 +29,7 @@ export function PortalMetricCard({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{label}</p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-navy">
+          <p className="mt-3 text-3xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
             {value}
           </p>
         </div>

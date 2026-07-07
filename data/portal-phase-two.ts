@@ -15,9 +15,9 @@ import {
   ShieldCheck,
   Stethoscope,
   UsersRound,
-} from "@/components/icons/LucideIcons";
+} from "@/components/icons/IconsaxIcons";
 import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
-import type { LucideIcon } from "@/components/icons/LucideIcons";
+import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 
 export type PortalKey = "admin" | "client" | "practitioner";
 export type Tone = "primary" | "success" | "warning" | "danger" | "neutral";
@@ -39,7 +39,9 @@ export type PortalMetric = {
   value: string;
   detail: string;
   tone: Tone;
-  icon: LucideIcon;
+  icon: IconsaxIcon;
+  progress?: number;
+  actionLabel?: string;
 };
 
 export type PortalListItem = {
@@ -131,6 +133,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
       { label: "Profile", href: "/practitioner/profile", icon: Stethoscope },
       { label: "Documents", href: "/practitioner/documents", icon: FileText },
       { label: "Payments", href: "/practitioner/payments", icon: CreditCard },
+      { label: "Settings", href: "/practitioner/settings", icon: Settings },
     ],
   },
 };
@@ -144,6 +147,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "36 retained accounts, 6 onboarding",
         tone: "primary",
         icon: Building2,
+        progress: 86,
+        actionLabel: "View organizations",
       },
       {
         label: "Upcoming Activations",
@@ -151,6 +156,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "6 scheduled this week",
         tone: "warning",
         icon: CalendarCheck,
+        progress: 68,
+        actionLabel: "Open schedule",
       },
       {
         label: "Verified Practitioners",
@@ -158,6 +165,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "38 available today",
         tone: "success",
         icon: Stethoscope,
+        progress: 82,
+        actionLabel: "Review capacity",
       },
       {
         label: "Reports Published",
@@ -165,6 +174,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "12 published this month",
         tone: "primary",
         icon: FileBarChart,
+        progress: 74,
+        actionLabel: "View reports",
       },
       {
         label: "Employees Reached",
@@ -172,6 +183,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "+3.2k this quarter",
         tone: "success",
         icon: ClipboardCheck,
+        progress: 79,
+        actionLabel: "View reach",
       },
     ],
     sections: [
@@ -300,6 +313,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "+4 points since last quarter",
         tone: "success",
         icon: HeartPulse,
+        progress: 82,
+        actionLabel: "Score detail",
       },
       {
         label: "Absenteeism Risk",
@@ -307,6 +322,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Two departments need attention",
         tone: "warning",
         icon: Activity,
+        progress: 58,
+        actionLabel: "Review risk",
       },
       {
         label: "Presenteeism Index",
@@ -314,6 +331,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Down 5 points from baseline",
         tone: "success",
         icon: BarChart3,
+        progress: 68,
+        actionLabel: "View trend",
       },
       {
         label: "Screening Participation",
@@ -321,6 +340,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "1,428 employees screened",
         tone: "primary",
         icon: ClipboardCheck,
+        progress: 74,
+        actionLabel: "Participation",
       },
       {
         label: "Employees Screened",
@@ -328,6 +349,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Across 4 locations",
         tone: "primary",
         icon: UsersRound,
+        progress: 71,
+        actionLabel: "View cohort",
       },
       {
         label: "Reports Available",
@@ -335,6 +358,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "3 new executive summaries",
         tone: "primary",
         icon: FileText,
+        progress: 92,
+        actionLabel: "Open reports",
       },
     ],
     sections: [
@@ -463,6 +488,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Next assignment starts tomorrow",
         tone: "primary",
         icon: CalendarCheck,
+        progress: 66,
+        actionLabel: "View assignments",
       },
       {
         label: "Completed Screenings",
@@ -470,6 +497,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "+42 completed this month",
         tone: "success",
         icon: ClipboardCheck,
+        progress: 88,
+        actionLabel: "View screenings",
       },
       {
         label: "Verification Status",
@@ -477,6 +506,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Clinical credentials active",
         tone: "success",
         icon: ShieldCheck,
+        progress: 96,
+        actionLabel: "Profile status",
       },
       {
         label: "Pending Submissions",
@@ -484,6 +515,8 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
         detail: "Activation summaries due",
         tone: "warning",
         icon: FileText,
+        progress: 42,
+        actionLabel: "Submit summaries",
       },
     ],
     sections: [
@@ -735,5 +768,11 @@ export const placeholderPages: Record<
     title: "Payments",
     description: "Track submitted activation summaries, payment status, and banking readiness.",
     focus: ["Payment history", "Pending summaries", "Banking profile"],
+  },
+  "/practitioner/settings": {
+    eyebrow: "Health Practitioner",
+    title: "Settings",
+    description: "Manage practitioner preferences, notification settings, and portal defaults.",
+    focus: ["Notifications", "Portal preferences", "Account defaults"],
   },
 };

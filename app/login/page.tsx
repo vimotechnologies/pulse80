@@ -13,7 +13,7 @@ import {
   Stethoscope,
   Sun,
   UsersRound,
-} from "@/components/icons/LucideIcons";
+} from "@/components/icons/IconsaxIcons";
 
 const features = [
   {
@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#E6F5FF_0%,#F6FAFD_38%,#FFFFFF_100%)] px-3 py-3 text-[#071633] sm:px-5 lg:px-6">
       <section className="mx-auto flex min-h-0 w-full max-w-[1780px] flex-1 flex-col overflow-hidden rounded-[28px] border border-white/80 bg-white/70 shadow-[0_18px_70px_rgba(7,22,51,0.10)] backdrop-blur-xl lg:grid lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative min-h-0 overflow-hidden bg-[linear-gradient(135deg,#F8FCFF_0%,#EEF8FF_48%,#FFFFFF_100%)] px-6 py-6 sm:px-8 lg:px-10 lg:py-8 xl:px-12">
+        <div className="relative hidden min-h-0 overflow-hidden bg-[linear-gradient(135deg,#F8FCFF_0%,#EEF8FF_48%,#FFFFFF_100%)] px-6 py-6 sm:px-8 lg:block lg:px-10 lg:py-8 xl:px-12">
           <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#DDF1FF]/70 blur-3xl" />
           <div className="absolute bottom-10 left-1/3 h-80 w-80 rounded-full bg-[#EAF7FF]/80 blur-3xl" />
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-8 max-w-[620px] lg:mt-10">
-              <h1 className="max-w-[620px] text-3xl font-extrabold tracking-[-0.03em] text-[#071633] sm:text-4xl lg:text-[3.1rem] lg:leading-[1]">
+              <h1 className="max-w-[620px] text-3xl font-extrabold tracking-[var(--pulse-tracking-display)] text-[#071633] sm:text-4xl lg:text-[3.1rem] lg:leading-[1]">
                 Smarter wellness.
                 <br />
                 Stronger workplaces.
@@ -121,8 +121,8 @@ export default function LoginPage() {
 
         </div>
 
-        <div className="relative flex min-h-0 items-center justify-center bg-white px-6 py-6 sm:px-8 lg:px-10 xl:px-12">
-          <div className="absolute right-6 top-5 flex items-center gap-5 text-xs font-medium text-[#445B7B]">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-white px-6 pb-2 pt-6 sm:px-8 sm:py-6 lg:overflow-hidden lg:px-10 xl:px-12">
+          <div className="absolute right-6 top-5 hidden items-center gap-5 text-xs font-medium text-[#445B7B] sm:flex">
             <button
               type="button"
               className="flex items-center gap-2 rounded-full px-3 py-2 hover:bg-[#F6FAFD]"
@@ -141,9 +141,20 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="w-full max-w-[640px] pt-8 lg:pt-6">
-            <div>
-              <h2 className="text-2xl font-extrabold tracking-[-0.02em] text-[#071633] sm:text-3xl">
+          <div className="flex min-h-full w-full max-w-[640px] flex-col justify-center pb-2 pt-6 sm:py-10 lg:block lg:min-h-0 lg:py-0 lg:pt-6">
+            <div className="relative mx-auto mb-8 h-[72px] w-[280px] max-w-full lg:hidden">
+              <Image
+                src="/brand/pulse80-logo-full.png"
+                alt="Pulse80"
+                fill
+                sizes="280px"
+                priority
+                className="object-contain object-center"
+              />
+            </div>
+
+            <div className="text-center sm:text-left">
+              <h2 className="text-2xl font-extrabold tracking-[var(--pulse-tracking-title)] text-[#071633] sm:text-3xl">
                 Welcome back
               </h2>
               <p className="mt-2 text-sm text-[#526887]">
@@ -160,13 +171,14 @@ export default function LoginPage() {
                   Email address
                 </label>
 
-                <div className="mt-2 flex h-[52px] items-center gap-4 rounded-2xl border border-[#DDE8F3] bg-white px-5 shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10">
-                  <Mail className="h-5 w-5 text-[#637896]" />
+                <div className="pulse-login-field relative mt-2 h-[52px] overflow-hidden rounded-2xl border border-[#DDE8F3] bg-white shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10">
+                  <Mail className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[#637896]" />
                   <input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="Enter your email"
-                    className="h-full flex-1 bg-transparent text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
+                    className="pulse-login-input h-full w-full rounded-2xl bg-transparent pl-14 pr-5 text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
                   />
                 </div>
               </div>
@@ -179,19 +191,20 @@ export default function LoginPage() {
                   Password
                 </label>
 
-                <div className="mt-2 flex h-[52px] items-center gap-4 rounded-2xl border border-[#DDE8F3] bg-white px-5 shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10">
-                  <Lock className="h-5 w-5 text-[#637896]" />
+                <div className="pulse-login-field relative mt-2 h-[52px] overflow-hidden rounded-2xl border border-[#DDE8F3] bg-white shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10">
+                  <Lock className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[#637896]" />
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder="Enter your password"
-                    className="h-full flex-1 bg-transparent text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
+                    className="pulse-login-input h-full w-full rounded-2xl bg-transparent pl-14 pr-14 text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
-                    className="rounded-full p-2 text-[#637896] hover:bg-[#F6FAFD]"
+                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-2 text-[#637896] hover:bg-[#F6FAFD]"
                     aria-label="Toggle password visibility"
                   >
                     <Eye className="h-5 w-5" />
@@ -232,7 +245,7 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <footer className="flex shrink-0 items-center justify-center gap-4 py-2 text-xs text-[#526887]">
+      <footer className="hidden shrink-0 items-center justify-center gap-4 py-2 text-xs text-[#526887] lg:flex">
         <ShieldCheck className="h-4 w-4" />
         <span>Your data is secure and private.</span>
         <span className="h-4 w-px bg-[#DDE8F3]" />

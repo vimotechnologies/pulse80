@@ -17,11 +17,11 @@ export function PortalPageHeader({
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+          <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-navy">
+        <h1 className="mt-2 text-2xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
           {title}
         </h1>
         {description ? (

@@ -1,4 +1,4 @@
-import { Bell, Menu, Search } from "@/components/icons/LucideIcons";
+import { Bell, Menu, Search } from "@/components/icons/IconsaxIcons";
 import { PulseLogo } from "@/components/brand/PulseLogo";
 
 export function TopNav() {
