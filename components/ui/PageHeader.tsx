@@ -21,7 +21,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-2 text-3xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
+        <h1 className="mt-2 text-xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
           {title}
         </h1>
         {description ? (

@@ -14,10 +14,12 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
+  User,
   UsersRound,
 } from "@/components/icons/IconsaxIcons";
 import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
+import { Profile2User } from "iconsax-react";
 
 export type PortalKey = "admin" | "client" | "practitioner";
 export type Tone = "primary" | "success" | "warning" | "danger" | "neutral";
@@ -130,7 +132,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
       { label: "Dashboard", href: "/practitioner/dashboard", icon: LayoutDashboard },
       { label: "Assignments", href: "/practitioner/assignments", icon: CalendarCheck },
       { label: "Screenings", href: "/practitioner/screenings", icon: ClipboardCheck },
-      { label: "Profile", href: "/practitioner/profile", icon: Stethoscope },
+      { label: "Profile", href: "/practitioner/profile", icon: User },
       { label: "Documents", href: "/practitioner/documents", icon: FileText },
       { label: "Payments", href: "/practitioner/payments", icon: CreditCard },
       { label: "Settings", href: "/practitioner/settings", icon: Settings },

@@ -1,6 +1,5 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
 
 export default function AdminActivationsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/activations"]} />;
+  return <AdminOperationsPage configId="activations" />;
 }
