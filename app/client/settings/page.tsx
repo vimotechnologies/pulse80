@@ -1,6 +1,5 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { ClientExecutivePage } from "@/components/client/ClientExecutivePage";
 
 export default function ClientSettingsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/client/settings"]} />;
+  return <ClientExecutivePage configId="settings" />;
 }

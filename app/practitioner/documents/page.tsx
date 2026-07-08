@@ -1,6 +1,5 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { PractitionerWorkspacePage } from "@/components/practitioner/PractitionerWorkspacePage";
 
 export default function PractitionerDocumentsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/practitioner/documents"]} />;
+  return <PractitionerWorkspacePage configId="documents" />;
 }

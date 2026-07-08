@@ -78,7 +78,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-8 max-w-[620px] lg:mt-10">
-              <h1 className="max-w-[620px] text-3xl font-extrabold tracking-[var(--pulse-tracking-display)] text-[#071633] sm:text-4xl lg:text-[3.1rem] lg:leading-[1]">
+              <h1 className="max-w-[620px] text-xl font-extrabold tracking-[var(--pulse-tracking-display)] text-[#071633] lg:leading-[1]">
                 Smarter wellness.
                 <br />
                 Stronger workplaces.
@@ -154,7 +154,7 @@ export default function LoginPage() {
             </div>
 
             <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-extrabold tracking-[var(--pulse-tracking-title)] text-[#071633] sm:text-3xl">
+              <h2 className="text-xl font-extrabold tracking-[var(--pulse-tracking-title)] text-[#071633]">
                 Welcome back
               </h2>
               <p className="mt-2 text-sm text-[#526887]">

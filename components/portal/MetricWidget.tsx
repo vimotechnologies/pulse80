@@ -37,7 +37,7 @@ export function MetricWidget({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{label}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
+          <p className="mt-3 text-xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
             {value}
           </p>
         </div>
