@@ -1,492 +1,147 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ActionButton } from "@/components/portal/ActionButton";
-import { DashboardWidget } from "@/components/portal/DashboardWidget";
-import { FormInput } from "@/components/portal/FormInput";
-import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Eye, Search } from "@/components/icons/IconsaxIcons";
 import {
-  clientPageConfigs,
-  type ClientPageConfig,
-  type ClientRecord,
-  type ClientTone,
-} from "@/data/client-portal-ui";
-import { cn } from "@/lib/utils/cn";
+  DataListPage,
+  ProgressCell,
+  RecordIdentity,
+  StatusCell,
+  listField,
+  type DataColumn,
+} from "@/components/portal/DataListPage";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { clientPageConfigs, type ClientPageConfig, type ClientRecord } from "@/data/client-portal-ui";
 
 type ClientExecutivePageProps = {
   configId: ClientPageConfig["id"];
 };
 
-const toneStyles: Record<ClientTone, string> = {
-  primary: "border-primary/20 bg-primary/10 text-primary",
-  success: "border-success/20 bg-success/10 text-success",
-  warning: "border-warning/25 bg-warning/10 text-warning",
-  danger: "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
-  neutral: "border-card-border bg-soft-bg text-muted",
-};
-
 export function ClientExecutivePage({ configId }: ClientExecutivePageProps) {
   const config = clientPageConfigs[configId];
-  const [records, setRecords] = useState(config.records);
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>(() =>
-    Object.fromEntries(config.filters.map((filter) => [filter.key, "All"])),
+
+  return (
+    <DataListPage
+      config={config}
+      columns={clientColumns(config.id)}
+      detailEyebrow={`${config.eyebrow} details`}
+      featuredTitle="Featured latest report"
+      onCycleStatus={(record) => cycleClientStatus(config.id, record)}
+    />
   );
-  const [activeTab, setActiveTab] = useState(config.tabs?.[0] ?? "Overview");
-  const [selected, setSelected] = useState<ClientRecord | null>(config.featured ?? config.records[0] ?? null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+}
 
-  const visibleRecords = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return records.filter((record) => {
-      const matchesSearch = normalizedQuery
-        ? `${record.title} ${record.subtitle} ${record.meta} ${record.search}`.toLowerCase().includes(normalizedQuery)
-        : true;
-      const matchesFilters = config.filters.every((filter) => {
-        const value = filters[filter.key] ?? "All";
-        return value === "All" || record.filters[filter.key] === value;
-      });
-      const matchesTab =
-        !config.tabs ||
-        activeTab === "Overview" ||
-        record.status.toLowerCase().includes(activeTab.toLowerCase()) ||
-        record.filters.risk?.toLowerCase().includes(activeTab.toLowerCase()) ||
-        record.filters.department?.toLowerCase().includes(activeTab.toLowerCase());
-
-      return matchesSearch && matchesFilters && matchesTab;
-    });
-  }, [activeTab, config.filters, config.tabs, filters, query, records]);
-
-  function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2400);
+function clientColumns(configId: ClientPageConfig["id"]): DataColumn<ClientRecord>[] {
+  if (configId === "reports") {
+    return [
+      identityColumn("Report"),
+      textColumn("Type", (record) => listField(record, "Type") || record.filters.type),
+      textColumn("Period", (record) => listField(record, "Period") || record.filters.period),
+      textColumn("Published Date", (record) => publishedDate(record)),
+      statusColumn(),
+    ];
   }
 
-  function simulateLoading() {
-    setLoading(true);
-    window.setTimeout(() => {
-      setLoading(false);
-      showToast(`${config.title} refreshed with mock data.`);
-    }, 650);
+  if (configId === "activations") {
+    return [
+      identityColumn("Activation"),
+      textColumn("Organization", () => "Your organization"),
+      textColumn("Date", (record) => record.subtitle.split(" · ")[1] || "Upcoming"),
+      textColumn("Location", (record) => record.subtitle.split(" · ")[2] || "Site"),
+      textColumn("Services", (record) => listField(record, "Services")),
+      statusColumn(),
+      progressColumn("Progress"),
+    ];
   }
 
-  function cycleRecommendation(record: ClientRecord) {
+  if (configId === "recommendations") {
+    return [
+      identityColumn("Recommendation"),
+      badgeColumn("Priority", (record) => listField(record, "Priority") || record.filters.priority),
+      textColumn("Business Impact", (record) => listField(record, "Impact")),
+      textColumn("Timing", (record) => listField(record, "Timing")),
+      statusColumn(),
+      progressColumn("Progress"),
+    ];
+  }
+
+  return [
+    identityColumn("Item"),
+    textColumn("Type", (record) => Object.values(record.filters)[0] ?? "Overview"),
+    textColumn("Metric", (record) => record.fields[0]?.value ?? "Tracked"),
+    statusColumn(),
+    progressColumn("Progress"),
+  ];
+}
+
+function identityColumn(label: string): DataColumn<ClientRecord> {
+  return {
+    key: "title",
+    label,
+    render: (record) => <RecordIdentity record={record} />,
+    sortValue: (record) => record.title,
+  };
+}
+
+function textColumn(label: string, value: (record: ClientRecord) => string): DataColumn<ClientRecord> {
+  return {
+    key: label.toLowerCase().replace(/\s+/g, "-"),
+    label,
+    render: (record) => <span className="font-medium text-navy">{value(record) || "Not set"}</span>,
+    sortValue: value,
+  };
+}
+
+function badgeColumn(label: string, value: (record: ClientRecord) => string): DataColumn<ClientRecord> {
+  return {
+    key: label.toLowerCase().replace(/\s+/g, "-"),
+    label,
+    render: (record) => {
+      const badgeValue = value(record) || "Medium";
+      const tone = badgeValue.toLowerCase().includes("high")
+        ? "danger"
+        : badgeValue.toLowerCase().includes("medium")
+          ? "warning"
+          : badgeValue.toLowerCase().includes("low")
+            ? "success"
+            : "info";
+      return <StatusBadge status={badgeValue} tone={tone} />;
+    },
+    sortValue: value,
+  };
+}
+
+function statusColumn(label = "Status"): DataColumn<ClientRecord> {
+  return {
+    key: "status",
+    label,
+    render: (record) => <StatusCell record={record} />,
+    sortValue: (record) => record.status,
+  };
+}
+
+function progressColumn(label: string): DataColumn<ClientRecord> {
+  return {
+    key: "progress",
+    label,
+    render: (record) => <ProgressCell record={record} />,
+    sortValue: (record) => record.progress ?? 0,
+  };
+}
+
+function publishedDate(record: ClientRecord) {
+  if (record.status === "Published") return record.subtitle.split(" · ")[0] || "Published";
+  return "Pending";
+}
+
+function cycleClientStatus(configId: ClientPageConfig["id"], record: ClientRecord): Partial<ClientRecord> {
+  if (configId === "recommendations") {
     const nextStatus = record.status === "Completed" ? "Recommended" : record.status === "Planned" ? "Completed" : "Planned";
-    const patch = {
+    return {
       status: nextStatus,
       statusTone: nextStatus === "Completed" ? "success" : nextStatus === "Planned" ? "info" : "warning",
       filters: { ...record.filters, status: nextStatus },
       progress: nextStatus === "Completed" ? 100 : nextStatus === "Planned" ? 64 : 36,
-    } satisfies Partial<ClientRecord>;
-
-    setRecords((items) => items.map((item) => (item.id === record.id ? { ...item, ...patch } : item)));
-    setSelected((item) => (item?.id === record.id ? { ...item, ...patch } : item));
-    showToast(`Recommendation marked ${nextStatus.toLowerCase()} locally.`);
+    };
   }
 
-  return (
-    <div className="space-y-6">
-      <PortalPageHeader
-        eyebrow={config.eyebrow}
-        title={config.title}
-        description={config.description}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <ActionButton variant="secondary" loading={loading} onClick={simulateLoading}>
-              Refresh
-            </ActionButton>
-            <ActionButton onClick={config.id === "settings" ? () => showToast("Settings saved locally.") : () => setModalOpen(true)}>
-              {config.primaryAction}
-            </ActionButton>
-          </div>
-        }
-      />
-
-      {toast ? (
-        <div className="rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm font-semibold text-success shadow-sm">
-          {toast}
-        </div>
-      ) : null}
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {config.metrics.map((metric) => {
-          const Icon = metric.icon;
-
-          return (
-            <DashboardWidget key={metric.label} interactive className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
-                    {metric.label}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-navy">{metric.value}</p>
-                  <p className="mt-1 text-xs leading-5 text-subtle">{metric.detail}</p>
-                </div>
-                <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg border", toneStyles[metric.tone])}>
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-              </div>
-            </DashboardWidget>
-          );
-        })}
-      </section>
-
-      {config.featured ? (
-        <DashboardWidget interactive className="overflow-hidden">
-          <div className="grid gap-5 p-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
-                {config.featured.highlight ?? "Featured"}
-              </p>
-              <h2 className="mt-2 text-xl font-semibold text-navy">{config.featured.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-subtle">{config.featured.meta}</p>
-            </div>
-            <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-              <ActionButton variant="secondary" onClick={() => setSelected(config.featured ?? null)}>
-                Preview
-              </ActionButton>
-              <ActionButton onClick={() => showToast("Download prepared as a placeholder.")}>
-                Download
-              </ActionButton>
-            </div>
-          </div>
-        </DashboardWidget>
-      ) : null}
-
-      <DashboardWidget className="p-4">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={config.searchPlaceholder}
-              className="h-11 w-full rounded-lg border border-card-border bg-soft-bg pl-10 pr-3 text-sm text-navy outline-none transition placeholder:text-muted hover:border-primary/30 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {config.tabs?.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "h-10 rounded-lg border px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-                  activeTab === tab
-                    ? "border-primary bg-primary text-white shadow-sm"
-                    : "border-card-border bg-surface text-muted hover:border-primary/30 hover:text-navy",
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {config.filters.map((filter) => (
-            <label key={filter.key} className="block">
-              <span className="text-xs font-semibold text-muted">{filter.label}</span>
-              <select
-                value={filters[filter.key] ?? "All"}
-                onChange={(event) => setFilters((value) => ({ ...value, [filter.key]: event.target.value }))}
-                className="mt-2 h-10 w-full rounded-lg border border-card-border bg-surface px-3 text-sm text-navy outline-none transition hover:border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              >
-                {filter.options.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-      </DashboardWidget>
-
-      {loading ? <LoadingState /> : null}
-
-      {!loading && visibleRecords.length === 0 ? (
-        <DashboardWidget className="p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Eye className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold text-navy">{config.emptyTitle}</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-subtle">{config.emptyDescription}</p>
-          <ActionButton
-            className="mt-5"
-            variant="secondary"
-            onClick={() => {
-              setQuery("");
-              setFilters(Object.fromEntries(config.filters.map((filter) => [filter.key, "All"])));
-            }}
-          >
-            Clear filters
-          </ActionButton>
-        </DashboardWidget>
-      ) : null}
-
-      {!loading && visibleRecords.length > 0 ? (
-        <section className="grid gap-4 xl:grid-cols-2">
-          {visibleRecords.map((record) => (
-            <ClientRecordCard
-              key={record.id}
-              config={config}
-              record={record}
-              onSelect={() => setSelected(record)}
-              onToast={showToast}
-              onRecommendationCycle={() => cycleRecommendation(record)}
-            />
-          ))}
-        </section>
-      ) : null}
-
-      {selected ? (
-        <ClientDrawer
-          config={config}
-          record={selected}
-          onClose={() => setSelected(null)}
-          onToast={showToast}
-          onRequest={() => setModalOpen(true)}
-        />
-      ) : null}
-
-      {modalOpen ? (
-        <RequestModal
-          config={config}
-          onClose={() => setModalOpen(false)}
-          onSubmit={() => {
-            setModalOpen(false);
-            showToast(`${config.primaryAction} submitted locally.`);
-          }}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function ClientRecordCard({
-  config,
-  record,
-  onSelect,
-  onToast,
-  onRecommendationCycle,
-}: {
-  config: ClientPageConfig;
-  record: ClientRecord;
-  onSelect: () => void;
-  onToast: (message: string) => void;
-  onRecommendationCycle: () => void;
-}) {
-  return (
-    <DashboardWidget interactive className="overflow-hidden">
-      <button
-        type="button"
-        onClick={onSelect}
-        className="block w-full p-5 text-left transition hover:bg-soft-bg/55 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-navy">{record.title}</h2>
-            <p className="mt-1 text-sm leading-6 text-subtle">{record.subtitle}</p>
-            <p className="mt-1 text-xs leading-5 text-muted">{record.meta}</p>
-          </div>
-          <StatusBadge status={record.status} tone={record.statusTone} />
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {record.fields.slice(0, 3).map((field) => (
-            <div key={`${record.id}-${field.label}`} className="rounded-lg border border-card-border bg-white/75 p-3">
-              <p className="text-xs font-semibold text-muted">{field.label}</p>
-              <p className="mt-1 truncate text-sm font-semibold text-navy">{field.value}</p>
-            </div>
-          ))}
-        </div>
-
-        {typeof record.progress === "number" ? (
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs font-semibold text-muted">
-              <span>{config.id === "activations" ? "Participation readiness" : "Progress"}</span>
-              <span>{record.progress}%</span>
-            </div>
-            <div className="mt-2 h-2 rounded-full bg-soft-bg">
-              <div
-                className={cn("h-2 rounded-full", record.progress > 80 ? "bg-success" : record.progress > 50 ? "bg-primary" : "bg-warning")}
-                style={{ width: `${record.progress}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
-      </button>
-
-      <div className="flex flex-wrap gap-2 border-t border-card-border bg-soft-bg/45 px-5 py-3">
-        <ActionButton variant="ghost" className="h-9 px-3" onClick={onSelect}>
-          View details
-        </ActionButton>
-        {config.id === "reports" ? (
-          <ActionButton variant="secondary" className="h-9 px-3" onClick={() => onToast("Download prepared as a placeholder.")}>
-            Download
-          </ActionButton>
-        ) : null}
-        {config.id === "recommendations" ? (
-          <ActionButton variant="secondary" className="h-9 px-3" onClick={onRecommendationCycle}>
-            {record.status === "Completed" ? "Reopen" : record.status === "Planned" ? "Complete" : "Plan"}
-          </ActionButton>
-        ) : null}
-        {config.id === "settings" ? (
-          <ActionButton variant="secondary" className="h-9 px-3" onClick={() => onToast("Setting saved locally.")}>
-            Save
-          </ActionButton>
-        ) : null}
-      </div>
-    </DashboardWidget>
-  );
-}
-
-function ClientDrawer({
-  config,
-  record,
-  onClose,
-  onToast,
-  onRequest,
-}: {
-  config: ClientPageConfig;
-  record: ClientRecord;
-  onClose: () => void;
-  onToast: (message: string) => void;
-  onRequest: () => void;
-}) {
-  return (
-    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-lg border-l border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]">
-      <div className="flex h-full flex-col">
-        <div className="border-b border-card-border p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
-                {config.id === "reports" ? "Report preview" : config.id === "activations" ? "Activation details" : "Executive details"}
-              </p>
-              <h2 className="mt-2 text-xl font-semibold text-navy">{record.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-subtle">{record.subtitle}</p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-10 rounded-lg border border-card-border px-3 text-sm font-semibold text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">
-          {record.details.map((detail) => (
-            <div key={`${record.id}-${detail.label}`} className="rounded-lg border border-card-border bg-soft-bg p-4">
-              <p className="text-xs font-semibold text-muted">{detail.label}</p>
-              <p className={cn("mt-2 text-sm font-semibold leading-6 text-navy", detail.tone ? toneText(detail.tone) : "")}>{detail.value}</p>
-            </div>
-          ))}
-
-          <DashboardWidget className="p-4">
-            <h3 className="text-base font-semibold text-navy">
-              {config.id === "insights" ? "Department comparison" : config.id === "activations" ? "Participation summary" : "Executive summary"}
-            </h3>
-            <div className="mt-4 grid gap-3">
-              {record.fields.map((field) => (
-                <div key={`${record.id}-drawer-${field.label}`} className="flex items-center justify-between gap-4 rounded-lg border border-card-border bg-white p-3">
-                  <span className="text-sm font-semibold text-muted">{field.label}</span>
-                  <span className="text-sm font-semibold text-navy">{field.value}</span>
-                </div>
-              ))}
-            </div>
-          </DashboardWidget>
-        </div>
-
-        <div className="flex flex-wrap gap-2 border-t border-card-border p-5">
-          {config.id === "reports" ? (
-            <ActionButton onClick={() => onToast("Download prepared as a placeholder.")}>
-              Download
-            </ActionButton>
-          ) : (
-            <ActionButton onClick={onRequest}>
-              {config.id === "recommendations" ? "Request activation" : config.primaryAction}
-            </ActionButton>
-          )}
-          <ActionButton variant="secondary" onClick={() => onToast("Shared internally as a placeholder.")}>
-            Share
-          </ActionButton>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function RequestModal({
-  config,
-  onClose,
-  onSubmit,
-}: {
-  config: ClientPageConfig;
-  onClose: () => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-lg border border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.18)]">
-        <div className="border-b border-card-border p-5">
-          <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">Frontend request</p>
-          <h2 className="mt-2 text-xl font-semibold text-navy">{config.primaryAction}</h2>
-          <p className="mt-2 text-sm leading-6 text-subtle">
-            This request is saved only in local UI state. No backend or database is connected.
-          </p>
-        </div>
-        <div className="grid gap-4 p-5 sm:grid-cols-2">
-          {config.formFields.map((field, index) => (
-            <FormInput
-              key={field}
-              label={field}
-              placeholder={field}
-              message={index === 0 ? "Required for mock request." : undefined}
-            />
-          ))}
-        </div>
-        <div className="flex justify-end gap-2 border-t border-card-border p-5">
-          <ActionButton variant="secondary" onClick={onClose}>
-            Cancel
-          </ActionButton>
-          <ActionButton onClick={onSubmit}>
-            Submit locally
-          </ActionButton>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      {[0, 1, 2, 3].map((item) => (
-        <DashboardWidget key={item} className="p-5">
-          <div className="h-4 w-32 animate-pulse rounded bg-card-border" />
-          <div className="mt-4 h-3 w-3/4 animate-pulse rounded bg-card-border" />
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {[0, 1, 2].map((field) => (
-              <div key={field} className="h-16 animate-pulse rounded-lg bg-soft-bg" />
-            ))}
-          </div>
-        </DashboardWidget>
-      ))}
-    </div>
-  );
-}
-
-function toneText(tone: ClientTone) {
-  if (tone === "success") return "text-success";
-  if (tone === "warning") return "text-warning";
-  if (tone === "danger") return "text-pulse-red";
-  if (tone === "primary") return "text-primary";
-  return "text-muted";
+  return {};
 }
