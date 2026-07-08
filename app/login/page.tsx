@@ -19,7 +19,7 @@ const features = [
   {
     title: "Actionable Insights",
     description: "Turn health data into clear, actionable insights.",
-    icon: UsersRound,
+    icon: Stethoscope,
     color: "blue",
   },
   {
@@ -37,7 +37,7 @@ const features = [
   {
     title: "Trusted Practitioner Network",
     description: "Work with licensed healthcare professionals.",
-    icon: Stethoscope,
+    icon: UsersRound,
     color: "purple",
   },
 ];
@@ -142,12 +142,12 @@ export default function LoginPage() {
           </div>
 
           <div className="flex min-h-0 w-full max-w-[640px] flex-col justify-center sm:min-h-full sm:py-10 lg:block lg:min-h-0 lg:py-0 lg:pt-6">
-            <div className="relative mx-auto mb-5 h-[54px] w-[220px] max-w-full sm:mb-8 sm:h-[72px] sm:w-[280px] lg:hidden">
+            <div className="relative mx-auto mb-[50px] h-[78px] w-[330px] max-w-full sm:mb-8 sm:h-[72px] sm:w-[280px] lg:hidden">
               <Image
                 src="/brand/pulse80-logo-full.png"
                 alt="Pulse80"
                 fill
-                sizes="280px"
+                sizes="(max-width: 640px) 330px, 280px"
                 priority
                 className="object-contain object-center"
               />
