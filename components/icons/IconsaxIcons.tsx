@@ -1,5 +1,4 @@
 import type { ComponentType, SVGAttributes } from "react";
-import type { IconsaxIcon } from '@/components/icons/IconsaxIcons';
 import {
   Activity as IconsaxActivity,
   AddCircle as IconsaxAddCircle,

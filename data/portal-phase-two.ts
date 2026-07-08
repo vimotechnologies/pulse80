@@ -19,7 +19,6 @@ import {
 } from "@/components/icons/IconsaxIcons";
 import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
-import { Profile2User } from "iconsax-react";
 
 export type PortalKey = "admin" | "client" | "practitioner";
 export type Tone = "primary" | "success" | "warning" | "danger" | "neutral";
