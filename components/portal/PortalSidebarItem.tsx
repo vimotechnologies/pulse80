@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "@/components/icons/IconsaxIcons";
+import { ArrowDown4 } from "@/components/icons/IconsaxIcons";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
@@ -111,7 +111,7 @@ export function PortalSidebarGroup({
         <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-muted")} aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-left">{group.label}</span>
         {group.badge ? <NavBadge badge={group.badge} /> : null}
-        <ChevronDown
+        <ArrowDown4
           className={cn("h-4 w-4 text-muted transition-transform duration-200", open && "rotate-180 text-primary")}
           aria-hidden="true"
         />

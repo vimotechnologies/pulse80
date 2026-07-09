@@ -3,6 +3,7 @@ import {
   Activity as IconsaxActivity,
   AddCircle as IconsaxAddCircle,
   ArrowDown as IconsaxArrowDown,
+  ArrowDown3 as IconsaxArrowDown3,
   ArrowLeft2 as IconsaxArrowLeft2,
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
@@ -64,6 +65,7 @@ function withDefaultVariant(Icon: IconsaxIcon): IconsaxIcon {
 export const Activity = withDefaultVariant(IconsaxActivity);
 export const AddCircle = withDefaultVariant(IconsaxAddCircle);
 export const AlertCircle = withDefaultVariant(IconsaxWarning2);
+export const ArrowDown4 = withDefaultVariant(IconsaxArrowDown3);
 export const ArrowDownRight = withDefaultVariant(IconsaxArrowDown);
 export const ArrowLeft2 = withDefaultVariant(IconsaxArrowLeft2);
 export const ArrowRight = withDefaultVariant(IconsaxArrowRight);
