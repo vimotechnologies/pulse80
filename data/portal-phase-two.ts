@@ -43,6 +43,11 @@ export type PortalMetric = {
   icon: IconsaxIcon;
   progress?: number;
   actionLabel?: string;
+  trend?: {
+    value: string;
+    direction: "up" | "down";
+    tone: "success" | "danger";
+  };
 };
 
 export type PortalListItem = {
@@ -89,14 +94,12 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
         label: "Requests & Proposals",
         href: "/admin/requests",
         icon: FileText,
-        badge: { label: "4", tone: "warning" },
       },
       { label: "Organizations", href: "/admin/organizations", icon: Building2 },
       {
         type: "group",
         label: "Wellness Operations",
         icon: CalendarCheck,
-        badge: { label: "6", tone: "warning" },
         children: [
           { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
           { label: "Mobilisation", href: "/admin/mobilisation", icon: Activity },
@@ -108,7 +111,6 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
         type: "group",
         label: "Practitioner Network",
         icon: Stethoscope,
-        badge: { label: "9", tone: "warning" },
         children: [
           { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },
           { label: "Verification", href: "/admin/practitioner-verification", icon: ShieldCheck },
@@ -119,7 +121,6 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
         type: "group",
         label: "Intelligence",
         icon: BarChart3,
-        badge: { label: "7", tone: "primary" },
         children: [
           { label: "Reports", href: "/admin/reports", icon: FileBarChart },
           { label: "Insights", href: "/admin/insights", icon: BarChart3 },
@@ -175,49 +176,52 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
   admin: {
     metrics: [
       {
-        label: "Active Organizations",
-        value: "42",
-        detail: "36 retained accounts, 6 onboarding",
+        label: "Upcoming Wellness Days",
+        value: "24",
+        detail: "Next: ACME Corp on May 24",
         tone: "primary",
-        icon: Building2,
-        progress: 86,
-        actionLabel: "View organizations",
-      },
-      {
-        label: "Upcoming Activations",
-        value: "18",
-        detail: "6 scheduled this week",
-        tone: "warning",
         icon: CalendarCheck,
-        progress: 68,
-        actionLabel: "Open schedule",
+        trend: {
+          value: "18% vs last week",
+          direction: "up",
+          tone: "success",
+        },
       },
       {
-        label: "Verified Practitioners",
-        value: "126",
-        detail: "38 available today",
+        label: "Pending Client Approvals",
+        value: "12",
+        detail: "4 proposals awaiting review",
+        tone: "danger",
+        icon: ClipboardCheck,
+        trend: {
+          value: "8% vs last week",
+          direction: "down",
+          tone: "danger",
+        },
+      },
+      {
+        label: "Practitioners to Mobilise",
+        value: "36",
+        detail: "Across 9 upcoming events",
         tone: "success",
         icon: Stethoscope,
-        progress: 82,
-        actionLabel: "Review capacity",
+        trend: {
+          value: "5% vs last week",
+          direction: "down",
+          tone: "success",
+        },
       },
       {
-        label: "Reports Published",
-        value: "87",
-        detail: "12 published this month",
-        tone: "primary",
+        label: "Reports Awaiting Review",
+        value: "7",
+        detail: "Across 5 organisations",
+        tone: "danger",
         icon: FileBarChart,
-        progress: 74,
-        actionLabel: "View reports",
-      },
-      {
-        label: "Employees Reached",
-        value: "31.4k",
-        detail: "+3.2k this quarter",
-        tone: "success",
-        icon: ClipboardCheck,
-        progress: 79,
-        actionLabel: "View reach",
+        trend: {
+          value: "17% vs last week",
+          direction: "up",
+          tone: "danger",
+        },
       },
     ],
     sections: [

@@ -8,7 +8,7 @@ import {
   PortalSidebarItem,
   type PortalNavEntry,
 } from "@/components/portal/PortalSidebarItem";
-import { ArrowLeft2 } from "@/components/icons/IconsaxIcons";
+import { ArrowLeft2, Logout } from "@/components/icons/IconsaxIcons";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
 
@@ -22,8 +22,6 @@ type PortalSidebarProps = {
 
 export function PortalSidebar({
   portalKey,
-  portalName,
-  portalDescription,
   collapsed,
   onToggleCollapsed,
 }: PortalSidebarProps) {
@@ -53,7 +51,7 @@ export function PortalSidebar({
     >
       <div
         className={cn(
-          "flex h-20 items-center border-b border-card-border px-4",
+          "flex h-20 items-center px-4",
           collapsed ? "justify-center" : "justify-between gap-3",
         )}
       >
@@ -100,13 +98,6 @@ export function PortalSidebar({
         )}
       </div>
 
-      {!collapsed ? (
-        <div className="border-b border-card-border px-5 py-4">
-          <p className="text-sm font-semibold text-navy">{portalName}</p>
-          <p className="mt-1 text-xs leading-5 text-muted">{portalDescription}</p>
-        </div>
-      ) : null}
-
       <nav
         className={cn(
           "flex-1 space-y-1 overflow-y-auto py-5",
@@ -123,6 +114,27 @@ export function PortalSidebar({
           />
         ))}
       </nav>
+
+      <div className="px-3 pb-4">
+        <div className="mx-2 mb-3 border-t border-card-border" />
+        <button
+          type="button"
+          className={cn(
+            "flex h-10 w-full items-center rounded-lg bg-surface text-[14px] font-medium text-navy transition hover:bg-card-border/45 hover:text-navy",
+            collapsed ? "justify-center px-0" : "gap-2.5 px-3",
+          )}
+          style={{ fontSize: 14, lineHeight: "20px" }}
+          aria-label="Sign out"
+          title={collapsed ? "Sign out" : undefined}
+        >
+          <Logout className="h-4 w-4" aria-hidden="true" />
+          {!collapsed ? (
+            <span className="leading-5" style={{ fontSize: "14px", lineHeight: "20px" }}>
+              Sign out
+            </span>
+          ) : null}
+        </button>
+      </div>
     </aside>
   );
 }

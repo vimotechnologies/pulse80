@@ -3,7 +3,7 @@ import {
   Activity as IconsaxActivity,
   AddCircle as IconsaxAddCircle,
   ArrowDown as IconsaxArrowDown,
-  ArrowDown3 as IconsaxArrowDown3,
+  ArrowDown2 as IconsaxArrowDown2,
   ArrowLeft2 as IconsaxArrowLeft2,
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
@@ -23,7 +23,9 @@ import {
   Heart as IconsaxHeart,
   LampOn as IconsaxLampOn,
   Lock as IconsaxLock,
+  LogoutCurve as IconsaxLogout,
   Menu as IconsaxMenu,
+  MessageQuestion as IconsaxMessageQuestion,
   Microscope as IconsaxMicroscope,
   More as IconsaxMore,
   Notification as IconsaxNotification,
@@ -65,7 +67,7 @@ function withDefaultVariant(Icon: IconsaxIcon): IconsaxIcon {
 export const Activity = withDefaultVariant(IconsaxActivity);
 export const AddCircle = withDefaultVariant(IconsaxAddCircle);
 export const AlertCircle = withDefaultVariant(IconsaxWarning2);
-export const ArrowDown4 = withDefaultVariant(IconsaxArrowDown3);
+export const ArrowDown = withDefaultVariant(IconsaxArrowDown2);
 export const ArrowDownRight = withDefaultVariant(IconsaxArrowDown);
 export const ArrowLeft2 = withDefaultVariant(IconsaxArrowLeft2);
 export const ArrowRight = withDefaultVariant(IconsaxArrowRight);
@@ -92,8 +94,10 @@ export const Inbox = withDefaultVariant(IconsaxTaskSquare);
 export const LayoutDashboard = withDefaultVariant(IconsaxChart2);
 export const Lightbulb = withDefaultVariant(IconsaxLampOn);
 export const Lock = withDefaultVariant(IconsaxLock);
+export const Logout = withDefaultVariant(IconsaxLogout);
 export const Mail = withDefaultVariant(IconsaxSms);
 export const Menu = withDefaultVariant(IconsaxMenu);
+export const MessageQuestion = withDefaultVariant(IconsaxMessageQuestion);
 export const Microscope = withDefaultVariant(IconsaxMicroscope);
 export const MoreHorizontal = withDefaultVariant(IconsaxMore);
 export const Refresh = withDefaultVariant(IconsaxRefresh);
