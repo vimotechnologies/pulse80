@@ -17,7 +17,7 @@ import {
   User,
   UsersRound,
 } from "@/components/icons/IconsaxIcons";
-import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
+import type { PortalNavEntry } from "@/components/portal/PortalSidebarItem";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 
 export type PortalKey = "admin" | "client" | "practitioner";
@@ -32,7 +32,7 @@ export type PortalConfig = {
   dashboardDescription: string;
   userLabel: string;
   userRole: string;
-  items: PortalNavItem[];
+  items: PortalNavEntry[];
 };
 
 export type PortalMetric = {
@@ -85,16 +85,48 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
     userRole: "Operations Lead",
     items: [
       { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      {
+        label: "Requests & Proposals",
+        href: "/admin/requests",
+        icon: FileText,
+        badge: { label: "4", tone: "warning" },
+      },
       { label: "Organizations", href: "/admin/organizations", icon: Building2 },
-      { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
-      { label: "Screenings", href: "/admin/screenings", icon: Microscope },
-      { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },
-      { label: "Results", href: "/admin/results", icon: HeartPulse },
-      { label: "Reports", href: "/admin/reports", icon: FileBarChart },
-      { label: "Insights", href: "/admin/insights", icon: BarChart3 },
-      { label: "Recommendations", href: "/admin/recommendations", icon: Lightbulb },
-      { label: "Billing", href: "/admin/billing", icon: CreditCard },
-      { label: "Users", href: "/admin/users", icon: UsersRound },
+      {
+        type: "group",
+        label: "Wellness Operations",
+        icon: CalendarCheck,
+        badge: { label: "6", tone: "warning" },
+        children: [
+          { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
+          { label: "Mobilisation", href: "/admin/mobilisation", icon: Activity },
+          { label: "Screenings", href: "/admin/screenings", icon: Microscope },
+          { label: "Results", href: "/admin/results", icon: HeartPulse },
+        ],
+      },
+      {
+        type: "group",
+        label: "Practitioner Network",
+        icon: Stethoscope,
+        badge: { label: "9", tone: "warning" },
+        children: [
+          { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },
+          { label: "Verification", href: "/admin/practitioner-verification", icon: ShieldCheck },
+          { label: "Assignments", href: "/admin/practitioner-assignments", icon: ClipboardCheck },
+        ],
+      },
+      {
+        type: "group",
+        label: "Intelligence",
+        icon: BarChart3,
+        badge: { label: "7", tone: "primary" },
+        children: [
+          { label: "Reports", href: "/admin/reports", icon: FileBarChart },
+          { label: "Insights", href: "/admin/insights", icon: BarChart3 },
+          { label: "Recommendations", href: "/admin/recommendations", icon: Lightbulb },
+        ],
+      },
+      { label: "Users & Roles", href: "/admin/users", icon: UsersRound },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
@@ -650,11 +682,23 @@ export const placeholderPages: Record<
     description: "Manage client organization profiles, contacts, segments, and account health.",
     focus: ["Organization registry", "Contract status", "Client contacts"],
   },
+  "/admin/requests": {
+    eyebrow: "Admin Operations",
+    title: "Requests & Proposals",
+    description: "Review inbound wellness requests, proposal drafts, and commercial handoff readiness.",
+    focus: ["Pending requests", "Proposal drafts", "Client handoff"],
+  },
   "/admin/activations": {
     eyebrow: "Admin Operations",
     title: "Activations",
     description: "Plan, schedule, and monitor onsite and virtual wellness activations.",
     focus: ["Activation calendar", "Readiness checklist", "Delivery status"],
+  },
+  "/admin/mobilisation": {
+    eyebrow: "Admin Operations",
+    title: "Mobilisation",
+    description: "Coordinate pre-activation confirmations, site readiness, and employee communication tasks.",
+    focus: ["Site readiness", "Employee notices", "Confirmation queue"],
   },
   "/admin/screenings": {
     eyebrow: "Admin Operations",
@@ -667,6 +711,18 @@ export const placeholderPages: Record<
     title: "Practitioners",
     description: "Manage verified practitioner profiles, availability, documents, and assignments.",
     focus: ["Credentialing", "Availability", "Assignment history"],
+  },
+  "/admin/practitioner-verification": {
+    eyebrow: "Admin Operations",
+    title: "Practitioner Verification",
+    description: "Review practitioner credentials, document expiry, and verification readiness.",
+    focus: ["Credential queue", "Document expiry", "Verification notes"],
+  },
+  "/admin/practitioner-assignments": {
+    eyebrow: "Admin Operations",
+    title: "Practitioner Assignments",
+    description: "Match practitioners to activations, monitor coverage, and flag assignment gaps.",
+    focus: ["Coverage planning", "Assignment gaps", "Capacity matching"],
   },
   "/admin/results": {
     eyebrow: "Admin Operations",

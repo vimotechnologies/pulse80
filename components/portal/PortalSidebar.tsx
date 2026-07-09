@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { PortalSidebarItem } from "@/components/portal/PortalSidebarItem";
+import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import {
+  PortalSidebarGroup,
+  PortalSidebarItem,
+  type PortalNavEntry,
+} from "@/components/portal/PortalSidebarItem";
 import { ArrowLeft2 } from "@/components/icons/IconsaxIcons";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
@@ -21,7 +27,22 @@ export function PortalSidebar({
   collapsed,
   onToggleCollapsed,
 }: PortalSidebarProps) {
+  const pathname = usePathname();
   const items = portalConfigs[portalKey].items;
+  const activeGroups = useMemo(
+    () =>
+      items
+        .filter((item) => item.type === "group" && item.children.some((child) => pathname === child.href))
+        .map((item) => item.label),
+    [items, pathname],
+  );
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+
+  function toggleGroup(label: string) {
+    setOpenGroups((current) =>
+      current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
+    );
+  }
 
   return (
     <aside
@@ -93,9 +114,40 @@ export function PortalSidebar({
         )}
       >
         {items.map((item) => (
-          <PortalSidebarItem key={item.href} item={item} collapsed={collapsed} />
+          <SidebarEntry
+            key={item.type === "group" ? item.label : item.href}
+            entry={item}
+            collapsed={collapsed}
+            open={item.type === "group" ? activeGroups.includes(item.label) || openGroups.includes(item.label) : false}
+            onToggle={() => item.type === "group" && toggleGroup(item.label)}
+          />
         ))}
       </nav>
     </aside>
   );
+}
+
+function SidebarEntry({
+  entry,
+  collapsed,
+  open,
+  onToggle,
+}: {
+  entry: PortalNavEntry;
+  collapsed: boolean;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  if (entry.type === "group") {
+    return (
+      <PortalSidebarGroup
+        group={entry}
+        collapsed={collapsed}
+        open={open}
+        onToggle={onToggle}
+      />
+    );
+  }
+
+  return <PortalSidebarItem item={entry} collapsed={collapsed} />;
 }
