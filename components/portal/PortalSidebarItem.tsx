@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "@/components/icons/IconsaxIcons";
+import { ArrowLeft2 } from "@/components/icons/IconsaxIcons";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
@@ -46,16 +46,21 @@ export function PortalSidebarItem({ item, collapsed = false }: PortalSidebarItem
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
       className={cn(
-        "flex h-11 items-center rounded-lg text-sm font-medium text-muted transition hover:bg-primary/10 hover:text-navy",
+        "flex h-11 items-center rounded-lg text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
         collapsed ? "justify-center px-0" : "gap-3 px-3",
-        active && "bg-primary/12 text-navy shadow-[inset_3px_0_0_var(--color-primary)]",
+        active && "bg-primary/12 text-primary shadow-[inset_3px_0_0_var(--color-primary)] hover:text-primary",
       )}
+      style={{ fontSize: "14px", lineHeight: "20px" }}
     >
       <Icon
-        className={cn("h-5 w-5", active ? "text-primary" : "text-muted")}
+        className={cn("h-5 w-5", active ? "text-primary" : "text-black")}
         aria-hidden="true"
       />
-      {!collapsed ? <span>{item.label}</span> : null}
+      {!collapsed ? (
+        <span style={{ fontSize: "14px", lineHeight: "20px" }}>
+          {item.label}
+        </span>
+      ) : null}
       {!collapsed && item.badge ? <NavBadge badge={item.badge} className="ml-auto" /> : null}
     </Link>
   );
@@ -87,11 +92,12 @@ export function PortalSidebarGroup({
           aria-label={group.label}
           onClick={onToggle}
           className={cn(
-            "flex h-11 w-full items-center justify-center rounded-lg text-muted transition hover:bg-primary/10 hover:text-navy",
-            active && "bg-primary/12 text-primary shadow-[inset_3px_0_0_var(--color-primary)]",
+            "flex h-11 w-full items-center justify-center rounded-lg text-black transition hover:bg-slate-100 hover:text-black",
+            active && "bg-primary/12 text-primary shadow-[inset_3px_0_0_var(--color-primary)] hover:text-primary",
           )}
+          style={{ fontSize: "14px", lineHeight: "20px" }}
         >
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-black")} aria-hidden="true" />
         </button>
       </div>
     );
@@ -104,15 +110,24 @@ export function PortalSidebarGroup({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-primary/10 hover:text-navy",
-          active && "bg-primary/8 text-navy",
+          "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
+          active && "bg-primary/8 text-primary hover:text-primary",
         )}
+        style={{ fontSize: "14px", lineHeight: "20px" }}
       >
-        <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-muted")} aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{group.label}</span>
+        <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-black")} aria-hidden="true" />
+        <span
+          className="min-w-0 flex-1 truncate text-left"
+          style={{ fontSize: "14px", lineHeight: "20px" }}
+        >
+          {group.label}
+        </span>
         {group.badge ? <NavBadge badge={group.badge} /> : null}
-        <ChevronDown
-          className={cn("h-4 w-4 text-muted transition-transform duration-200", open && "rotate-180 text-primary")}
+        <ArrowLeft2
+          className={cn(
+            "h-4 w-4 -rotate-90 text-black transition-transform duration-200",
+            open && "rotate-90 text-primary",
+          )}
           aria-hidden="true"
         />
       </button>
@@ -133,12 +148,18 @@ export function PortalSidebarGroup({
                   key={child.href}
                   href={child.href}
                   className={cn(
-                    "flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-primary/10 hover:text-navy",
-                    childActive && "bg-primary/12 text-navy",
+                    "flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
+                    childActive && "bg-primary/12 text-primary hover:text-primary",
                   )}
+                  style={{ fontSize: "14px", lineHeight: "20px" }}
                 >
-                  <ChildIcon className={cn("h-4 w-4", childActive ? "text-primary" : "text-muted")} aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate">{child.label}</span>
+                  <ChildIcon className={cn("h-4 w-4", childActive ? "text-primary" : "text-black")} aria-hidden="true" />
+                  <span
+                    className="min-w-0 flex-1 truncate"
+                    style={{ fontSize: "14px", lineHeight: "20px" }}
+                  >
+                    {child.label}
+                  </span>
                   {childActive ? <span className="h-1.5 w-1.5 rounded-full bg-primary" /> : null}
                 </Link>
               );

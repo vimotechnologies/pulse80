@@ -116,18 +116,18 @@ export function PortalSidebar({
       </nav>
 
       <div className="px-3 pb-4">
-        <div className="mx-2 mb-3 border-t border-card-border" />
+        <div className="mx-2 mb-3 border-t border-slate-200" />
         <button
           type="button"
           className={cn(
-            "flex h-10 w-full items-center rounded-lg bg-surface text-[14px] font-medium text-navy transition hover:bg-card-border/45 hover:text-navy",
-            collapsed ? "justify-center px-0" : "gap-2.5 px-3",
+            "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
+            collapsed ? "justify-center px-0" : "gap-3 px-3",
           )}
-          style={{ fontSize: 14, lineHeight: "20px" }}
+          style={{ fontSize: "14px", lineHeight: "20px" }}
           aria-label="Sign out"
           title={collapsed ? "Sign out" : undefined}
         >
-          <Logout className="h-4 w-4" aria-hidden="true" />
+          <Logout className="h-5 w-5 text-black" aria-hidden="true" />
           {!collapsed ? (
             <span className="leading-5" style={{ fontSize: "14px", lineHeight: "20px" }}>
               Sign out
