@@ -1,6 +1,6 @@
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
-import { ArrowDown, ArrowUpRight } from "@/components/icons/IconsaxIcons";
 import type { Tone } from "@/data/portal-phase-two";
+import { TrendingDown, TrendingUp } from "react-feather";
 import { cn } from "@/lib/utils/cn";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { ProgressWidget } from "@/components/portal/ProgressWidget";
@@ -20,14 +20,6 @@ type MetricWidgetProps = {
   };
 };
 
-const toneStyles: Record<Tone, string> = {
-  primary: "bg-primary/10 text-primary ring-primary/15",
-  success: "bg-success/10 text-success ring-success/15",
-  warning: "bg-warning/10 text-warning ring-warning/15",
-  danger: "bg-pulse-red/10 text-pulse-red ring-pulse-red/15",
-  neutral: "bg-soft-bg text-muted ring-card-border",
-};
-
 export function MetricWidget({
   label,
   value,
@@ -37,40 +29,33 @@ export function MetricWidget({
   progress,
   trend,
 }: MetricWidgetProps) {
-  const TrendIcon = trend?.direction === "down" ? ArrowDown : ArrowUpRight;
+  const TrendIcon = trend?.direction === "down" ? TrendingDown : TrendingUp;
 
   return (
     <DashboardWidget
       interactive
-      className="rounded-2xl border-card-border bg-white p-5 shadow-[0_18px_44px_rgba(7,22,51,0.065)]"
+      className="rounded-2xl border-card-border bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.08)]"
     >
       <div className="flex items-start gap-4">
-        <span
-          className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1",
-            toneStyles[tone],
-          )}
-        >
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-5 text-muted">{label}</p>
-          <p className="mt-2 text-xl font-semibold leading-7 tracking-[var(--pulse-tracking-heading)] text-navy">
+          <p className="text-[12px] font-medium leading-4 text-muted">{label}</p>
+          <p className="mt-2 text-[18px] font-semibold leading-6 tracking-[var(--pulse-tracking-heading)] text-navy">
             {value}
           </p>
-          <p className="mt-2 text-sm leading-5 text-subtle">{detail}</p>
+          <p className="mt-2 text-[12px] leading-5 text-subtle">{detail}</p>
           {trend ? (
             <p
               className={cn(
-                "mt-3 inline-flex items-center gap-1.5 text-xs font-semibold",
+                "mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold leading-4",
                 trend.tone === "success" ? "text-success" : "text-pulse-red",
               )}
             >
-              <TrendIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              <TrendIcon size={14} strokeWidth={2} aria-hidden="true" />
               {trend.value}
             </p>
           ) : null}
         </div>
+        <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
       </div>
       {typeof progress === "number" ? (
         <div className="mt-4">
