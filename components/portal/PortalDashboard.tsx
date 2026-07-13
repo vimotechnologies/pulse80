@@ -4,6 +4,7 @@ import { DrillDownCard } from "@/components/portal/DrillDownCard";
 import { InsightCard } from "@/components/portal/InsightCard";
 import { MetricWidget } from "@/components/portal/MetricWidget";
 import { RiskCard } from "@/components/portal/RiskCard";
+import { RequestsPipelineCard } from "@/components/portal/RequestsPipelineCard";
 import { WellnessDaysCard } from "@/components/portal/WellnessDaysCard";
 
 type PortalDashboardProps = {
@@ -34,11 +35,12 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
         ))}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+      <section className="grid gap-5 xl:grid-cols-2">
         <div className="grid gap-5">
           <WellnessDaysCard />
         </div>
         <div className="grid gap-5">
+          <RequestsPipelineCard />
           {data.sections.slice(1, 3).map((section) => (
             <DashboardSection
               key={section.title}

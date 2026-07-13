@@ -325,14 +325,14 @@ export function WellnessDaysCard() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[760px]">
-            <div className="grid grid-cols-[0.75fr_1.2fr_1.65fr_1.25fr_1.25fr] gap-4 border-b border-card-border bg-[#f8fafc] px-5 py-3 text-[12px] font-semibold text-black">
-              <span style={{ fontSize: "12px", lineHeight: "16px" }}>Date</span>
-              <span style={{ fontSize: "12px", lineHeight: "16px" }}>Organization</span>
-              <span style={{ fontSize: "12px", lineHeight: "16px" }}>Activation Type</span>
-              <span style={{ fontSize: "12px", lineHeight: "16px" }}>Location / Branch</span>
-              <span style={{ fontSize: "12px", lineHeight: "16px" }}>Status</span>
+        <div>
+          <div className="w-full">
+            <div className="grid grid-cols-[0.58fr_1fr_1.35fr_1fr_1.08fr] gap-2 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Date</span>
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Organization</span>
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Activation Type</span>
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Location / Branch</span>
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Status</span>
             </div>
 
             <div className="divide-y divide-card-border">
@@ -341,14 +341,14 @@ export function WellnessDaysCard() {
                   key={day.id}
                   type="button"
                   onClick={() => setSelectedDay(day)}
-                  className="grid w-full cursor-pointer grid-cols-[0.75fr_1.2fr_1.65fr_1.25fr_1.25fr] items-center gap-4 px-5 py-4 text-left text-[12px] text-black transition hover:-translate-y-0.5 hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:translate-y-0"
+                  className="grid w-full cursor-pointer grid-cols-[0.58fr_1fr_1.35fr_1fr_1.08fr] items-center gap-2 px-4 py-4 text-left text-[12px] text-black transition hover:-translate-y-0.5 hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:translate-y-0"
                   style={{ fontSize: "12px", lineHeight: "16px" }}
                   aria-label={`View ${day.organization} wellness day details`}
                 >
-                  <span className="font-normal" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.date}</span>
-                  <span className="font-normal" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.organization}</span>
-                  <span className="text-black" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.activationType}</span>
-                  <span className="text-black" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.location}</span>
+                  <span className="min-w-0 font-normal" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.date}</span>
+                  <span className="min-w-0 break-words font-normal" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.organization}</span>
+                  <span className="min-w-0 break-words text-black" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.activationType}</span>
+                  <span className="min-w-0 break-words text-black" style={{ fontSize: "12px", lineHeight: "16px" }}>{day.location}</span>
                   <span
                     className={cn(
                       "inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-[12px] font-normal leading-4",
