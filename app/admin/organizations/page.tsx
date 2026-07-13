@@ -1,5 +1,5 @@
-import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
+import { AdminOrganizations } from "@/components/admin/AdminOrganizations";
 
 export default function AdminOrganizationsPage() {
-  return <AdminOperationsPage configId="organizations" />;
+  return <AdminOrganizations />;
 }
