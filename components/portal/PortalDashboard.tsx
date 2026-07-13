@@ -23,7 +23,7 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
           <h1 className="text-xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
             Dashboard
           </h1>
-          <p className="mt-2 text-sm leading-6 text-subtle">
+          <p className="mt-2 text-[12px] leading-5 text-subtle">
             Overview of wellness operations and client activity
           </p>
         </div>
