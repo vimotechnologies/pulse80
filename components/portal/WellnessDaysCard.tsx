@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft2,
   ArrowRight,
   CalendarCheck,
   CalendarDays,
@@ -310,7 +309,7 @@ export function WellnessDaysCard() {
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Previous week"
             >
-              <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
             </button>
             <span className="min-w-24 text-center text-[12px] leading-4 text-black">{currentWeek.label}</span>
             <button
@@ -331,7 +330,7 @@ export function WellnessDaysCard() {
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Date</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Organization</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Activation Type</span>
-              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Location / Branch</span>
+              <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Branch</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Status</span>
             </div>
 
@@ -400,7 +399,7 @@ function WellnessCalendarCard({
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white"
             aria-label="Previous month"
           >
-            <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
           </button>
           <span className="min-w-28 text-center text-[12px] leading-4 text-black">{monthLabel}</span>
           <button
