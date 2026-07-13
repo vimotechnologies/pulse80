@@ -3,6 +3,7 @@ import { DashboardSection } from "@/components/portal/DashboardSection";
 import { DrillDownCard } from "@/components/portal/DrillDownCard";
 import { InsightCard } from "@/components/portal/InsightCard";
 import { MetricWidget } from "@/components/portal/MetricWidget";
+import { PractitionerMobilisationStatusCard } from "@/components/portal/PractitionerMobilisationStatusCard";
 import { RiskCard } from "@/components/portal/RiskCard";
 import { RequestsPipelineCard } from "@/components/portal/RequestsPipelineCard";
 import { WellnessDaysCard } from "@/components/portal/WellnessDaysCard";
@@ -41,7 +42,8 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
         </div>
         <div className="grid gap-5">
           <RequestsPipelineCard />
-          {data.sections.slice(1, 3).map((section) => (
+          <PractitionerMobilisationStatusCard />
+          {data.sections.slice(2, 3).map((section) => (
             <DashboardSection
               key={section.title}
               title={section.title}
