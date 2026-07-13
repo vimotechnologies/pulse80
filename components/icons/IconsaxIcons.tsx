@@ -8,6 +8,7 @@ import {
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
   CloseCircle as IconsaxCloseCircle,
+  CloseSquare as IconsaxCloseSquare,
   Buildings as IconsaxBuildings,
   CalendarTick as IconsaxCalendarTick,
   Card as IconsaxCard,
@@ -21,6 +22,7 @@ import {
   Filter as IconsaxFilter,
   Health as IconsaxHealth,
   Heart as IconsaxHeart,
+  Home as IconsaxHome,
   LampOn as IconsaxLampOn,
   Lock as IconsaxLock,
   LogoutCurve as IconsaxLogout,
@@ -79,6 +81,7 @@ export const CalendarCheck = withDefaultVariant(IconsaxCalendarTick);
 export const CalendarDays = withDefaultVariant(IconsaxCalendarTick);
 export const ChevronDown = withDefaultVariant(IconsaxArrowDown);
 export const CloseCircle = withDefaultVariant(IconsaxCloseCircle);
+export const CloseSquare = withDefaultVariant(IconsaxCloseSquare);
 export const ClipboardCheck = withDefaultVariant(IconsaxClipboardTick);
 export const Clock = withDefaultVariant(IconsaxClock);
 export const CreditCard = withDefaultVariant(IconsaxCard);
@@ -91,7 +94,7 @@ export const Filter = withDefaultVariant(IconsaxFilter);
 export const Globe2 = withDefaultVariant(IconsaxStatusUp);
 export const HeartPulse = withDefaultVariant(IconsaxHeart);
 export const Inbox = withDefaultVariant(IconsaxTaskSquare);
-export const LayoutDashboard = withDefaultVariant(IconsaxChart2);
+export const LayoutDashboard = withDefaultVariant(IconsaxHome);
 export const Lightbulb = withDefaultVariant(IconsaxLampOn);
 export const Lock = withDefaultVariant(IconsaxLock);
 export const Logout = withDefaultVariant(IconsaxLogout);

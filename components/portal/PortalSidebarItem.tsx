@@ -48,7 +48,7 @@ export function PortalSidebarItem({ item, collapsed = false }: PortalSidebarItem
       className={cn(
         "flex h-11 items-center rounded-lg text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
         collapsed ? "justify-center px-0" : "gap-3 px-3",
-        active && "bg-primary/12 text-primary shadow-[inset_3px_0_0_var(--color-primary)] hover:text-primary",
+        active && "bg-primary/12 text-primary hover:text-primary",
       )}
       style={{ fontSize: "14px", lineHeight: "20px" }}
     >
@@ -93,7 +93,7 @@ export function PortalSidebarGroup({
           onClick={onToggle}
           className={cn(
             "flex h-11 w-full items-center justify-center rounded-lg text-black transition hover:bg-slate-100 hover:text-black",
-            active && "bg-primary/12 text-primary shadow-[inset_3px_0_0_var(--color-primary)] hover:text-primary",
+            active && "bg-primary/12 text-primary hover:text-primary",
           )}
           style={{ fontSize: "14px", lineHeight: "20px" }}
         >

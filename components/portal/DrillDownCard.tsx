@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { CloseSquare } from "@/components/icons/IconsaxIcons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { PortalListItem } from "@/data/portal-phase-two";
 
@@ -6,29 +10,66 @@ type DrillDownCardProps = {
 };
 
 export function DrillDownCard({ item }: DrillDownCardProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <details className="group border-b border-card-border last:border-b-0">
-      <summary className="grid cursor-pointer list-none gap-3 p-5 transition hover:bg-soft-bg/70 sm:grid-cols-[1fr_auto] sm:items-center">
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="grid w-full cursor-pointer gap-3 border-b border-card-border p-5 text-left transition hover:bg-soft-bg/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:grid-cols-[1fr_auto] sm:items-center"
+      >
         <div>
-          <h3 className="text-sm font-semibold text-navy">{item.title}</h3>
-          <p className="mt-1 text-sm leading-6 text-muted">{item.meta}</p>
+          <h3 className="text-[12px] font-semibold leading-4 text-black">{item.title}</h3>
+          <p className="mt-1 text-[12px] leading-5 text-black/65">{item.meta}</p>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={item.status} tone={item.tone} />
-          <span className="text-xs font-semibold text-primary group-open:hidden">
-            Details
-          </span>
-          <span className="hidden text-xs font-semibold text-muted group-open:inline">
-            Close
-          </span>
+          <span className="text-[12px] font-semibold leading-4 text-black">Details</span>
         </div>
-      </summary>
-      <div className="px-5 pb-5">
-        <div className="rounded-lg border border-card-border bg-white/75 p-4 text-xs leading-5 text-muted">
-          Owner, due date, source report, and action history will appear here in
-          a later phase. This keeps the dashboard high-level by default.
+      </button>
+
+      {open ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`${item.title}-details-title`}
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
+            <div className="border-b border-card-border px-5 py-4">
+              <h3 id={`${item.title}-details-title`} className="text-[14px] font-semibold leading-5 text-black">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-[12px] leading-5 text-black">{item.meta}</p>
+            </div>
+            <div className="grid gap-3 px-5 py-4">
+              <DetailRow label="Status" value={item.status} />
+              <DetailRow label="Signal" value="Dashboard operations detail" />
+              <DetailRow label="Next step" value="Review owner, due date, source report, and action history." />
+            </div>
+            <div className="flex justify-end border-t border-card-border px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
+              >
+                <CloseSquare className="h-4 w-4" aria-hidden="true" />
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </details>
+      ) : null}
+    </>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-card-border bg-[#f8fafc] px-4 py-3">
+      <span className="text-[12px] leading-4 text-black">{label}</span>
+      <span className="text-right text-[12px] leading-4 text-black">{value}</span>
+    </div>
   );
 }

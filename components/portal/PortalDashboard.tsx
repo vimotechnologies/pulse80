@@ -35,7 +35,9 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-        <WellnessDaysCard />
+        <div className="grid gap-5">
+          <WellnessDaysCard />
+        </div>
         <div className="grid gap-5">
           {data.sections.slice(1, 3).map((section) => (
             <DashboardSection
