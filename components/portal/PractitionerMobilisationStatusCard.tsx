@@ -67,9 +67,7 @@ export function PractitionerMobilisationStatusCard() {
     <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-card-border bg-white">
-            <UsersRound className="h-4 w-4 text-black" aria-hidden="true" />
-          </span>
+          <UsersRound className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
           <h2 className="truncate text-[14px] font-semibold leading-5 text-black">
             Practitioner Mobilisation Status
           </h2>

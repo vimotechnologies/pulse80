@@ -1,6 +1,7 @@
 import type { PortalConfig, PortalDashboardData } from "@/data/portal-phase-two";
 import { DashboardSection } from "@/components/portal/DashboardSection";
 import { DrillDownCard } from "@/components/portal/DrillDownCard";
+import { HighRiskClientInsightsCard } from "@/components/portal/HighRiskClientInsightsCard";
 import { InsightCard } from "@/components/portal/InsightCard";
 import { MetricWidget } from "@/components/portal/MetricWidget";
 import { PractitionerMobilisationStatusCard } from "@/components/portal/PractitionerMobilisationStatusCard";
@@ -39,6 +40,7 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
       <section className="grid gap-5 xl:grid-cols-2">
         <div className="grid gap-5">
           <WellnessDaysCard />
+          <HighRiskClientInsightsCard />
         </div>
         <div className="grid gap-5">
           <RequestsPipelineCard />
