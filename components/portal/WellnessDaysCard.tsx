@@ -284,6 +284,15 @@ function readinessTone(readiness: number) {
 }
 
 export function WellnessDaysCard() {
+  return (
+    <>
+      <ThisWeeksWellnessDaysCard />
+      <WellnessCalendarCard />
+    </>
+  );
+}
+
+export function ThisWeeksWellnessDaysCard() {
   const [selectedDay, setSelectedDay] = useState<WellnessDay | null>(null);
   const [weekIndex, setWeekIndex] = useState(0);
   const currentWeek = weekSets[weekIndex];
@@ -364,13 +373,23 @@ export function WellnessDaysCard() {
         </div>
       </section>
 
-      <WellnessCalendarCard events={allWellnessDays} onSelect={setSelectedDay} />
       {selectedDay ? <WellnessDayModal day={selectedDay} onClose={() => setSelectedDay(null)} /> : null}
     </>
   );
 }
 
-function WellnessCalendarCard({
+export function WellnessCalendarCard() {
+  const [selectedDay, setSelectedDay] = useState<WellnessDay | null>(null);
+
+  return (
+    <>
+      <WellnessCalendarView events={allWellnessDays} onSelect={setSelectedDay} />
+      {selectedDay ? <WellnessDayModal day={selectedDay} onClose={() => setSelectedDay(null)} /> : null}
+    </>
+  );
+}
+
+function WellnessCalendarView({
   events,
   onSelect,
 }: {

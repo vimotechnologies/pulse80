@@ -1,13 +1,6 @@
 import type { PortalConfig, PortalDashboardData } from "@/data/portal-phase-two";
-import { DashboardSection } from "@/components/portal/DashboardSection";
-import { DrillDownCard } from "@/components/portal/DrillDownCard";
-import { HighRiskClientInsightsCard } from "@/components/portal/HighRiskClientInsightsCard";
-import { InsightCard } from "@/components/portal/InsightCard";
+import { AdminDashboardDraggableCards } from "@/components/portal/AdminDashboardDraggableCards";
 import { MetricWidget } from "@/components/portal/MetricWidget";
-import { PractitionerMobilisationStatusCard } from "@/components/portal/PractitionerMobilisationStatusCard";
-import { RiskCard } from "@/components/portal/RiskCard";
-import { RequestsPipelineCard } from "@/components/portal/RequestsPipelineCard";
-import { WellnessDaysCard } from "@/components/portal/WellnessDaysCard";
 
 type PortalDashboardProps = {
   config: PortalConfig;
@@ -15,9 +8,6 @@ type PortalDashboardProps = {
 };
 
 export function PortalDashboard({ data }: PortalDashboardProps) {
-  const riskInsights = data.insights.filter((insight) => insight.tone === "danger");
-  const calmerInsights = data.insights.filter((insight) => insight.tone !== "danger");
-
   return (
     <div className="space-y-7">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -37,78 +27,7 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
         ))}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <div className="grid gap-5">
-          <WellnessDaysCard />
-          <HighRiskClientInsightsCard />
-        </div>
-        <div className="grid gap-5">
-          <RequestsPipelineCard />
-          <PractitionerMobilisationStatusCard />
-          {data.sections.slice(2, 3).map((section) => (
-            <DashboardSection
-              key={section.title}
-              title={section.title}
-              description={section.description}
-            >
-              {section.items.map((item) => (
-                <DrillDownCard
-                  key={`${section.title}-${item.title}`}
-                  item={item}
-                />
-              ))}
-            </DashboardSection>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-5 xl:grid-cols-2">
-        {data.sections.slice(3).map((section) => (
-          <DashboardSection
-            key={section.title}
-            title={section.title}
-            description={section.description}
-          >
-            {section.items.map((item) => (
-              <DrillDownCard
-                key={`${section.title}-${item.title}`}
-                item={item}
-              />
-            ))}
-          </DashboardSection>
-        ))}
-      </section>
-
-      <DashboardSection
-        title={data.insightsTitle}
-        description={data.insightsDescription}
-      >
-        <div className="grid gap-4 p-5 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="grid gap-3">
-            {riskInsights.length > 0 ? (
-              riskInsights.map((insight) => (
-                <RiskCard
-                  key={insight.title}
-                  title={insight.title}
-                  detail={insight.detail}
-                  level="high-risk"
-                />
-              ))
-            ) : (
-              <RiskCard
-                title="No critical risk flags"
-                detail="No high-risk operational or wellness signals are active in this view."
-                level="low-risk"
-              />
-            )}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {calmerInsights.map((insight) => (
-              <InsightCard key={insight.title} {...insight} />
-            ))}
-          </div>
-        </div>
-      </DashboardSection>
+      <AdminDashboardDraggableCards />
     </div>
   );
 }
