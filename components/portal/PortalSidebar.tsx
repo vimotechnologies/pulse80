@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { PortalSidebarItem } from "@/components/portal/PortalSidebarItem";
-import { ArrowLeft2 } from "@/components/icons/IconsaxIcons";
+import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import {
+  PortalSidebarGroup,
+  PortalSidebarItem,
+  type PortalNavEntry,
+} from "@/components/portal/PortalSidebarItem";
+import { ArrowLeft2, Logout } from "@/components/icons/IconsaxIcons";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
 
@@ -16,12 +22,25 @@ type PortalSidebarProps = {
 
 export function PortalSidebar({
   portalKey,
-  portalName,
-  portalDescription,
   collapsed,
   onToggleCollapsed,
 }: PortalSidebarProps) {
+  const pathname = usePathname();
   const items = portalConfigs[portalKey].items;
+  const activeGroups = useMemo(
+    () =>
+      items
+        .filter((item) => item.type === "group" && item.children.some((child) => pathname === child.href))
+        .map((item) => item.label),
+    [items, pathname],
+  );
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+
+  function toggleGroup(label: string) {
+    setOpenGroups((current) =>
+      current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
+    );
+  }
 
   return (
     <aside
@@ -32,7 +51,7 @@ export function PortalSidebar({
     >
       <div
         className={cn(
-          "flex h-20 items-center border-b border-card-border px-4",
+          "flex h-20 items-center px-4",
           collapsed ? "justify-center" : "justify-between gap-3",
         )}
       >
@@ -79,13 +98,6 @@ export function PortalSidebar({
         )}
       </div>
 
-      {!collapsed ? (
-        <div className="border-b border-card-border px-5 py-4">
-          <p className="text-sm font-semibold text-navy">{portalName}</p>
-          <p className="mt-1 text-xs leading-5 text-muted">{portalDescription}</p>
-        </div>
-      ) : null}
-
       <nav
         className={cn(
           "flex-1 space-y-1 overflow-y-auto py-5",
@@ -93,9 +105,61 @@ export function PortalSidebar({
         )}
       >
         {items.map((item) => (
-          <PortalSidebarItem key={item.href} item={item} collapsed={collapsed} />
+          <SidebarEntry
+            key={item.type === "group" ? item.label : item.href}
+            entry={item}
+            collapsed={collapsed}
+            open={item.type === "group" ? activeGroups.includes(item.label) || openGroups.includes(item.label) : false}
+            onToggle={() => item.type === "group" && toggleGroup(item.label)}
+          />
         ))}
       </nav>
+
+      <div className="px-3 pb-4">
+        <div className="mx-2 mb-3 border-t border-slate-200" />
+        <button
+          type="button"
+          className={cn(
+            "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
+            collapsed ? "justify-center px-0" : "gap-3 px-3",
+          )}
+          style={{ fontSize: "14px", lineHeight: "20px" }}
+          aria-label="Sign out"
+          title={collapsed ? "Sign out" : undefined}
+        >
+          <Logout className="h-5 w-5 text-black" aria-hidden="true" />
+          {!collapsed ? (
+            <span className="leading-5" style={{ fontSize: "14px", lineHeight: "20px" }}>
+              Sign out
+            </span>
+          ) : null}
+        </button>
+      </div>
     </aside>
   );
+}
+
+function SidebarEntry({
+  entry,
+  collapsed,
+  open,
+  onToggle,
+}: {
+  entry: PortalNavEntry;
+  collapsed: boolean;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  if (entry.type === "group") {
+    return (
+      <PortalSidebarGroup
+        group={entry}
+        collapsed={collapsed}
+        open={open}
+        onToggle={onToggle}
+      />
+    );
+  }
+
+  return <PortalSidebarItem item={entry} collapsed={collapsed} />;
 }

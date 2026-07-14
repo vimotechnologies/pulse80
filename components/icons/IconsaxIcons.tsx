@@ -3,10 +3,12 @@ import {
   Activity as IconsaxActivity,
   AddCircle as IconsaxAddCircle,
   ArrowDown as IconsaxArrowDown,
+  ArrowDown2 as IconsaxArrowDown2,
   ArrowLeft2 as IconsaxArrowLeft2,
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
   CloseCircle as IconsaxCloseCircle,
+  CloseSquare as IconsaxCloseSquare,
   Buildings as IconsaxBuildings,
   CalendarTick as IconsaxCalendarTick,
   Card as IconsaxCard,
@@ -20,13 +22,18 @@ import {
   Filter as IconsaxFilter,
   Health as IconsaxHealth,
   Heart as IconsaxHeart,
+  Home as IconsaxHome,
   LampOn as IconsaxLampOn,
   Lock as IconsaxLock,
+  Location as IconsaxLocation,
+  LogoutCurve as IconsaxLogout,
   Menu as IconsaxMenu,
+  MessageQuestion as IconsaxMessageQuestion,
   Microscope as IconsaxMicroscope,
   More as IconsaxMore,
   Notification as IconsaxNotification,
   Profile2User as IconsaxProfile2User,
+  ProfileCircle as IconsaxProfileCircle,
   Refresh as IconsaxRefresh,
   SearchNormal1 as IconsaxSearch,
   Setting2 as IconsaxSettings,
@@ -64,6 +71,7 @@ function withDefaultVariant(Icon: IconsaxIcon): IconsaxIcon {
 export const Activity = withDefaultVariant(IconsaxActivity);
 export const AddCircle = withDefaultVariant(IconsaxAddCircle);
 export const AlertCircle = withDefaultVariant(IconsaxWarning2);
+export const ArrowDown = withDefaultVariant(IconsaxArrowDown2);
 export const ArrowDownRight = withDefaultVariant(IconsaxArrowDown);
 export const ArrowLeft2 = withDefaultVariant(IconsaxArrowLeft2);
 export const ArrowRight = withDefaultVariant(IconsaxArrowRight);
@@ -75,6 +83,7 @@ export const CalendarCheck = withDefaultVariant(IconsaxCalendarTick);
 export const CalendarDays = withDefaultVariant(IconsaxCalendarTick);
 export const ChevronDown = withDefaultVariant(IconsaxArrowDown);
 export const CloseCircle = withDefaultVariant(IconsaxCloseCircle);
+export const CloseSquare = withDefaultVariant(IconsaxCloseSquare);
 export const ClipboardCheck = withDefaultVariant(IconsaxClipboardTick);
 export const Clock = withDefaultVariant(IconsaxClock);
 export const CreditCard = withDefaultVariant(IconsaxCard);
@@ -87,13 +96,17 @@ export const Filter = withDefaultVariant(IconsaxFilter);
 export const Globe2 = withDefaultVariant(IconsaxStatusUp);
 export const HeartPulse = withDefaultVariant(IconsaxHeart);
 export const Inbox = withDefaultVariant(IconsaxTaskSquare);
-export const LayoutDashboard = withDefaultVariant(IconsaxChart2);
+export const LayoutDashboard = withDefaultVariant(IconsaxHome);
 export const Lightbulb = withDefaultVariant(IconsaxLampOn);
 export const Lock = withDefaultVariant(IconsaxLock);
+export const Location = withDefaultVariant(IconsaxLocation);
+export const Logout = withDefaultVariant(IconsaxLogout);
 export const Mail = withDefaultVariant(IconsaxSms);
 export const Menu = withDefaultVariant(IconsaxMenu);
+export const MessageQuestion = withDefaultVariant(IconsaxMessageQuestion);
 export const Microscope = withDefaultVariant(IconsaxMicroscope);
 export const MoreHorizontal = withDefaultVariant(IconsaxMore);
+export const ProfileCircle = withDefaultVariant(IconsaxProfileCircle);
 export const Refresh = withDefaultVariant(IconsaxRefresh);
 export const Search = withDefaultVariant(IconsaxSearch);
 export const Settings = withDefaultVariant(IconsaxSettings);

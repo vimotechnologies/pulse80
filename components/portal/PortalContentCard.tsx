@@ -29,10 +29,10 @@ export function PortalContentCard({
         <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
           <div>
             {title ? (
-              <h2 className="text-base font-semibold text-navy">{title}</h2>
+              <h2 className="text-[14px] font-semibold leading-5 text-black">{title}</h2>
             ) : null}
             {description ? (
-              <p className="mt-1 text-sm leading-5 text-muted">{description}</p>
+              <p className="mt-1 text-[12px] leading-4 text-black/60">{description}</p>
             ) : null}
           </div>
           {action}
