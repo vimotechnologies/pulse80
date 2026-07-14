@@ -839,14 +839,14 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
                     type="button"
                     onClick={() => setActiveTab(tab.label)}
                     className={cn(
-                      "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-t-2xl border-b-2 px-2.5 text-[12px] font-medium leading-3 transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+                      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-t-2xl border-b-2 px-3 text-[14px] font-medium leading-4 transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
                       activeTab === tab.label
                         ? "border-primary text-primary"
                         : "border-transparent text-black hover:-translate-y-0.5 hover:rounded-2xl hover:bg-[#f8fafc] hover:text-primary",
                     )}
-                    style={{ fontSize: 12, lineHeight: "12px" }}
+                    style={{ fontSize: 14, lineHeight: "16px" }}
                   >
-                    <Icon className="h-3 w-3" aria-hidden="true" />
+                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                     {tab.label}
                   </button>
                 );
