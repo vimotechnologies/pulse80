@@ -1,18 +1,33 @@
 "use client";
 
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
+  Activity,
   AddCircle,
+  AlertCircle,
+  ArrowDown,
   ArrowLeft2,
   ArrowRight,
   Building2,
+  CalendarCheck,
+  CalendarDays,
+  ClipboardCheck,
   CloseSquare,
+  Clock,
   Download,
   Edit,
   Eye,
-  Filter,
+  FileText,
+  Globe2,
+  HeartPulse,
+  Location,
+  Mail,
   MoreHorizontal,
+  Refresh,
   Search,
+  ShieldCheck,
   Sort,
   Trash,
   User,
@@ -138,6 +153,7 @@ type Organization = {
   insights: string[];
   recommendations: Recommendation[];
   customPackageNotes?: string;
+  quickSummary?: string;
 };
 
 type OrganizationForm = {
@@ -184,6 +200,13 @@ const statusOptions: OrganizationStatus[] = [
 ];
 
 const riskOptions: WellnessRisk[] = ["Low", "Medium", "High", "Critical"];
+const sortOptions = [
+  { value: "Organization name", label: "Sort by: Organization (A-Z)" },
+  { value: "Employee count", label: "Sort by: Employees" },
+  { value: "Contract end date", label: "Sort by: Contract Expiry" },
+  { value: "Wellness risk", label: "Sort by: Wellness Risk" },
+  { value: "Latest activation", label: "Sort by: Latest Activation" },
+];
 const roleLabelOptions = [
   "HR Manager",
   "Wellness Coordinator",
@@ -225,36 +248,36 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-abc",
     name: "ABC Holdings",
-    code: "ABC-001",
-    logo: "AB",
-    industry: "Insurance & Financial Services",
-    country: "Botswana",
-    primaryLocation: "Gaborone",
-    region: "South East District",
-    employees: 780,
+    code: "ABC001",
+    logo: "ABC",
+    industry: "Conglomerate",
+    country: "South Africa",
+    primaryLocation: "Johannesburg, Gauteng",
+    region: "Gauteng",
+    employees: 2450,
     package: "Enterprise Wellness Intelligence Package",
-    contractStart: "2026-01-15",
-    contractEnd: "2026-12-15",
-    risk: "Medium",
+    contractStart: "2024-01-01",
+    contractEnd: "2025-12-31",
+    risk: "High",
     status: "Active",
-    lastActivation: "May 10, 2026",
-    nextActivation: "Aug 18, 2026",
+    lastActivation: "10 May 2024",
+    nextActivation: "20 Jun 2024",
     reportsPublished: 8,
   }),
   createOrganization({
     id: "org-delta",
     name: "Delta Mining Group",
-    code: "DMG-014",
-    logo: "DM",
+    code: "DMG002",
+    logo: "DMG",
     industry: "Mining",
     country: "Botswana",
-    primaryLocation: "Jwaneng",
-    region: "Southern District",
-    employees: 1240,
-    package: "Enterprise Wellness Intelligence Package",
-    contractStart: "2025-09-01",
-    contractEnd: "2026-08-25",
-    risk: "High",
+    primaryLocation: "Rustenburg, North West",
+    region: "North West",
+    employees: 1120,
+    package: "Corporate Wellness Package",
+    contractStart: "2024-03-01",
+    contractEnd: "2025-02-28",
+    risk: "Medium",
     status: "Active",
     lastActivation: "May 22, 2026",
     nextActivation: "Sep 04, 2026",
@@ -263,16 +286,16 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-nova",
     name: "Nova Finance",
-    code: "NVF-022",
+    code: "NF003",
     logo: "NF",
-    industry: "Banking",
-    country: "Botswana",
-    primaryLocation: "CBD Branch",
-    region: "Gaborone",
-    employees: 460,
+    industry: "Financial Services",
+    country: "South Africa",
+    primaryLocation: "Cape Town, Western Cape",
+    region: "Western Cape",
+    employees: 860,
     package: "Corporate Wellness Package",
-    contractStart: "2026-03-01",
-    contractEnd: "2027-02-28",
+    contractStart: "2024-02-15",
+    contractEnd: "2025-02-14",
     risk: "Low",
     status: "Onboarding",
     lastActivation: "Not started",
@@ -282,17 +305,18 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-legae",
     name: "Legae Academy",
-    code: "LGA-105",
+    code: "LA004",
+    logo: "LA",
     industry: "Education",
-    country: "Botswana",
-    primaryLocation: "Phakalane",
-    region: "Gaborone",
-    employees: 190,
+    country: "South Africa",
+    primaryLocation: "Pretoria, Gauteng",
+    region: "Gauteng",
+    employees: 320,
     package: "Starter Wellness Package",
-    contractStart: "2025-10-01",
-    contractEnd: "2026-09-15",
-    risk: "Medium",
-    status: "Active",
+    contractStart: "2024-08-01",
+    contractEnd: "2025-07-31",
+    risk: "Low",
+    status: "Onboarding",
     lastActivation: "Apr 19, 2026",
     nextActivation: "Oct 02, 2026",
     reportsPublished: 4,
@@ -300,16 +324,16 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-btcl",
     name: "BTCL",
-    code: "BTC-009",
-    logo: "BT",
+    code: "BTCL005",
+    logo: "BTCL",
     industry: "Telecommunications",
     country: "Botswana",
-    primaryLocation: "Gaborone Office",
+    primaryLocation: "Gaborone, Botswana",
     region: "South East District",
-    employees: 960,
-    package: "Corporate Wellness Package",
-    contractStart: "2025-08-01",
-    contractEnd: "2026-08-20",
+    employees: 780,
+    package: "Enterprise Wellness Intelligence Package",
+    contractStart: "2023-01-01",
+    contractEnd: "2024-12-31",
     risk: "High",
     status: "Paused",
     lastActivation: "May 29, 2026",
@@ -319,16 +343,16 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-fsg",
     name: "FSG",
-    code: "FSG-017",
-    logo: "FS",
-    industry: "Security & Facilities",
-    country: "Botswana",
-    primaryLocation: "Francistown",
-    region: "North East District",
-    employees: 1430,
+    code: "FSG006",
+    logo: "FSG",
+    industry: "Manufacturing",
+    country: "South Africa",
+    primaryLocation: "Durban, KwaZulu-Natal",
+    region: "KwaZulu-Natal",
+    employees: 540,
     package: "Custom Package",
-    contractStart: "2025-07-01",
-    contractEnd: "2026-07-30",
+    contractStart: "2023-07-01",
+    contractEnd: "2024-06-30",
     risk: "Critical",
     status: "Contract Expired",
     lastActivation: "Mar 18, 2026",
@@ -339,17 +363,18 @@ const mockOrganizations: Organization[] = [
   createOrganization({
     id: "org-devre",
     name: "De Vre Group",
-    code: "DVG-031",
-    industry: "Logistics",
-    country: "Botswana",
-    primaryLocation: "Lobatse",
-    region: "South East District",
-    employees: 340,
+    code: "DVG007",
+    logo: "DV",
+    industry: "Retail",
+    country: "South Africa",
+    primaryLocation: "Bloemfontein, Free State",
+    region: "Free State",
+    employees: 210,
     package: "Starter Wellness Package",
-    contractStart: "2026-04-01",
-    contractEnd: "2026-11-30",
-    risk: "Low",
-    status: "Prospect",
+    contractStart: "2024-11-01",
+    contractEnd: "2025-10-31",
+    risk: "Medium",
+    status: "Active",
     lastActivation: "Proposal stage",
     nextActivation: "Discovery call",
     reportsPublished: 0,
@@ -367,8 +392,6 @@ export function AdminOrganizations() {
   const [townFilter, setTownFilter] = useState("All");
   const [expiryFilter, setExpiryFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Organization name");
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState<string | null>(null);
-  const [drawerTab, setDrawerTab] = useState("Overview");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [addOpen, setAddOpen] = useState(false);
@@ -426,8 +449,6 @@ export function AdminOrganizations() {
 
   const totalPages = Math.max(1, Math.ceil(filteredOrganizations.length / pageSize));
   const paginatedOrganizations = filteredOrganizations.slice((page - 1) * pageSize, page * pageSize);
-  const selectedOrganization =
-    organizations.find((organization) => organization.id === selectedOrganizationId) ?? null;
 
   function showToast(message: string) {
     setToast(message);
@@ -437,17 +458,8 @@ export function AdminOrganizations() {
   function addOrganization(form: OrganizationForm) {
     const organization = organizationFromForm(form);
     setOrganizations((current) => [organization, ...current]);
-    setSelectedOrganizationId(organization.id);
     setAddOpen(false);
     showToast(`${organization.name} was added locally.`);
-  }
-
-  function updateOrganization(updatedOrganization: Organization) {
-    setOrganizations((current) =>
-      current.map((organization) =>
-        organization.id === updatedOrganization.id ? updatedOrganization : organization,
-      ),
-    );
   }
 
   function inviteClientUser(payload: InvitePayload) {
@@ -478,89 +490,99 @@ export function AdminOrganizations() {
     showToast(`Invitation simulated for ${payload.email}. Email includes ${orgName}, role, and a secure time-limited setup link.`);
   }
 
-  function archiveOrganization(id: string) {
-    setOrganizations((current) =>
-      current.map((organization) =>
-        organization.id === id ? { ...organization, status: "Archived" } : organization,
-      ),
-    );
-    showToast("Organization archived locally.");
-  }
-
   return (
     <div className="space-y-5">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-[20px] font-semibold leading-6 text-black">Organizations</h1>
-          <p className="mt-2 text-[12px] leading-5 text-black/60">
-            Manage client organizations, contracts, branches, departments, and portal access.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-2xl border border-card-border bg-white px-4 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            Export
-          </button>
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-          >
-            <AddCircle className="h-4 w-4" aria-hidden="true" />
-            Add Organization
-          </button>
-        </div>
-      </header>
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-[20px] font-semibold leading-6 text-black">Organizations</h1>
+            <p className="mt-2 text-[12px] leading-5 text-black/60">
+              Manage client organizations, contracts, branches, departments, and portal access.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[12px] font-semibold text-white shadow-[0_8px_20px_rgba(0,102,255,0.25)] transition hover:bg-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              <AddCircle className="h-4 w-4" aria-hidden="true" />
+              Add Organization
+            </button>
+          </div>
+        </header>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard title="Total Organizations" value="24" />
-        <SummaryCard title="Active Contracts" value="18" />
-        <SummaryCard title="Contracts Expiring Soon" value="4" tone="warning" />
-        <SummaryCard title="High-Risk Organizations" value="3" tone="danger" />
-      </section>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard title="Total Organizations" value="24" detail="All client organizations" icon={Building2} />
+          <SummaryCard title="Active Contracts" value="18" detail="With active contracts" icon={ClipboardCheck} tone="success" />
+          <SummaryCard title="Contracts Expiring Soon" value="4" detail="Within 60 days" icon={Clock} tone="warning" />
+          <SummaryCard title="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} tone="danger" />
+        </section>
 
-      <section className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-        <div className="grid gap-3 xl:grid-cols-[1.4fr_repeat(7,minmax(120px,1fr))]">
+      <section className="rounded-2xl border border-card-border bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
           <label className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/45" aria-hidden="true" />
+            <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
             <input
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
                 setPage(1);
               }}
-              placeholder="Search organizations, industries, locations"
-              className="h-9 w-full rounded-2xl border border-card-border bg-white pl-9 pr-3 text-[12px] text-black outline-none transition placeholder:text-black/40 focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              placeholder="Search organizations..."
+              className="h-10 w-full rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
             />
           </label>
           <FilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
           <FilterSelect label="Industry" value={industryFilter} options={["All", ...industries]} onChange={setIndustryFilter} />
           <FilterSelect label="Package" value={packageFilter} options={["All", ...packageOptions]} onChange={setPackageFilter} />
-          <FilterSelect label="Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
+          <FilterSelect label="Wellness Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
           <FilterSelect label="Country" value={countryFilter} options={["All", ...countries]} onChange={setCountryFilter} />
-          <FilterSelect label="Town" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
-          <FilterSelect label="Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 text-[12px] text-black/60">
-            <Filter className="h-4 w-4 text-black" aria-hidden="true" />
-            {filteredOrganizations.length} organizations in this view
-          </div>
-          <label className="inline-flex items-center gap-2 text-[12px] text-black">
-            <Sort className="h-4 w-4" aria-hidden="true" />
+        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(160px,0.9fr)_minmax(180px,1.1fr)_minmax(280px,1.7fr)_auto_1fr]">
+          <FilterSelect label="Town / Province" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
+          <FilterSelect label="Contract Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
+          <label className="relative">
+            <span className="sr-only">Sort by</span>
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-9 rounded-2xl border border-card-border bg-white px-3 text-[12px] outline-none focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
             >
-              {["Organization name", "Employee count", "Contract end date", "Wellness risk", "Latest activation"].map((option) => (
-                <option key={option}>{option}</option>
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-3 text-[#43536b]">
+              <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+              <Sort className="h-3.5 w-3.5" aria-hidden="true" />
+              <Refresh className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
           </label>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setStatusFilter("All");
+              setIndustryFilter("All");
+              setPackageFilter("All");
+              setRiskFilter("All");
+              setCountryFilter("All");
+              setTownFilter("All");
+              setExpiryFilter("All");
+              setSortBy("Organization name");
+              setPage(1);
+            }}
+            className="inline-flex h-10 items-center justify-center px-2 text-[12px] font-semibold text-primary transition hover:text-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          >
+            Clear Filters
+          </button>
         </div>
       </section>
 
@@ -585,14 +607,10 @@ export function AdminOrganizations() {
         {!isLoading && paginatedOrganizations.length > 0 ? (
           <div className="divide-y divide-card-border">
             {paginatedOrganizations.map((organization) => (
-              <button
+              <Link
                 key={organization.id}
-                type="button"
-                onClick={() => {
-                  setSelectedOrganizationId(organization.id);
-                  setDrawerTab("Overview");
-                }}
-                className="grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] items-center gap-3 px-4 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                href={`/admin/organizations/${organization.id}`}
+                className="grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <LogoMark organization={organization} />
@@ -602,8 +620,11 @@ export function AdminOrganizations() {
                   </span>
                 </span>
                 <span className="min-w-0 truncate text-black/70">{organization.industry}</span>
-                <span className="min-w-0 truncate text-black/70">{organization.primaryLocation}</span>
-                <span>{organization.branches.length}</span>
+                <span className="min-w-0 truncate text-black/70">
+                  <span className="mr-2" aria-hidden="true">{countryFlag(organization.country)}</span>
+                  {organization.primaryLocation}
+                </span>
+                <span>{displayBranchCount(organization)}</span>
                 <span>{organization.employees.toLocaleString()}</span>
                 <span className="min-w-0 truncate text-black/70">{organization.package}</span>
                 <span className="text-black/70">{formatDateRange(organization.contractStart, organization.contractEnd)}</span>
@@ -617,7 +638,7 @@ export function AdminOrganizations() {
                     <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                   </span>
                 </span>
-              </button>
+              </Link>
             ))}
           </div>
         ) : null}
@@ -659,22 +680,6 @@ export function AdminOrganizations() {
         </div>
       </section>
 
-      {selectedOrganization ? (
-        <OrganizationDrawer
-          organization={selectedOrganization}
-          activeTab={drawerTab}
-          onTabChange={setDrawerTab}
-          onClose={() => setSelectedOrganizationId(null)}
-          onArchive={() => archiveOrganization(selectedOrganization.id)}
-          onUpdate={updateOrganization}
-          onInvite={() => {
-            setInviteOrganizationId(selectedOrganization.id);
-            setInviteOpen(true);
-          }}
-          onToast={showToast}
-        />
-      ) : null}
-
       {addOpen ? (
         <AddOrganizationModal
           onClose={() => setAddOpen(false)}
@@ -685,7 +690,7 @@ export function AdminOrganizations() {
       {inviteOpen ? (
         <InviteClientUserModal
           organizations={organizations}
-          initialOrganizationId={inviteOrganizationId ?? selectedOrganizationId ?? organizations[0]?.id}
+          initialOrganizationId={inviteOrganizationId ?? organizations[0]?.id}
           onClose={() => setInviteOpen(false)}
           onSubmit={inviteClientUser}
         />
@@ -700,36 +705,278 @@ export function AdminOrganizations() {
   );
 }
 
-function SummaryCard({ title, value, tone = "primary" }: { title: string; value: string; tone?: "primary" | "warning" | "danger" }) {
-  const toneClass = tone === "warning" ? "text-warning" : tone === "danger" ? "text-pulse-red" : "text-primary";
+export function AdminOrganizationDetails({ organizationId }: { organizationId: string }) {
+  const initialOrganization = mockOrganizations.find((organization) => organization.id === organizationId) ?? null;
+  const [organization, setOrganization] = useState<Organization | null>(initialOrganization);
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 3200);
+  }
+
+  function updateOrganization(updatedOrganization: Organization) {
+    setOrganization(updatedOrganization);
+  }
+
+  function inviteClientUser(payload: InvitePayload) {
+    if (!organization) return;
+    setOrganization({
+      ...organization,
+      clientUsers: [
+        ...organization.clientUsers,
+        {
+          id: `client-${Date.now()}`,
+          name: payload.name,
+          email: payload.email,
+          role: payload.role,
+          invitationStatus: "Invitation Pending",
+          lastActive: "Invitation sent today",
+        },
+      ],
+    });
+    setInviteOpen(false);
+    showToast(`Invitation simulated for ${payload.email}.`);
+  }
+
+  if (!organization) {
+    return (
+      <section className="rounded-2xl border border-card-border bg-white p-6 text-black shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+        <p className="text-[14px] font-semibold">Organization not found</p>
+        <p className="mt-2 text-[12px] text-black/60">Return to the organizations list and select an available organization.</p>
+        <Link href="/admin/organizations" className="mt-4 inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
+          <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
+          Back to organizations
+        </Link>
+      </section>
+    );
+  }
+
   return (
-    <div className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-      <p className="text-[14px] font-semibold leading-5 text-black">{title}</p>
-      <p className={cn("mt-2 text-[24px] font-semibold leading-7", toneClass)}>{value}</p>
-      <p className="mt-1 text-[12px] leading-4 text-black/55">Current portfolio snapshot</p>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-[16px] font-medium leading-5">
+        <Link href="/admin/organizations" className="text-black transition hover:text-primary">
+          Organizations
+        </Link>
+        <span className="text-black/35">/</span>
+        <span className="text-black">{organization.name}</span>
+      </div>
+
+      <section className="rounded-lg border border-card-border bg-white px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <LogoMark organization={organization} size="xl" />
+            <div className="min-w-0">
+              <h1 className="text-[14px] font-semibold leading-5 text-black">{organization.name}</h1>
+              <div className="mt-3 grid gap-x-6 gap-y-2 text-[12px] text-black md:grid-cols-2 xl:grid-cols-3">
+                <HeaderMeta icon={Building2} label="Industry:" value={organization.industry} />
+                <span className="inline-flex items-center gap-2">
+                  <StatusBadge status={organization.status} />
+                </span>
+                <HeaderMeta icon={ClipboardCheck} label="Package:" value={organization.package} />
+                <HeaderMeta icon={Location} label="Location:" value={organization.primaryLocation} />
+                <HeaderMeta icon={User} label="Member Since:" value={formatShortDate(organization.contractStart)} />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
+              style={{ fontSize: 12, lineHeight: "12px" }}
+            >
+              <Mail className="h-3 w-3" aria-hidden="true" />
+              Invite Client User
+            </button>
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="inline-flex h-7 items-center rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
+                  style={{ fontSize: 12, lineHeight: "12px" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    showToast("Changes saved locally.");
+                  }}
+                  className="inline-flex h-7 items-center rounded-md bg-primary px-3 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
+                  style={{ fontSize: 12, lineHeight: "12px" }}
+                >
+                  Save Changes
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
+                style={{ fontSize: 12, lineHeight: "12px" }}
+              >
+                <Edit className="h-3 w-3" aria-hidden="true" />
+                Edit Organization
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="border-b border-card-border">
+        <div className="flex overflow-x-auto">
+              {detailTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.label}
+                    type="button"
+                    onClick={() => setActiveTab(tab.label)}
+                    className={cn(
+                      "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-t-2xl border-b-2 px-2.5 text-[12px] font-medium leading-3 transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+                      activeTab === tab.label
+                        ? "border-primary text-primary"
+                        : "border-transparent text-black hover:-translate-y-0.5 hover:rounded-2xl hover:bg-[#f8fafc] hover:text-primary",
+                    )}
+                    style={{ fontSize: 12, lineHeight: "12px" }}
+                  >
+                    <Icon className="h-3 w-3" aria-hidden="true" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+        </div>
+      </div>
+
+      <section className="-mt-4">
+        <section className="rounded-b-2xl rounded-t-none border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)]">
+          {activeTab === "Overview" ? (
+            <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="p-5">
+                <OrganizationOverviewForm organization={organization} />
+              </div>
+              <div className="border-t border-card-border p-5 xl:border-l xl:border-t-0">
+                <WellnessRiskGauge risk={organization.risk} />
+              </div>
+            </div>
+          ) : (
+            <div className="p-5">
+            {activeTab === "Contacts" ? <ContactsTab organization={organization} /> : null}
+            {activeTab === "Branches & Departments" ? (
+              <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
+            ) : null}
+            {activeTab === "Contract" ? <ContractTab organization={organization} /> : null}
+            {activeTab === "Operations" ? <OperationsTab organization={organization} /> : null}
+            {activeTab === "Client Portal Access" ? (
+              <ClientPortalTab organization={organization} onInvite={() => setInviteOpen(true)} onUpdate={updateOrganization} onToast={showToast} />
+            ) : null}
+            </div>
+          )}
+        </section>
+      </section>
+
+      {inviteOpen ? (
+        <InviteClientUserModal
+          organizations={[organization]}
+          initialOrganizationId={organization.id}
+          onClose={() => setInviteOpen(false)}
+          onSubmit={inviteClientUser}
+        />
+      ) : null}
+
+      {toast ? (
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-2xl border border-success/20 bg-white px-4 py-3 text-[12px] font-semibold text-black shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
+          {toast}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SummaryCard({
+  title,
+  value,
+  detail,
+  icon: Icon,
+  tone = "primary",
+}: {
+  title: string;
+  value: string;
+  detail: string;
+  icon: typeof Building2;
+  tone?: "primary" | "success" | "warning" | "danger";
+}) {
+  const toneClass =
+    tone === "success"
+      ? "text-success border-success/35 bg-success/10"
+      : tone === "warning"
+        ? "text-warning border-warning/40 bg-warning/10"
+        : tone === "danger"
+          ? "text-pulse-red border-pulse-red/35 bg-pulse-red/10"
+          : "text-primary border-primary/35 bg-primary/10";
+  return (
+    <div className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
+      <div className="flex items-center gap-4">
+        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border", toneClass)}>
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="text-[12px] font-medium leading-4 text-black">{title}</p>
+          <p className="mt-1 text-[24px] font-semibold leading-7 text-black">{value}</p>
+        </div>
+      </div>
+      <p className="mt-5 text-[12px] leading-4 text-black/60">{detail}</p>
     </div>
   );
 }
 
 function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
   return (
-    <label className="grid gap-1">
+    <label className="relative">
       <span className="sr-only">{label}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 rounded-2xl border border-card-border bg-white px-3 text-[12px] text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+        className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
       >
-        {options.map((option) => <option key={option}>{option}</option>)}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option === "All" ? label : option}
+          </option>
+        ))}
       </select>
+      <ArrowDown className="pointer-events-none absolute right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
     </label>
   );
 }
 
-function LogoMark({ organization }: { organization: Organization }) {
+function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-2 text-[12px] leading-4">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-[#475467]" aria-hidden="true" />
+      <span className="shrink-0 text-black/70">{label}</span>
+      <span className="min-w-0 truncate text-black">{value}</span>
+    </span>
+  );
+}
+
+function LogoMark({ organization, size = "sm" }: { organization: Organization; size?: "sm" | "lg" | "xl" }) {
   return (
     <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-card-border bg-[#f2f4f7] bg-cover bg-center text-[12px] font-semibold text-black"
+      className={cn(
+        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
+        size === "xl"
+          ? "h-20 w-20 rounded-md bg-white text-[20px] text-primary shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
+          : size === "lg"
+          ? "h-20 w-20 rounded-full text-[22px] ring-4 ring-primary/10"
+          : "h-9 w-9 rounded-2xl text-[12px]",
+      )}
       style={organization.logo?.startsWith("data:") ? { backgroundImage: `url(${organization.logo})` } : undefined}
     >
       {organization.logo?.startsWith("data:") ? null : organization.logo ?? initials(organization.name)}
@@ -746,7 +993,7 @@ function StatusBadge({ status }: { status: OrganizationStatus }) {
     "Contract Expired": "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
     Archived: "border-slate-300 bg-slate-100 text-slate-500",
   };
-  return <span className={cn("inline-flex w-fit rounded-full border px-2.5 py-1 text-[12px] font-medium leading-4", styles[status])}>{status}</span>;
+  return <span className={cn("inline-flex w-fit rounded-md border px-3 py-1 text-[12px] font-medium leading-4", styles[status])}>{status}</span>;
 }
 
 function RiskBadge({ risk }: { risk: WellnessRisk }) {
@@ -759,136 +1006,162 @@ function RiskBadge({ risk }: { risk: WellnessRisk }) {
   return <span className={cn("inline-flex w-fit rounded-full border px-2.5 py-1 text-[12px] font-medium leading-4", styles[risk])}>{risk}</span>;
 }
 
-const drawerTabs = [
-  "Overview",
-  "Contacts",
-  "Branches & Departments",
-  "Contract",
-  "Activations",
-  "Reports",
-  "Insights",
-  "Recommendations",
-  "Client Portal Access",
+function WellnessRiskGauge({ risk }: { risk: WellnessRisk }) {
+  const riskMeta: Record<WellnessRisk, { score: number; label: string; tone: string; rotation: number }> = {
+    Low: { score: 22, label: "LOW", tone: "text-success", rotation: -54 },
+    Medium: { score: 45, label: "MEDIUM", tone: "text-black", rotation: -12 },
+    High: { score: 78, label: "HIGH", tone: "text-pulse-red", rotation: 42 },
+    Critical: { score: 92, label: "CRITICAL", tone: "text-pulse-red", rotation: 64 },
+  };
+  const meta = riskMeta[risk];
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[14px] font-semibold text-black">Wellness Risk Score</h2>
+          <AlertCircle className="h-3.5 w-3.5 text-[#475467]" aria-hidden="true" />
+        </div>
+        <ArrowDown className="h-3.5 w-3.5 rotate-180 text-black" aria-hidden="true" />
+      </div>
+
+      <div className="mt-8 flex flex-col items-center">
+        <div className="relative h-36 w-64 overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-64 w-64 rounded-full"
+            style={{
+              background:
+                "conic-gradient(from 270deg at 50% 50%, #48bb78 0deg 45deg, #9bd330 45deg 90deg, #fbbf24 90deg 135deg, #fb923c 135deg 162deg, #ef4444 162deg 180deg, #e5e7eb 180deg 360deg)",
+            }}
+          />
+          <div className="absolute left-1/2 top-8 h-48 w-48 -translate-x-1/2 rounded-full bg-white" />
+          <div className="absolute left-0 top-[118px] text-[12px] font-medium text-black/55">0</div>
+          <div className="absolute right-0 top-[118px] text-[12px] font-medium text-black/55">100</div>
+          <div className="absolute bottom-0 left-1/2 h-20 w-1 origin-bottom rounded-full bg-[#fb923c] transition-transform" style={{ transform: `translateX(-50%) rotate(${meta.rotation}deg)` }} />
+          <div className="absolute bottom-[-5px] left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-white bg-[#fb923c] shadow" />
+          <div className="absolute inset-x-0 bottom-0 text-center">
+            <p className="text-[28px] font-semibold leading-7 text-black">
+              {meta.score}<span className="text-[14px] font-medium">/100</span>
+            </p>
+            <p className={cn("mt-2 text-[12px] font-semibold", meta.tone)}>{meta.label}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-4 gap-2 text-[12px] text-black/65">
+        <LegendDot color="bg-[#48bb78]" label="0-25" />
+        <LegendDot color="bg-[#9bd330]" label="26-50" />
+        <LegendDot color="bg-[#fb923c]" label="51-75" />
+        <LegendDot color="bg-[#ef4444]" label="76-100" />
+      </div>
+
+      <div className="mt-8 flex gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+        <Refresh className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <div>
+          <p className="text-[12px] font-semibold text-black">Auto-calculated on page load</p>
+          <p className="mt-1 text-[12px] text-black/60">Calculating from 0 to {meta.score} over 3 seconds</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", color)} />
+      {label}
+    </span>
+  );
+}
+
+const detailTabs = [
+  { label: "Overview", icon: Building2 },
+  { label: "Contacts", icon: User },
+  { label: "Branches & Departments", icon: Building2 },
+  { label: "Contract", icon: ClipboardCheck },
+  { label: "Operations", icon: Activity },
+  { label: "Client Portal Access", icon: Globe2 },
 ];
 
-function OrganizationDrawer({
-  organization,
-  activeTab,
-  onTabChange,
-  onClose,
-  onArchive,
-  onUpdate,
-  onInvite,
-  onToast,
-}: {
-  organization: Organization;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  onClose: () => void;
-  onArchive: () => void;
-  onUpdate: (organization: Organization) => void;
-  onInvite: () => void;
-  onToast: (message: string) => void;
-}) {
+function OrganizationOverviewForm({ organization }: { organization: Organization }) {
   return (
-    <div className="fixed inset-0 z-40 bg-black/20" role="dialog" aria-modal="true">
-      <aside className="ml-auto flex h-full w-full max-w-3xl flex-col border-l border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
-        <div className="border-b border-card-border px-5 py-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 gap-3">
-              <LogoMark organization={organization} />
-              <div className="min-w-0">
-                <h2 className="truncate text-[14px] font-semibold leading-5 text-black">{organization.name}</h2>
-                <p className="mt-1 text-[12px] leading-4 text-black/60">
-                  {organization.industry} · {organization.package} · {organization.primaryLocation}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <StatusBadge status={organization.status} />
-                  <RiskBadge risk={organization.risk} />
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-2xl border border-card-border text-black transition hover:bg-black hover:text-white"
-            >
-              <CloseSquare className="h-4 w-4" aria-hidden="true" />
-              <span className="sr-only">Close drawer</span>
-            </button>
+    <div className="space-y-5">
+      <div className="flex items-center gap-2">
+        <Building2 className="h-4 w-4 text-black" aria-hidden="true" />
+        <h2 className="text-[14px] font-semibold text-black">Organization Overview</h2>
+      </div>
+
+      <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
+        <ReadonlyField label="Organization Name" required value={organization.name} />
+        <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
+        <ReadonlyField label="Industry" required value={organization.industry} select />
+        <ReadonlyField label="Country" required value={organization.country} select />
+        <ReadonlyField label="Primary Location" required value={organization.primaryLocation} select />
+        <ReadonlyField label="Region" value={organization.region} select />
+        <ReadonlyField label="Employee Count" required value={organization.employees.toLocaleString()} />
+        <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
+        <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
+        <ReadonlyField label="Package" required value={organization.package} select />
+        <ReadonlyField label="Status" required value={organization.status} select />
+        <ReadonlyField label="Wellness Risk" value={organization.risk} muted />
+        <ReadonlyField label="Contract Start Date" value={formatShortDate(organization.contractStart)} icon={CalendarDays} />
+        <ReadonlyField label="Contract End Date" value={formatShortDate(organization.contractEnd)} icon={CalendarDays} />
+        <ReadonlyField label="Last Activation" value={organization.lastActivation} icon={CalendarDays} />
+        <ReadonlyField label="Next Activation" value={organization.nextActivation} icon={CalendarDays} />
+        <ReadonlyField label="Reports Published" value={String(organization.reportsPublished)} />
+        <ReadonlyField label="Portal Users" value={String(organization.clientUsers.length)} />
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[12px] font-medium text-black">Organization Logo</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <LogoMark organization={organization} />
+          <div className="flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65">
+            <Download className="h-4 w-4 rotate-180 text-black/55" aria-hidden="true" />
+            Click to upload or drag and drop
           </div>
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {drawerTabs.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => onTabChange(tab)}
-                className={cn(
-                  "shrink-0 rounded-2xl px-3 py-2 text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-                  activeTab === tab ? "bg-primary/10 text-primary" : "text-black hover:bg-[#f8fafc]",
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          {activeTab === "Overview" ? <OverviewTab organization={organization} /> : null}
-          {activeTab === "Contacts" ? <ContactsTab organization={organization} /> : null}
-          {activeTab === "Branches & Departments" ? (
-            <BranchesTab organization={organization} onUpdate={onUpdate} onToast={onToast} />
-          ) : null}
-          {activeTab === "Contract" ? <ContractTab organization={organization} /> : null}
-          {activeTab === "Activations" ? <ActivationsTab organization={organization} /> : null}
-          {activeTab === "Reports" ? <ReportsTab organization={organization} /> : null}
-          {activeTab === "Insights" ? <SimpleList title="Wellness Insights" items={organization.insights} /> : null}
-          {activeTab === "Recommendations" ? <RecommendationsTab organization={organization} /> : null}
-          {activeTab === "Client Portal Access" ? (
-            <ClientPortalTab organization={organization} onInvite={onInvite} onUpdate={onUpdate} onToast={onToast} />
-          ) : null}
-        </div>
-        <div className="flex flex-wrap justify-between gap-3 border-t border-card-border px-5 py-4">
-          <button
-            type="button"
-            onClick={onArchive}
-            className="inline-flex h-9 items-center gap-2 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc]"
-          >
-            <Trash className="h-4 w-4" aria-hidden="true" />
-            Archive Organization
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black"
-          >
+          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white">
             <Edit className="h-4 w-4" aria-hidden="true" />
-            Edit Organization
+            Replace
+          </button>
+          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white">
+            <Trash className="h-4 w-4" aria-hidden="true" />
+            Remove
           </button>
         </div>
-      </aside>
+        <p className="text-[12px] text-black/55">Recommended size: 512 x 512px. Square images work best.</p>
+      </div>
     </div>
   );
 }
 
-function OverviewTab({ organization }: { organization: Organization }) {
+function ReadonlyField({
+  label,
+  value,
+  required,
+  select,
+  muted,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  required?: boolean;
+  select?: boolean;
+  muted?: boolean;
+  icon?: typeof Building2;
+}) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      {[
-        ["Organization name", organization.name],
-        ["Industry", organization.industry],
-        ["Country", organization.country],
-        ["Primary location", organization.primaryLocation],
-        ["Total employees", organization.employees.toLocaleString()],
-        ["Branches", String(organization.branches.length)],
-        ["Departments", String(countDepartments(organization))],
-        ["Package", organization.package],
-        ["Status", organization.status],
-        ["Wellness risk", organization.risk],
-        ["Last activation", organization.lastActivation],
-        ["Next activation", organization.nextActivation],
-        ["Reports published", String(organization.reportsPublished)],
-      ].map(([label, value]) => <DetailTile key={label} label={label} value={value} />)}
-    </div>
+    <label className="block">
+      <span className="mb-1.5 block text-[12px] font-medium text-black/70">
+        {label} {required ? <span className="text-pulse-red">*</span> : null}
+      </span>
+      <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-card-border px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
+        {Icon ? <Icon className="h-4 w-4 shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+        <span className="min-w-0 flex-1 truncate">{value}</span>
+        {select ? <ArrowDown className="h-3.5 w-3.5 shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+      </span>
+    </label>
   );
 }
 
@@ -1043,8 +1316,32 @@ function ReportsTab({ organization }: { organization: Organization }) {
   return <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate, "Preview · Download"])} />;
 }
 
-function RecommendationsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Recommendation", "Priority", "Suggested activation", "Impact", "Status", "Owner"]} rows={organization.recommendations.map((item) => [item.title, item.priority, item.activation, item.impact, item.status, item.owner])} />;
+function OperationsTab({ organization }: { organization: Organization }) {
+  return (
+    <div className="space-y-5">
+      <OperationsSection title="Activations" icon={CalendarCheck}>
+        <ActivationsTab organization={organization} />
+      </OperationsSection>
+      <OperationsSection title="Reports" icon={FileText}>
+        <ReportsTab organization={organization} />
+      </OperationsSection>
+      <OperationsSection title="Insights" icon={HeartPulse}>
+        <SimpleList title="Wellness Insights" items={organization.insights} />
+      </OperationsSection>
+    </div>
+  );
+}
+
+function OperationsSection({ title, icon: Icon, children }: { title: string; icon: typeof Building2; children: ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-black" aria-hidden="true" />
+        <h2 className="text-[14px] font-semibold text-black">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
 }
 
 function ClientPortalTab({
@@ -1547,6 +1844,53 @@ function uniqueOptions(values: string[]) {
 
 function countDepartments(organization: Organization) {
   return organization.branches.reduce((total, branch) => total + branch.departments.length, 0);
+}
+
+function displayBranchCount(organization: Organization) {
+  const counts: Record<string, number> = {
+    "org-abc": 3,
+    "org-delta": 2,
+    "org-nova": 4,
+    "org-legae": 1,
+    "org-btcl": 2,
+    "org-fsg": 3,
+    "org-devre": 1,
+  };
+  return counts[organization.id] ?? organization.branches.length;
+}
+
+function displayDepartmentCount(organization: Organization) {
+  const counts: Record<string, number> = {
+    "org-abc": 12,
+    "org-delta": 8,
+    "org-nova": 9,
+    "org-legae": 4,
+    "org-btcl": 7,
+    "org-fsg": 6,
+    "org-devre": 3,
+  };
+  return counts[organization.id] ?? countDepartments(organization);
+}
+
+function countryFlag(country: string) {
+  if (country === "South Africa") return "🇿🇦";
+  if (country === "Botswana") return "🇧🇼";
+  return "🏳";
+}
+
+function formatShortDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function referenceNumber(organization: Organization) {
+  const digits = organization.code.replace(/\D/g, "").padStart(4, "0").slice(-4);
+  return `ORG-2024-${digits}`;
 }
 
 function contractsExpiringSoon(organizations: Organization[]) {

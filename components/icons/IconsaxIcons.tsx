@@ -25,6 +25,7 @@ import {
   Home as IconsaxHome,
   LampOn as IconsaxLampOn,
   Lock as IconsaxLock,
+  Location as IconsaxLocation,
   LogoutCurve as IconsaxLogout,
   Menu as IconsaxMenu,
   MessageQuestion as IconsaxMessageQuestion,
@@ -32,6 +33,7 @@ import {
   More as IconsaxMore,
   Notification as IconsaxNotification,
   Profile2User as IconsaxProfile2User,
+  ProfileCircle as IconsaxProfileCircle,
   Refresh as IconsaxRefresh,
   SearchNormal1 as IconsaxSearch,
   Setting2 as IconsaxSettings,
@@ -97,12 +99,14 @@ export const Inbox = withDefaultVariant(IconsaxTaskSquare);
 export const LayoutDashboard = withDefaultVariant(IconsaxHome);
 export const Lightbulb = withDefaultVariant(IconsaxLampOn);
 export const Lock = withDefaultVariant(IconsaxLock);
+export const Location = withDefaultVariant(IconsaxLocation);
 export const Logout = withDefaultVariant(IconsaxLogout);
 export const Mail = withDefaultVariant(IconsaxSms);
 export const Menu = withDefaultVariant(IconsaxMenu);
 export const MessageQuestion = withDefaultVariant(IconsaxMessageQuestion);
 export const Microscope = withDefaultVariant(IconsaxMicroscope);
 export const MoreHorizontal = withDefaultVariant(IconsaxMore);
+export const ProfileCircle = withDefaultVariant(IconsaxProfileCircle);
 export const Refresh = withDefaultVariant(IconsaxRefresh);
 export const Search = withDefaultVariant(IconsaxSearch);
 export const Settings = withDefaultVariant(IconsaxSettings);
