@@ -45,7 +45,7 @@ export function PortalSidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 hidden border-r border-card-border bg-surface transition-[width] duration-300 lg:flex lg:flex-col",
+        "pulse-portal-sidebar fixed inset-y-0 left-0 z-30 hidden border-r border-card-border bg-surface transition-[width] duration-300 lg:flex lg:flex-col",
         collapsed ? "w-20" : "w-64",
       )}
     >

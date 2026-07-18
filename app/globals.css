@@ -110,6 +110,31 @@ button {
   cursor: pointer;
 }
 
+button.bg-primary,
+a.bg-primary,
+.bg-primary:is(button, a),
+.pulse-button-primary,
+.pulse-sign-in {
+  color: #ffffff !important;
+}
+
+button.bg-primary *,
+a.bg-primary *,
+.bg-primary:is(button, a) *,
+.pulse-button-primary *,
+.pulse-sign-in * {
+  color: inherit !important;
+}
+
+.pulse-portal-sidebar :is(a, button, span) {
+  color: #000000 !important;
+}
+
+.pulse-portal-sidebar :is(a, button):hover,
+.pulse-portal-sidebar :is(a, button):focus-visible {
+  color: #000000 !important;
+}
+
 button:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
@@ -348,7 +373,7 @@ textarea:disabled {
 .pulse-tab {
   align-items: center;
   border-bottom: 2px solid transparent;
-  border-radius: var(--pulse-radius-lg) var(--pulse-radius-lg) 0 0;
+  border-radius: var(--pulse-radius-lg);
   color: var(--dark-navy);
   display: inline-flex;
   font-size: var(--pulse-text-sm) !important;
@@ -367,9 +392,7 @@ textarea:disabled {
 
 .pulse-tab:hover {
   background: var(--pulse-hover);
-  border-radius: var(--pulse-radius-lg);
   color: var(--primary-blue);
-  transform: translateY(-2px);
 }
 
 .pulse-tab-active {
