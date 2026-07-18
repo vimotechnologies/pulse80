@@ -372,8 +372,11 @@ textarea:disabled {
 
 .pulse-tab {
   align-items: center;
+  background: transparent;
+  border: 0;
   border-bottom: 2px solid transparent;
-  border-radius: var(--pulse-radius-lg);
+  border-radius: 0 !important;
+  box-shadow: none !important;
   color: var(--dark-navy);
   display: inline-flex;
   font-size: var(--pulse-text-sm) !important;
@@ -391,13 +394,24 @@ textarea:disabled {
 }
 
 .pulse-tab:hover {
-  background: var(--pulse-hover);
+  background: transparent;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   color: var(--primary-blue);
 }
 
 .pulse-tab-active {
+  background: transparent;
   border-bottom-color: var(--primary-blue);
+  border-radius: 0 !important;
   color: var(--primary-blue);
+  box-shadow: none !important;
+}
+
+.pulse-tab.pulse-focus:focus-visible {
+  box-shadow: none !important;
+  outline: 2px solid color-mix(in srgb, var(--primary-blue) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .pulse-badge {

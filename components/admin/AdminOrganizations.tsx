@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Activity,
   AddCircle,
@@ -51,10 +51,10 @@ type OrganizationStatus =
   | "Archived";
 type WellnessRisk = "Low" | "Medium" | "High" | "Critical";
 type PackageName =
-  | "Starter Wellness Package"
-  | "Corporate Wellness Package"
-  | "Enterprise Wellness Intelligence Package"
-  | "Custom Package";
+  | "Starter Wellness"
+  | "Corporate Wellness"
+  | "Enterprise Wellness Intelligence"
+  | "Custom";
 type ContactMethod = "Email" | "Phone" | "WhatsApp" | "Portal";
 type ClientRole = "Client Admin" | "Client Viewer";
 type InvitationStatus =
@@ -154,7 +154,7 @@ type Organization = {
   lastActivation: string;
   nextActivation: string;
   reportsPublished: number;
-  contacts: [OrganizationContact, OrganizationContact];
+  contacts: OrganizationContact[];
   clientUsers: ClientUser[];
   activations: Activation[];
   reports: Report[];
@@ -192,10 +192,10 @@ type OrganizationForm = {
 };
 
 const packageOptions: PackageName[] = [
-  "Starter Wellness Package",
-  "Corporate Wellness Package",
-  "Enterprise Wellness Intelligence Package",
-  "Custom Package",
+  "Starter Wellness",
+  "Corporate Wellness",
+  "Enterprise Wellness Intelligence",
+  "Custom",
 ];
 
 const statusOptions: OrganizationStatus[] = [
@@ -233,7 +233,7 @@ const initialForm: OrganizationForm = {
   town: "",
   region: "",
   employees: "",
-  package: "Corporate Wellness Package",
+  package: "Corporate Wellness",
   contractStart: "2026-01-01",
   contractEnd: "2026-12-31",
   status: "Prospect",
@@ -263,7 +263,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Johannesburg, Gauteng",
     region: "Gauteng",
     employees: 2450,
-    package: "Enterprise Wellness Intelligence Package",
+    package: "Enterprise Wellness Intelligence",
     contractStart: "2024-01-01",
     contractEnd: "2025-12-31",
     risk: "High",
@@ -282,7 +282,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Rustenburg, North West",
     region: "North West",
     employees: 1120,
-    package: "Corporate Wellness Package",
+    package: "Corporate Wellness",
     contractStart: "2024-03-01",
     contractEnd: "2025-02-28",
     risk: "Medium",
@@ -301,7 +301,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Cape Town, Western Cape",
     region: "Western Cape",
     employees: 860,
-    package: "Corporate Wellness Package",
+    package: "Corporate Wellness",
     contractStart: "2024-02-15",
     contractEnd: "2025-02-14",
     risk: "Low",
@@ -320,7 +320,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Pretoria, Gauteng",
     region: "Gauteng",
     employees: 320,
-    package: "Starter Wellness Package",
+    package: "Starter Wellness",
     contractStart: "2024-08-01",
     contractEnd: "2025-07-31",
     risk: "Low",
@@ -339,7 +339,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Gaborone, Botswana",
     region: "South East District",
     employees: 780,
-    package: "Enterprise Wellness Intelligence Package",
+    package: "Enterprise Wellness Intelligence",
     contractStart: "2023-01-01",
     contractEnd: "2024-12-31",
     risk: "High",
@@ -358,7 +358,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Durban, KwaZulu-Natal",
     region: "KwaZulu-Natal",
     employees: 540,
-    package: "Custom Package",
+    package: "Custom",
     contractStart: "2023-07-01",
     contractEnd: "2024-06-30",
     risk: "Critical",
@@ -378,7 +378,7 @@ const mockOrganizations: Organization[] = [
     primaryLocation: "Bloemfontein, Free State",
     region: "Free State",
     employees: 210,
-    package: "Starter Wellness Package",
+    package: "Starter Wellness",
     contractStart: "2024-11-01",
     contractEnd: "2025-10-31",
     risk: "Medium",
@@ -778,27 +778,21 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
           <div className="flex min-w-0 items-center gap-4">
             <LogoMark organization={organization} size="xl" />
             <div className="min-w-0">
-              <h1 className="text-[14px] font-semibold leading-5 text-black">{organization.name}</h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-[14px] font-semibold leading-5 text-black">{organization.name}</h1>
+                <StatusBadge status={organization.status} />
+              </div>
               <div className="mt-3 grid gap-x-6 gap-y-2 text-[12px] text-black md:grid-cols-2 xl:grid-cols-3">
                 <HeaderMeta icon={Building2} label="Industry:" value={organization.industry} />
-                <span className="inline-flex items-center gap-2">
-                  <StatusBadge status={organization.status} />
-                </span>
-                <HeaderMeta icon={ClipboardCheck} label="Package:" value={organization.package} />
                 <HeaderMeta icon={Location} label="Location:" value={organization.primaryLocation} />
+                <HeaderMeta icon={ClipboardCheck} label="Package:" value={organization.package} />
+                <HeaderMeta icon={UsersRound} label="Employees:" value={organization.employees.toLocaleString()} />
+                <HeaderMeta icon={FileText} label="Reports:" value={String(organization.reportsPublished)} />
                 <HeaderMeta icon={User} label="Member Since:" value={formatShortDate(organization.contractStart)} />
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <AdminButton
-              onClick={() => setInviteOpen(true)}
-              icon={Mail}
-              size="xs"
-              variant="secondary"
-            >
-              Invite Client User
-            </AdminButton>
+          <div className="flex flex-wrap items-center gap-3 xl:flex-nowrap">
             {isEditing ? (
               <>
                 <AdminButton
@@ -811,7 +805,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
                 <AdminButton
                   onClick={() => {
                     setIsEditing(false);
-                    showToast("Changes saved locally.");
+                    showToast("Organization changes saved locally.");
                   }}
                   size="xs"
                   variant="primary"
@@ -826,7 +820,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
                 size="xs"
                 variant="primary"
               >
-                Edit Organization
+                Edit
               </AdminButton>
             )}
           </div>
@@ -856,7 +850,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
           {activeTab === "Overview" ? (
             <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="p-5">
-                <OrganizationOverviewForm organization={organization} />
+                <OrganizationOverviewForm organization={organization} editing={isEditing} onUpdate={updateOrganization} onToast={showToast} />
               </div>
               <div className="border-t border-card-border p-5 xl:border-l xl:border-t-0">
                 <WellnessRiskGauge risk={organization.risk} />
@@ -864,7 +858,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
             </div>
           ) : (
             <div className="p-5">
-            {activeTab === "Contacts" ? <ContactsTab organization={organization} /> : null}
+            {activeTab === "Contacts" ? <ContactsTab organization={organization} onUpdate={updateOrganization} onToast={showToast} /> : null}
             {activeTab === "Branches & Departments" ? (
               <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
             ) : null}
@@ -1081,7 +1075,21 @@ const detailTabs = [
   { label: "Client Portal Access", icon: Globe2 },
 ];
 
-function OrganizationOverviewForm({ organization }: { organization: Organization }) {
+function OrganizationOverviewForm({
+  organization,
+  editing,
+  onUpdate,
+  onToast,
+}: {
+  organization: Organization;
+  editing: boolean;
+  onUpdate: (organization: Organization) => void;
+  onToast: (message: string) => void;
+}) {
+  function update(field: keyof Organization, value: string | number | undefined) {
+    onUpdate({ ...organization, [field]: value });
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
@@ -1090,20 +1098,20 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
       </div>
 
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
-        <ReadonlyField label="Organization Name" required value={organization.name} />
+        <ReadonlyField label="Organization Name" required value={organization.name} editing={editing} onChange={(value) => update("name", value)} />
         <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
-        <ReadonlyField label="Industry" required value={organization.industry} select />
-        <ReadonlyField label="Country" required value={organization.country} select />
-        <ReadonlyField label="Primary Location" required value={organization.primaryLocation} select />
-        <ReadonlyField label="Region" value={organization.region} select />
-        <ReadonlyField label="Employee Count" required value={organization.employees.toLocaleString()} />
+        <ReadonlyField label="Industry" required value={organization.industry} editing={editing} onChange={(value) => update("industry", value)} />
+        <ReadonlyField label="Country" required value={organization.country} editing={editing} onChange={(value) => update("country", value)} />
+        <ReadonlyField label="Primary Location" required value={organization.primaryLocation} editing={editing} onChange={(value) => update("primaryLocation", value)} />
+        <ReadonlyField label="Region" value={organization.region} editing={editing} onChange={(value) => update("region", value)} />
+        <ReadonlyField label="Employee Count" required value={organization.employees.toLocaleString()} editing={editing} onChange={(value) => update("employees", Number(value.replace(/,/g, "")) || 0)} />
         <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
         <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
-        <ReadonlyField label="Package" required value={organization.package} select />
-        <ReadonlyField label="Status" required value={organization.status} select />
-        <ReadonlyField label="Wellness Risk" value={organization.risk} muted />
-        <ReadonlyField label="Contract Start Date" value={formatShortDate(organization.contractStart)} icon={CalendarDays} />
-        <ReadonlyField label="Contract End Date" value={formatShortDate(organization.contractEnd)} icon={CalendarDays} />
+        <ReadonlyField label="Package" required value={organization.package} select editing={editing} options={packageOptions} onChange={(value) => update("package", value as PackageName)} />
+        <ReadonlyField label="Status" required value={organization.status} select editing={editing} options={statusOptions} onChange={(value) => update("status", value as OrganizationStatus)} />
+        <ReadonlyField label="Wellness Risk" value={organization.risk} muted={!editing} select editing={editing} options={riskOptions} onChange={(value) => update("risk", value as WellnessRisk)} />
+        <ReadonlyField label="Contract Start Date" value={organization.contractStart} editing={editing} onChange={(value) => update("contractStart", value)} icon={CalendarDays} />
+        <ReadonlyField label="Contract End Date" value={organization.contractEnd} editing={editing} onChange={(value) => update("contractEnd", value)} icon={CalendarDays} />
         <ReadonlyField label="Last Activation" value={organization.lastActivation} icon={CalendarDays} />
         <ReadonlyField label="Next Activation" value={organization.nextActivation} icon={CalendarDays} />
         <ReadonlyField label="Reports Published" value={String(organization.reportsPublished)} />
@@ -1112,21 +1120,12 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
 
       <div className="space-y-2">
         <p className="text-[12px] font-medium text-black">Organization Logo</p>
-        <div className="flex flex-wrap items-center gap-3">
-          <LogoMark organization={organization} />
-          <div className="flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65">
-            <Download className="h-[18px] w-[18px] rotate-180 text-black/55" aria-hidden="true" />
-            Click to upload or drag and drop
-          </div>
-          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white">
-            <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
-            Replace
-          </button>
-          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white">
-            <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
-            Remove
-          </button>
-        </div>
+        <DetailLogoUpload
+          organization={organization}
+          disabled={!editing}
+          onToast={onToast}
+          onChange={(logo) => update("logo", logo)}
+        />
         <p className="text-[12px] text-black/55">Recommended size: 512 x 512px. Square images work best.</p>
       </div>
     </div>
@@ -1140,6 +1139,9 @@ function ReadonlyField({
   select,
   muted,
   icon: Icon,
+  editing = false,
+  options,
+  onChange,
 }: {
   label: string;
   value: string;
@@ -1147,38 +1149,219 @@ function ReadonlyField({
   select?: boolean;
   muted?: boolean;
   icon?: typeof Building2;
+  editing?: boolean;
+  options?: readonly string[];
+  onChange?: (value: string) => void;
 }) {
+  const editable = editing && onChange;
+
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-black/70">
         {label} {required ? <span className="text-pulse-red">*</span> : null}
       </span>
-      <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-card-border px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
-        {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
-        <span className="min-w-0 flex-1 truncate">{value}</span>
-        {select ? <ArrowDown className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
-      </span>
+      {editable && select ? (
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-9 w-full rounded-lg border border-card-border bg-white px-3 text-[12px] text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+        >
+          {(options ?? [value]).map((option) => <option key={option}>{option}</option>)}
+        </select>
+      ) : editable ? (
+        <span className="flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-3 focus-within:border-primary/45 focus-within:ring-4 focus-within:ring-primary/10">
+          {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[12px] text-black outline-none focus:shadow-none focus:ring-0"
+          />
+        </span>
+      ) : (
+        <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-card-border px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
+          {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+          <span className="min-w-0 flex-1 truncate">{select ? value : label.includes("Date") && value.includes("-") ? formatShortDate(value) : value}</span>
+          {select ? <ArrowDown className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+        </span>
+      )}
     </label>
   );
 }
 
-function ContactsTab({ organization }: { organization: Organization }) {
+function ContactsTab({
+  organization,
+  onUpdate,
+  onToast,
+}: {
+  organization: Organization;
+  onUpdate: (organization: Organization) => void;
+  onToast: (message: string) => void;
+}) {
+  const [editingContact, setEditingContact] = useState<OrganizationContact | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  function saveContact(contact: OrganizationContact) {
+    const exists = organization.contacts.some((item) => item.id === contact.id);
+    const nextContacts = exists
+      ? organization.contacts.map((item) => (item.id === contact.id ? contact : item))
+      : [...organization.contacts, contact];
+
+    onUpdate({
+      ...organization,
+      contacts: contact.primary
+        ? nextContacts.map((item) => ({ ...item, primary: item.id === contact.id }))
+        : nextContacts,
+    });
+    setEditingContact(null);
+    setCreating(false);
+    onToast(exists ? "Contact updated locally." : "Contact added locally.");
+  }
+
+  function deleteContact(contactId: string) {
+    onUpdate({
+      ...organization,
+      contacts: organization.contacts.filter((contact) => contact.id !== contactId),
+    });
+    onToast("Contact removed locally.");
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-        <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span>
-      </div>
-      {organization.contacts.map((contact) => (
-        <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-          <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>
-          <span>{contact.roleLabel}</span>
-          <span className="truncate">{contact.email}</span>
-          <span>{contact.method}</span>
-          <span>{contact.primary ? "Yes" : "No"}</span>
-          <span className="col-span-5 text-black/60">{contact.notes}</span>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[14px] font-semibold text-black">Contacts</h2>
+          <p className="mt-1 text-[12px] text-black/60">Manage client contacts for coordination, reporting, and portal access.</p>
         </div>
-      ))}
+        <button
+          type="button"
+          onClick={() => setCreating(true)}
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black"
+        >
+          <AddCircle className="h-[18px] w-[18px]" aria-hidden="true" />
+          Add Contact
+        </button>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        {organization.contacts.map((contact) => (
+          <div key={contact.id} className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <User className="h-[18px] w-[18px] text-black" aria-hidden="true" />
+                  <h3 className="truncate text-[14px] font-semibold text-black">{contact.name}</h3>
+                  {contact.primary ? <AdminBadge tone="success">Primary</AdminBadge> : null}
+                </div>
+                <p className="mt-1 text-[12px] text-black/60">{contact.roleLabel}</p>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingContact(contact)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-primary transition hover:bg-black hover:text-white"
+                  aria-label={`Edit ${contact.name}`}
+                >
+                  <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteContact(contact.id)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-pulse-red transition hover:bg-black hover:text-white"
+                  aria-label={`Remove ${contact.name}`}
+                >
+                  <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 text-[12px] text-black">
+              <span className="flex items-center gap-2 truncate"><Mail className="h-[18px] w-[18px] text-black/55" aria-hidden="true" />{contact.email}</span>
+              <span className="flex items-center gap-2"><Activity className="h-[18px] w-[18px] text-black/55" aria-hidden="true" />{contact.phone || "No phone captured"}</span>
+              <span className="flex items-center gap-2"><Globe2 className="h-[18px] w-[18px] text-black/55" aria-hidden="true" />Preferred: {contact.method}</span>
+            </div>
+            {contact.notes ? <p className="mt-3 rounded-lg bg-[#f8fafc] px-3 py-2 text-[12px] leading-5 text-black/65">{contact.notes}</p> : null}
+          </div>
+        ))}
+      </div>
+
+      {creating || editingContact ? (
+        <ContactModal
+          contact={editingContact}
+          onClose={() => {
+            setCreating(false);
+            setEditingContact(null);
+          }}
+          onSubmit={saveContact}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function ContactModal({
+  contact,
+  onClose,
+  onSubmit,
+}: {
+  contact: OrganizationContact | null;
+  onClose: () => void;
+  onSubmit: (contact: OrganizationContact) => void;
+}) {
+  const generatedId = useId();
+  const [form, setForm] = useState<OrganizationContact>(
+    contact ?? {
+      id: `contact-${generatedId.replace(/:/g, "")}`,
+      name: "",
+      roleLabel: "Wellness Coordinator",
+      email: "",
+      phone: "",
+      method: "Email",
+      primary: false,
+      notes: "",
+    },
+  );
+  const canSubmit = form.name.trim() && form.email.trim();
+
+  return (
+    <Modal title={contact ? "Edit Contact" : "Add Contact"} onClose={onClose}>
+      <form
+        className="grid gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (canSubmit) onSubmit(form);
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <TextInput label="Full name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
+          <TextInput label="Role label" value={form.roleLabel} onChange={(roleLabel) => setForm((current) => ({ ...current, roleLabel }))} />
+          <TextInput label="Email" value={form.email} onChange={(email) => setForm((current) => ({ ...current, email }))} required />
+          <TextInput label="Phone" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} />
+          <SelectInput label="Preferred communication method" value={form.method} options={["Email", "Phone", "WhatsApp", "Portal"]} onChange={(method) => setForm((current) => ({ ...current, method: method as ContactMethod }))} />
+          <label className="flex items-center gap-2 self-end rounded-2xl border border-card-border px-3 py-2 text-[12px] font-semibold text-black">
+            <input
+              type="checkbox"
+              checked={form.primary}
+              onChange={(event) => setForm((current) => ({ ...current, primary: event.target.checked }))}
+              className="h-4 w-4 rounded border-card-border text-primary focus:ring-primary"
+            />
+            Primary contact
+          </label>
+        </div>
+        <label className="grid gap-1 text-[12px] font-semibold text-black">
+          Notes
+          <textarea
+            value={form.notes}
+            onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+            className="min-h-20 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10"
+          />
+        </label>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black transition hover:bg-black hover:text-white">Cancel</button>
+          <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">
+            {contact ? "Save contact" : "Add contact"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -1658,21 +1841,64 @@ function ContractTab({ organization }: { organization: Organization }) {
   const remaining = daysUntil(organization.contractEnd);
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[14px] font-semibold text-black">Contract Details</h2>
+          <p className="mt-1 text-[12px] text-black/60">Read-only contract fields for the selected client organization.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => downloadContractPlaceholder(organization)}
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black"
+        >
+          <Download className="h-[18px] w-[18px]" aria-hidden="true" />
+          Download Contract
+        </button>
+      </div>
       {remaining <= 60 ? (
         <StateBanner tone="warning" title="Contract renewal warning" detail="This contract is expiring within 60 days. Confirm renewal owner and reminder cadence." />
       ) : null}
       <div className="grid gap-3 md:grid-cols-2">
-        <DetailTile label="Package" value={organization.package} />
-        <DetailTile label="Contract start date" value={organization.contractStart} />
-        <DetailTile label="Contract end date" value={organization.contractEnd} />
-        <DetailTile label="Contract duration" value={contractDuration(organization.contractStart, organization.contractEnd)} />
-        <DetailTile label="Contract status" value={remaining < 0 ? "Expired" : "Active"} />
-        <DetailTile label="Days remaining" value={remaining < 0 ? "Expired" : `${remaining} days`} />
-        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Required now" : "Scheduled 60 days before expiry"} />
-        <DetailTile label="Custom package notes" value={organization.customPackageNotes ?? "None"} />
+        <ContractField label="Package" value={organization.package} />
+        <ContractField label="Contract start date" value={formatShortDate(organization.contractStart)} />
+        <ContractField label="Contract end date" value={formatShortDate(organization.contractEnd)} />
+        <ContractField label="Contract duration" value={contractDuration(organization.contractStart, organization.contractEnd)} />
+        <ContractField label="Contract status" value={remaining < 0 ? "Expired" : "Active"} />
+        <ContractField label="Days remaining" value={remaining < 0 ? "Expired" : `${remaining} days`} />
+        <ContractField label="Renewal reminder" value={remaining <= 60 ? "Required now" : "Scheduled 60 days before expiry"} />
+        <ContractField label="Custom notes" value={organization.customPackageNotes ?? "None"} />
       </div>
     </div>
   );
+}
+
+function ContractField({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label}</span>
+      <span className="flex min-h-9 items-center rounded-lg border border-card-border bg-[#f8fafc] px-3 py-2 text-[12px] font-semibold text-black">
+        {value}
+      </span>
+    </label>
+  );
+}
+
+function downloadContractPlaceholder(organization: Organization) {
+  const content = [
+    "Pulse80 Contract Placeholder",
+    `Organization: ${organization.name}`,
+    `Package: ${organization.package}`,
+    `Contract start: ${formatShortDate(organization.contractStart)}`,
+    `Contract end: ${formatShortDate(organization.contractEnd)}`,
+    "This frontend-only file is generated from mock UI data.",
+  ].join("\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${slug(organization.name)}-contract-placeholder.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function ActivationsTab({ organization }: { organization: Organization }) {
@@ -1757,15 +1983,6 @@ function ClientPortalTab({
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function DetailTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-card-border bg-white px-4 py-3">
-      <p className="text-[12px] leading-4 text-black/55">{label}</p>
-      <p className="mt-1 text-[12px] font-semibold leading-4 text-black">{value}</p>
     </div>
   );
 }
@@ -1916,24 +2133,100 @@ function LogoUpload({ value, onChange }: { value?: string; onChange: (value?: st
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-card-border bg-white bg-cover bg-center text-[12px] font-semibold text-black" style={value ? { backgroundImage: `url(${value})` } : undefined}>
         {value ? null : "Logo"}
       </span>
-      <label className="cursor-pointer text-[12px] font-semibold text-primary">
+      <label className="cursor-pointer text-[12px] font-semibold text-primary transition hover:text-black">
         Upload or replace logo
         <input
           type="file"
-          accept="image/*"
+          accept=".jpeg,.jpg,.png,.webp,image/jpeg,image/png,image/webp"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) return;
+            if (!isAllowedLogoFile(file)) return;
             const reader = new FileReader();
             reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : undefined);
             reader.readAsDataURL(file);
           }}
         />
       </label>
-      {value ? <button type="button" onClick={() => onChange(undefined)} className="text-[12px] font-semibold text-black/60">Remove</button> : null}
+      {value ? <button type="button" onClick={() => onChange(undefined)} className="rounded-lg px-2 py-1 text-[12px] font-semibold text-black/60 transition hover:bg-black hover:text-white">Remove</button> : null}
     </div>
   );
+}
+
+function DetailLogoUpload({
+  organization,
+  disabled,
+  onChange,
+  onToast,
+}: {
+  organization: Organization;
+  disabled: boolean;
+  onChange: (value?: string) => void;
+  onToast: (message: string) => void;
+}) {
+  function handleFile(file?: File) {
+    if (!file) return;
+    if (!isAllowedLogoFile(file)) {
+      onToast("Logo upload only supports JPEG, JPG, PNG, or WEBP files.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : undefined);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <LogoMark organization={organization} />
+      <label
+        className={cn(
+          "flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65 transition",
+          disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer hover:border-primary/40 hover:text-black",
+        )}
+      >
+        <Download className="h-[18px] w-[18px] rotate-180 text-black/55" aria-hidden="true" />
+        Click to upload or drag and drop
+        <input
+          type="file"
+          disabled={disabled}
+          accept=".jpeg,.jpg,.png,.webp,image/jpeg,image/png,image/webp"
+          className="sr-only"
+          onChange={(event) => handleFile(event.target.files?.[0])}
+        />
+      </label>
+      <label
+        className={cn(
+          "inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white",
+          disabled ? "pointer-events-none opacity-45" : "cursor-pointer",
+        )}
+      >
+        <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
+        Replace
+        <input
+          type="file"
+          disabled={disabled}
+          accept=".jpeg,.jpg,.png,.webp,image/jpeg,image/png,image/webp"
+          className="sr-only"
+          onChange={(event) => handleFile(event.target.files?.[0])}
+        />
+      </label>
+      <button
+        type="button"
+        disabled={disabled || !organization.logo}
+        onClick={() => onChange(undefined)}
+        className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
+        Remove
+      </button>
+    </div>
+  );
+}
+
+function isAllowedLogoFile(file: File) {
+  return ["image/jpeg", "image/png", "image/webp"].includes(file.type);
 }
 
 function ContactFields({
