@@ -102,7 +102,7 @@ export default function LoginPage() {
                         feature.color
                       )}`}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-[18px] w-[18px]" />
                     </div>
 
                     <div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
               type="button"
               className="flex items-center gap-2 rounded-full px-3 py-2 hover:bg-[#F6FAFD]"
             >
-              <Globe2 className="h-4 w-4" />
+              <Globe2 className="h-[18px] w-[18px]" />
               English
               <span className="text-xs">⌄</span>
             </button>
@@ -137,7 +137,7 @@ export default function LoginPage() {
               aria-label="Toggle theme"
               className="rounded-full p-2 hover:bg-[#F6FAFD]"
             >
-              <Sun className="h-5 w-5" />
+              <Sun className="h-[18px] w-[18px]" />
             </button>
           </div>
 
@@ -172,7 +172,7 @@ export default function LoginPage() {
                 </label>
 
                 <div className="pulse-login-field relative mt-2 h-11 overflow-hidden rounded-2xl border border-[#DDE8F3] bg-white shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10 sm:h-[52px]">
-                  <Mail className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[#637896]" />
+                  <Mail className="pointer-events-none absolute left-5 top-1/2 z-10 h-[18px] w-[18px] -translate-y-1/2 text-[#637896]" />
                   <input
                     id="email"
                     type="email"
@@ -192,7 +192,7 @@ export default function LoginPage() {
                 </label>
 
                 <div className="pulse-login-field relative mt-2 h-11 overflow-hidden rounded-2xl border border-[#DDE8F3] bg-white shadow-sm transition focus-within:border-[#4AAAEA] focus-within:ring-4 focus-within:ring-[#4AAAEA]/10 sm:h-[52px]">
-                  <Lock className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[#637896]" />
+                  <Lock className="pointer-events-none absolute left-5 top-1/2 z-10 h-[18px] w-[18px] -translate-y-1/2 text-[#637896]" />
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -207,7 +207,7 @@ export default function LoginPage() {
                     className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-2 text-[#637896] hover:bg-[#F6FAFD]"
                     aria-label="Toggle password visibility"
                   >
-                    <Eye className="h-5 w-5" />
+                    <Eye className="h-[18px] w-[18px]" />
                   </button>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function LoginPage() {
                 className="group flex h-11 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#1F73FF] to-[#0F63F4] text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow sm:h-[52px]"
               >
                 Sign in
-                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                <ArrowRight className="h-[18px] w-[18px] transition group-hover:translate-x-1" />
               </button>
             </form>
 
@@ -246,7 +246,7 @@ export default function LoginPage() {
       </section>
 
       <footer className="hidden shrink-0 items-center justify-center gap-4 py-2 text-xs text-[#526887] lg:flex">
-        <ShieldCheck className="h-4 w-4" />
+        <ShieldCheck className="h-[18px] w-[18px]" />
         <span>Your data is secure and private.</span>
         <span className="h-4 w-px bg-[#DDE8F3]" />
         <button

@@ -54,7 +54,7 @@ export function DrillDownCard({ item }: DrillDownCardProps) {
                 onClick={() => setOpen(false)}
                 className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
               >
-                <CloseSquare className="h-4 w-4" aria-hidden="true" />
+                <CloseSquare className="h-[18px] w-[18px]" aria-hidden="true" />
                 Close
               </button>
             </div>

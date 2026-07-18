@@ -58,7 +58,7 @@ function withDefaultVariant(Icon: IconsaxIcon): IconsaxIcon {
     return (
       <Icon
         color={color ?? "currentColor"}
-        size={size ?? 24}
+        size={size ?? 18}
         variant="Linear"
         {...props}
       />

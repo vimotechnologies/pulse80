@@ -293,11 +293,11 @@ export function DataListPage<RecordType extends DataRecord>({
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <ActionButton variant="secondary" loading={loading} onClick={refreshList}>
-              <Refresh className="mr-2 h-5 w-5" aria-hidden="true" />
+              <Refresh className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
               Refresh
             </ActionButton>
             <ActionButton onClick={() => setModalMode("create")}>
-              <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />
+              <AddCircle className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
               {config.primaryAction}
             </ActionButton>
           </div>
@@ -330,11 +330,11 @@ export function DataListPage<RecordType extends DataRecord>({
             </div>
             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
               <ActionButton variant="secondary" onClick={() => setSelected(config.featured ?? null)}>
-                <Eye className="mr-2 h-5 w-5" aria-hidden="true" />
+                <Eye className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
                 Preview
               </ActionButton>
               <ActionButton onClick={() => showToast("Download prepared as a placeholder.")}>
-                <Download className="mr-2 h-5 w-5" aria-hidden="true" />
+                <Download className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
                 Download
               </ActionButton>
             </div>
@@ -482,7 +482,7 @@ export function ListSummaryMetric({ metric }: { metric: DataMetric }) {
           <p className="mt-1 text-xs leading-5 text-subtle">{metric.detail}</p>
         </div>
         <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg border", metricToneStyles[metric.tone])}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
       </div>
     </DashboardWidget>
@@ -527,7 +527,7 @@ export function DataToolbar<RecordType extends DataRecord>({
         <div className="flex flex-wrap items-center gap-2">
           {tabs ? <FilterTabs tabs={tabs} activeTab={activeTab} onChange={onTabChange} /> : null}
           <label className="flex h-10 items-center gap-2 rounded-lg border border-card-border bg-surface px-3 text-xs font-semibold text-muted">
-            <Sort className="h-4 w-4" aria-hidden="true" />
+            <Sort className="h-[18px] w-[18px]" aria-hidden="true" />
             <select
               value={sortKey}
               onChange={(event) => onSortChange(event.target.value)}
@@ -542,7 +542,7 @@ export function DataToolbar<RecordType extends DataRecord>({
             </select>
           </label>
           <ActionButton variant="secondary" className="h-10 px-3" onClick={onExport}>
-            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+            <Download className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
             Export
           </ActionButton>
         </div>
@@ -572,7 +572,7 @@ export function SearchInput({
 }) {
   return (
     <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" aria-hidden="true" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" aria-hidden="true" />
       <input
         type="search"
         value={value}
@@ -596,7 +596,7 @@ export function FilterSelect({
   return (
     <label className="block">
       <span className="flex items-center gap-2 text-xs font-semibold text-muted">
-        <Filter className="h-4 w-4" aria-hidden="true" />
+        <Filter className="h-[18px] w-[18px]" aria-hidden="true" />
         {filter.label}
       </span>
       <select
@@ -749,7 +749,7 @@ export function DataTableHeader<RecordType extends DataRecord>({
               className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted transition hover:text-navy"
             >
               {column.label}
-              <Sort className={cn("h-4 w-4", sortKey === column.key ? "text-primary" : "text-muted")} aria-hidden="true" />
+              <Sort className={cn("h-[18px] w-[18px]", sortKey === column.key ? "text-primary" : "text-muted")} aria-hidden="true" />
               {sortKey === column.key ? <span className="sr-only">sorted {sortDirection}</span> : null}
             </button>
           </th>
@@ -842,7 +842,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:border-primary/30 hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         aria-label={`Open actions for ${record.title}`}
       >
-        <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+        <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
       </button>
       {open ? (
         <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-card-border bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
@@ -894,7 +894,7 @@ function ActionItem({
         danger ? "text-pulse-red" : "text-navy",
       )}
     >
-      <Icon className="h-4 w-4" aria-hidden="true" />
+      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
       {label}
     </button>
   );
@@ -937,7 +937,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-card-border text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
               aria-label="Close details"
             >
-              <CloseCircle className="h-5 w-5" aria-hidden="true" />
+              <CloseCircle className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -1000,7 +1000,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
 
         <div className="flex flex-wrap gap-2 border-t border-card-border p-5">
           <ActionButton onClick={onEdit}>
-            <Edit className="mr-2 h-5 w-5" aria-hidden="true" />
+            <Edit className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
             Edit details
           </ActionButton>
           <ActionButton variant="secondary" onClick={onAction}>
@@ -1097,7 +1097,7 @@ export function EmptyState({
   return (
     <DashboardWidget className="p-8 text-center">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Eye className="h-6 w-6" aria-hidden="true" />
+        <Eye className="h-[18px] w-[18px]" aria-hidden="true" />
       </div>
       <h2 className="mt-4 text-lg font-semibold text-navy">{title}</h2>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-subtle">{description}</p>
@@ -1129,7 +1129,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
     <div className="rounded-lg border border-pulse-red/20 bg-pulse-red/10 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex items-center gap-2 text-sm font-semibold text-pulse-red">
-          <AlertCircle className="h-5 w-5" aria-hidden="true" />
+          <AlertCircle className="h-[18px] w-[18px]" aria-hidden="true" />
           {message}
         </p>
         <ActionButton variant="secondary" className="h-9 px-3" onClick={onRetry}>

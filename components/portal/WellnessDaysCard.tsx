@@ -302,7 +302,7 @@ export function ThisWeeksWellnessDaysCard() {
       <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
         <div className="flex flex-col gap-4 border-b border-card-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <CalendarCheck className="mt-1 h-5 w-5 shrink-0 text-black" aria-hidden="true" />
+            <CalendarCheck className="mt-1 h-[18px] w-[18px] shrink-0 text-black" aria-hidden="true" />
             <div>
               <h2 className="text-[14px] font-semibold leading-5 text-black">This Week&apos;s Wellness Days</h2>
               <p className="mt-1 text-[12px] leading-4 text-black/55">
@@ -318,7 +318,7 @@ export function ThisWeeksWellnessDaysCard() {
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Previous week"
             >
-              <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
+              <ArrowRight className="h-[18px] w-[18px] rotate-180" aria-hidden="true" />
             </button>
             <span className="min-w-24 text-center text-[12px] leading-4 text-black">{currentWeek.label}</span>
             <button
@@ -328,7 +328,7 @@ export function ThisWeeksWellnessDaysCard() {
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Next week"
             >
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -405,7 +405,7 @@ function WellnessCalendarView({
     <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
       <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
         <div className="flex gap-3">
-          <CalendarDays className="mt-1 h-5 w-5 text-black" aria-hidden="true" />
+          <CalendarDays className="mt-1 h-[18px] w-[18px] text-black" aria-hidden="true" />
           <div>
             <h2 className="text-[14px] font-semibold leading-5 text-black">Calendar</h2>
             <p className="mt-1 text-[12px] leading-4 text-black/55">Wellness days by month.</p>
@@ -418,7 +418,7 @@ function WellnessCalendarView({
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white"
             aria-label="Previous month"
           >
-            <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
+            <ArrowRight className="h-[18px] w-[18px] rotate-180" aria-hidden="true" />
           </button>
           <span className="min-w-28 text-center text-[12px] leading-4 text-black">{monthLabel}</span>
           <button
@@ -427,7 +427,7 @@ function WellnessCalendarView({
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white"
             aria-label="Next month"
           >
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -515,7 +515,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
             href="/admin/activations"
             className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
           >
-            <Edit className="h-4 w-4" aria-hidden="true" />
+            <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
             Edit
           </Link>
           <button
@@ -523,7 +523,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
             onClick={onClose}
             className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
           >
-            <CloseSquare className="h-4 w-4" aria-hidden="true" />
+            <CloseSquare className="h-[18px] w-[18px]" aria-hidden="true" />
             Close
           </button>
         </div>

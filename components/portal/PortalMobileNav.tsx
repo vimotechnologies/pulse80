@@ -135,7 +135,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
                 )}
               >
                 <Icon
-                  className={cn("h-5 w-5", active ? "text-primary" : "text-muted")}
+                  className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-muted")}
                   aria-hidden="true"
                 />
                 {item.label}
@@ -163,7 +163,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
                 aria-expanded={expanded}
                 aria-label="Open portal menu"
               >
-                <Icon className="h-5 w-5" aria-hidden="true" />
+                <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                 {item.label}
               </button>
             );
@@ -179,7 +179,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
                 onClick={() => setExpanded(false)}
               >
                 <span className="absolute inset-1 rounded-[22px] border border-white/25" />
-                <Icon className="relative h-8 w-8" aria-hidden="true" />
+                <Icon className="relative h-[18px] w-[18px]" aria-hidden="true" />
               </Link>
             );
           }
@@ -194,7 +194,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
                 active && "bg-primary/10 text-primary",
               )}
             >
-              <Icon className="h-5 w-5" aria-hidden="true" />
+              <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           );

@@ -24,7 +24,7 @@ export function MetricCard({ metric }: MetricCardProps) {
           </p>
         </div>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <metric.icon className="h-5 w-5" aria-hidden="true" />
+          <metric.icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
       </div>
       <div
@@ -34,7 +34,7 @@ export function MetricCard({ metric }: MetricCardProps) {
           metric.trend === "neutral" && "text-muted",
         )}
       >
-        <TrendIcon className="h-4 w-4" aria-hidden="true" />
+        <TrendIcon className="h-[18px] w-[18px]" aria-hidden="true" />
         <span>{metric.change}</span>
       </div>
     </article>

@@ -18,7 +18,7 @@ export function FormFieldMessage({
 }: FormFieldMessageProps) {
   return (
     <p className={cn("mt-2 flex items-center gap-2 text-xs", toneStyles[tone])}>
-      {tone !== "neutral" ? <AlertCircle className="h-3.5 w-3.5" /> : null}
+      {tone !== "neutral" ? <AlertCircle className="h-[18px] w-[18px]" /> : null}
       {children}
     </p>
   );

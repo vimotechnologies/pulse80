@@ -70,7 +70,7 @@ export function AppSidebar({ collapsed = false }: AppSidebarProps) {
             title={collapsed ? item.label : undefined}
           >
             <item.icon
-              className={cn("h-5 w-5", item.active ? "text-primary" : "text-muted")}
+              className={cn("h-[18px] w-[18px]", item.active ? "text-primary" : "text-muted")}
               aria-hidden="true"
             />
             <span className={cn(collapsed && "sr-only")}>{item.label}</span>
@@ -81,7 +81,7 @@ export function AppSidebar({ collapsed = false }: AppSidebarProps) {
         <div className="rounded-lg bg-soft-bg p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface">
-              <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
+              <ShieldCheck className="h-[18px] w-[18px] text-primary" aria-hidden="true" />
             </span>
             <div>
               <p className="text-sm font-semibold text-navy">Operations Portal</p>

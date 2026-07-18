@@ -39,7 +39,7 @@ export function PortalMetricCard({
             toneStyles[tone],
           )}
         >
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
       </div>
       <p className="mt-5 text-sm leading-6 text-subtle">{detail}</p>

@@ -35,7 +35,7 @@ export function PortalTopNav({
         <div className="ml-auto flex items-center gap-3">
           <div className="relative hidden sm:block">
             <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted"
               aria-hidden="true"
             />
             <input
@@ -49,7 +49,7 @@ export function PortalTopNav({
             className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:text-navy"
             aria-label="Notifications"
           >
-            <Bell className="h-5 w-5" aria-hidden="true" />
+            <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
             <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-pulse-red" />
           </button>
           <div className="flex items-center gap-3 rounded-lg border border-card-border bg-surface py-1.5 pl-2 pr-3">

@@ -1,7 +1,6 @@
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import type { Tone } from "@/data/portal-phase-two";
 import { TrendingDown, TrendingUp } from "react-feather";
-import { cn } from "@/lib/utils/cn";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { ProgressWidget } from "@/components/portal/ProgressWidget";
 
@@ -30,6 +29,8 @@ export function MetricWidget({
   trend,
 }: MetricWidgetProps) {
   const TrendIcon = trend?.direction === "down" ? TrendingDown : TrendingUp;
+  const [trendPercentage, ...trendContext] = trend?.value.split(" ") ?? [];
+  const trendContextText = trendContext.join(" ");
 
   return (
     <DashboardWidget
@@ -39,23 +40,24 @@ export function MetricWidget({
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-medium leading-4 text-muted">{label}</p>
-          <p className="mt-2 text-[24px] font-semibold leading-8 tracking-[var(--pulse-tracking-heading)] text-navy">
+          <p className="pulse-metric-value mt-2 tracking-[var(--pulse-tracking-heading)]">
             {value}
           </p>
           <p className="mt-2 text-[12px] leading-5 text-subtle">{detail}</p>
           {trend ? (
             <p
-              className={cn(
-                "mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold leading-4",
-                trend.tone === "success" ? "text-success" : "text-pulse-red",
-              )}
+              className="pulse-metric-trend mt-3"
+              data-trend-direction={trend.direction}
             >
-              <TrendIcon size={14} strokeWidth={2} aria-hidden="true" />
-              {trend.value}
+              <TrendIcon size={18} strokeWidth={2} aria-hidden="true" />
+              <span>{trendPercentage}</span>
+              {trendContextText ? (
+                <span className="pulse-metric-trend-context">{trendContextText}</span>
+              ) : null}
             </p>
           ) : null}
         </div>
-        <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
+        <Icon className="h-[18px] w-[18px] shrink-0 text-black" aria-hidden="true" />
       </div>
       {typeof progress === "number" ? (
         <div className="mt-4">

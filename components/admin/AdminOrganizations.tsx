@@ -31,7 +31,15 @@ import {
   Sort,
   Trash,
   User,
+  UsersRound,
 } from "@/components/icons/IconsaxIcons";
+import {
+  AdminBadge,
+  AdminButton,
+  AdminIconButton,
+  AdminMetricCard,
+  AdminTabButton,
+} from "@/components/admin/ui/PulseAdminUI";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -504,7 +512,7 @@ export function AdminOrganizations() {
               type="button"
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             >
-              <Download className="h-4 w-4" aria-hidden="true" />
+              <Download className="h-[18px] w-[18px]" aria-hidden="true" />
               Export
             </button>
             <button
@@ -512,7 +520,7 @@ export function AdminOrganizations() {
               onClick={() => setAddOpen(true)}
               className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[12px] font-semibold text-white shadow-[0_8px_20px_rgba(0,102,255,0.25)] transition hover:bg-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
             >
-              <AddCircle className="h-4 w-4" aria-hidden="true" />
+              <AddCircle className="h-[18px] w-[18px]" aria-hidden="true" />
               Add Organization
             </button>
           </div>
@@ -528,7 +536,7 @@ export function AdminOrganizations() {
       <section className="rounded-2xl border border-card-border bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
           <label className="relative">
-            <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
+            <Search className="pointer-events-none absolute right-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
             <input
               value={query}
               onChange={(event) => {
@@ -560,9 +568,9 @@ export function AdminOrganizations() {
               ))}
             </select>
             <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-3 text-[#43536b]">
-              <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
-              <Sort className="h-3.5 w-3.5" aria-hidden="true" />
-              <Refresh className="h-3.5 w-3.5" aria-hidden="true" />
+              <ArrowDown className="h-[18px] w-[18px]" aria-hidden="true" />
+              <Sort className="h-[18px] w-[18px]" aria-hidden="true" />
+              <Refresh className="h-[18px] w-[18px]" aria-hidden="true" />
             </span>
           </label>
           <button
@@ -632,10 +640,10 @@ export function AdminOrganizations() {
                 <StatusBadge status={organization.status} />
                 <span className="flex justify-end gap-1">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
-                    <Eye className="h-4 w-4" aria-hidden="true" />
+                    <Eye className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
                   <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
-                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
                 </span>
               </Link>
@@ -664,7 +672,7 @@ export function AdminOrganizations() {
               disabled={page === 1}
               className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
+              <ArrowLeft2 className="h-[18px] w-[18px]" aria-hidden="true" />
               Previous
             </button>
             <button
@@ -674,7 +682,7 @@ export function AdminOrganizations() {
               className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -748,7 +756,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
         <p className="text-[14px] font-semibold">Organization not found</p>
         <p className="mt-2 text-[12px] text-black/60">Return to the organizations list and select an available organization.</p>
         <Link href="/admin/organizations" className="mt-4 inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
-          <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
+          <ArrowLeft2 className="h-[18px] w-[18px]" aria-hidden="true" />
           Back to organizations
         </Link>
       </section>
@@ -783,47 +791,43 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
+            <AdminButton
               onClick={() => setInviteOpen(true)}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
-              style={{ fontSize: 12, lineHeight: "12px" }}
+              icon={Mail}
+              size="xs"
+              variant="secondary"
             >
-              <Mail className="h-3 w-3" aria-hidden="true" />
               Invite Client User
-            </button>
+            </AdminButton>
             {isEditing ? (
               <>
-                <button
-                  type="button"
+                <AdminButton
                   onClick={() => setIsEditing(false)}
-                  className="inline-flex h-7 items-center rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
-                  style={{ fontSize: 12, lineHeight: "12px" }}
+                  size="xs"
+                  variant="secondary"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </AdminButton>
+                <AdminButton
                   onClick={() => {
                     setIsEditing(false);
                     showToast("Changes saved locally.");
                   }}
-                  className="inline-flex h-7 items-center rounded-md bg-primary px-3 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
-                  style={{ fontSize: 12, lineHeight: "12px" }}
+                  size="xs"
+                  variant="primary"
                 >
                   Save Changes
-                </button>
+                </AdminButton>
               </>
             ) : (
-              <button
-                type="button"
+              <AdminButton
                 onClick={() => setIsEditing(true)}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
-                style={{ fontSize: 12, lineHeight: "12px" }}
+                icon={Edit}
+                size="xs"
+                variant="primary"
               >
-                <Edit className="h-3 w-3" aria-hidden="true" />
                 Edit Organization
-              </button>
+              </AdminButton>
             )}
           </div>
         </div>
@@ -834,21 +838,14 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
               {detailTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
-                  <button
+                  <AdminTabButton
                     key={tab.label}
-                    type="button"
                     onClick={() => setActiveTab(tab.label)}
-                    className={cn(
-                      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-t-2xl border-b-2 px-3 text-[14px] font-medium leading-4 transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-                      activeTab === tab.label
-                        ? "border-primary text-primary"
-                        : "border-transparent text-black hover:-translate-y-0.5 hover:rounded-2xl hover:bg-[#f8fafc] hover:text-primary",
-                    )}
-                    style={{ fontSize: 14, lineHeight: "16px" }}
+                    active={activeTab === tab.label}
+                    icon={Icon}
                   >
-                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                     {tab.label}
-                  </button>
+                  </AdminTabButton>
                 );
               })}
         </div>
@@ -924,7 +921,7 @@ function SummaryCard({
     <div className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
       <div className="flex items-center gap-4">
         <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border", toneClass)}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
         <div>
           <p className="text-[12px] font-medium leading-4 text-black">{title}</p>
@@ -951,7 +948,7 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
           </option>
         ))}
       </select>
-      <ArrowDown className="pointer-events-none absolute right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
+      <ArrowDown className="pointer-events-none absolute right-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
     </label>
   );
 }
@@ -959,7 +956,7 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
 function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2 text-[12px] leading-4">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-[#475467]" aria-hidden="true" />
+      <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" />
       <span className="shrink-0 text-black/70">{label}</span>
       <span className="min-w-0 truncate text-black">{value}</span>
     </span>
@@ -985,15 +982,15 @@ function LogoMark({ organization, size = "sm" }: { organization: Organization; s
 }
 
 function StatusBadge({ status }: { status: OrganizationStatus }) {
-  const styles: Record<OrganizationStatus, string> = {
-    Prospect: "border-card-border bg-[#f2f4f7] text-black/70",
-    Onboarding: "border-primary/20 bg-primary/10 text-primary",
-    Active: "border-success/20 bg-success/10 text-success",
-    Paused: "border-warning/25 bg-warning/10 text-warning",
-    "Contract Expired": "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
-    Archived: "border-slate-300 bg-slate-100 text-slate-500",
+  const tone: Record<OrganizationStatus, "neutral" | "info" | "success" | "warning" | "danger"> = {
+    Prospect: "neutral",
+    Onboarding: "info",
+    Active: "success",
+    Paused: "warning",
+    "Contract Expired": "danger",
+    Archived: "neutral",
   };
-  return <span className={cn("inline-flex w-fit rounded-md border px-3 py-1 text-[12px] font-medium leading-4", styles[status])}>{status}</span>;
+  return <AdminBadge tone={tone[status]}>{status}</AdminBadge>;
 }
 
 function RiskBadge({ risk }: { risk: WellnessRisk }) {
@@ -1020,9 +1017,9 @@ function WellnessRiskGauge({ risk }: { risk: WellnessRisk }) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h2 className="text-[14px] font-semibold text-black">Wellness Risk Score</h2>
-          <AlertCircle className="h-3.5 w-3.5 text-[#475467]" aria-hidden="true" />
+          <AlertCircle className="h-[18px] w-[18px] text-[#475467]" aria-hidden="true" />
         </div>
-        <ArrowDown className="h-3.5 w-3.5 rotate-180 text-black" aria-hidden="true" />
+        <ArrowDown className="h-[18px] w-[18px] rotate-180 text-black" aria-hidden="true" />
       </div>
 
       <div className="mt-8 flex flex-col items-center">
@@ -1056,7 +1053,7 @@ function WellnessRiskGauge({ risk }: { risk: WellnessRisk }) {
       </div>
 
       <div className="mt-8 flex gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-        <Refresh className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <Refresh className="mt-0.5 h-[18px] w-[18px] shrink-0 text-primary" aria-hidden="true" />
         <div>
           <p className="text-[12px] font-semibold text-black">Auto-calculated on page load</p>
           <p className="mt-1 text-[12px] text-black/60">Calculating from 0 to {meta.score} over 3 seconds</p>
@@ -1088,7 +1085,7 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <Building2 className="h-4 w-4 text-black" aria-hidden="true" />
+        <Building2 className="h-[18px] w-[18px] text-black" aria-hidden="true" />
         <h2 className="text-[14px] font-semibold text-black">Organization Overview</h2>
       </div>
 
@@ -1118,15 +1115,15 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
         <div className="flex flex-wrap items-center gap-3">
           <LogoMark organization={organization} />
           <div className="flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65">
-            <Download className="h-4 w-4 rotate-180 text-black/55" aria-hidden="true" />
+            <Download className="h-[18px] w-[18px] rotate-180 text-black/55" aria-hidden="true" />
             Click to upload or drag and drop
           </div>
           <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white">
-            <Edit className="h-4 w-4" aria-hidden="true" />
+            <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
             Replace
           </button>
           <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white">
-            <Trash className="h-4 w-4" aria-hidden="true" />
+            <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
             Remove
           </button>
         </div>
@@ -1157,9 +1154,9 @@ function ReadonlyField({
         {label} {required ? <span className="text-pulse-red">*</span> : null}
       </span>
       <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-card-border px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
-        {Icon ? <Icon className="h-4 w-4 shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+        {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
         <span className="min-w-0 flex-1 truncate">{value}</span>
-        {select ? <ArrowDown className="h-3.5 w-3.5 shrink-0 text-[#475467]" aria-hidden="true" /> : null}
+        {select ? <ArrowDown className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
       </span>
     </label>
   );
@@ -1185,105 +1182,475 @@ function ContactsTab({ organization }: { organization: Organization }) {
   );
 }
 
+type BranchStatus = "Active" | "Paused" | "Archived";
+
+type DepartmentOverview = {
+  id: string;
+  name: string;
+  employees: number;
+  wellnessScore: number;
+  risk: WellnessRisk;
+  latestActivation: string;
+  status: BranchStatus;
+};
+
+type BranchOverview = {
+  id: string;
+  name: string;
+  locationLines: string[];
+  primary: boolean;
+  departments: number;
+  employees: number;
+  wellnessScore: number;
+  wellnessLabel: string;
+  risk: WellnessRisk;
+  status: BranchStatus;
+  departmentRows: DepartmentOverview[];
+};
+
+type BranchOverviewForm = {
+  name: string;
+  country: string;
+  province: string;
+  town: string;
+  address: string;
+  employees: string;
+  primary: boolean;
+  status: BranchStatus;
+  risk: WellnessRisk;
+  contactName: string;
+  email: string;
+  phone: string;
+};
+
+type DepartmentOverviewForm = {
+  name: string;
+  branchId: string;
+  lead: string;
+  employees: string;
+  risk: WellnessRisk;
+  wellnessScore: string;
+  status: BranchStatus;
+  notes: string;
+};
+
+const initialBranchOverview: BranchOverview[] = [
+  {
+    id: "head-office-sandton",
+    name: "Head Office – Sandton",
+    locationLines: ["Sandton", "Johannesburg", "Gauteng"],
+    primary: true,
+    departments: 14,
+    employees: 1250,
+    wellnessScore: 82,
+    wellnessLabel: "Good",
+    risk: "Low",
+    status: "Active",
+    departmentRows: [
+      { id: "hr", name: "Human Resources", employees: 45, wellnessScore: 88, risk: "Low", latestActivation: "Wellness Day · 15 May 2024", status: "Active" },
+      { id: "finance", name: "Finance", employees: 78, wellnessScore: 76, risk: "Medium", latestActivation: "Financial Wellness Webinar · 10 Apr 2024", status: "Active" },
+      { id: "it", name: "Information Technology", employees: 120, wellnessScore: 81, risk: "Low", latestActivation: "Ergonomics Workshop · 22 Apr 2024", status: "Active" },
+      { id: "operations", name: "Operations", employees: 340, wellnessScore: 72, risk: "Medium", latestActivation: "Stress Management Session · 05 Apr 2024", status: "Active" },
+      { id: "sales", name: "Sales & Marketing", employees: 190, wellnessScore: 85, risk: "Low", latestActivation: "Nutrition Talk · 18 May 2024", status: "Active" },
+    ],
+  },
+  {
+    id: "gaborone-branch",
+    name: "Gaborone Branch",
+    locationLines: ["Gaborone", "South East District"],
+    primary: false,
+    departments: 10,
+    employees: 780,
+    wellnessScore: 74,
+    wellnessLabel: "Good",
+    risk: "Medium",
+    status: "Active",
+    departmentRows: [],
+  },
+  {
+    id: "cape-town-branch",
+    name: "Cape Town Branch",
+    locationLines: ["Cape Town", "Western Cape"],
+    primary: false,
+    departments: 8,
+    employees: 420,
+    wellnessScore: 71,
+    wellnessLabel: "Good",
+    risk: "Medium",
+    status: "Active",
+    departmentRows: [],
+  },
+];
+
 function BranchesTab({
   organization,
-  onUpdate,
   onToast,
 }: {
   organization: Organization;
   onUpdate: (organization: Organization) => void;
   onToast: (message: string) => void;
 }) {
-  function addBranch() {
-    const branch: Branch = {
+  const [branches, setBranches] = useState<BranchOverview[]>(initialBranchOverview);
+  const [expandedBranchId, setExpandedBranchId] = useState("head-office-sandton");
+  const [addBranchOpen, setAddBranchOpen] = useState(false);
+  const [addDepartmentBranchId, setAddDepartmentBranchId] = useState<string | null>(null);
+  const activeBranches = branches.filter((branch) => branch.status !== "Archived");
+  const organizationName = organization.name;
+  const totalBranches = activeBranches.length;
+  const totalDepartments = activeBranches.reduce((sum, branch) => sum + branch.departments, 0);
+  const totalEmployees = activeBranches.reduce((sum, branch) => sum + branch.employees, 0);
+  const averageWellnessScore = Math.round(
+    activeBranches.reduce((sum, branch) => sum + branch.wellnessScore * branch.employees, 0) / Math.max(totalEmployees, 1),
+  );
+  const expandedBranch = branches.find((branch) => branch.id === addDepartmentBranchId) ?? branches[0];
+
+  function toggleBranch(branchId: string) {
+    setExpandedBranchId((current) => (current === branchId ? "" : branchId));
+  }
+
+  function createBranch(form: BranchOverviewForm) {
+    const branch: BranchOverview = {
       id: `branch-${Date.now()}`,
-      name: "New Branch",
-      country: organization.country,
-      region: organization.region,
-      town: organization.primaryLocation,
-      address: "Address to be confirmed",
-      employees: 0,
-      primary: false,
-      departments: [],
-      status: "Active",
+      name: form.name || "New Branch",
+      locationLines: [form.town || "Town to confirm", form.province || form.country || "Region to confirm"],
+      primary: form.primary,
+      departments: 0,
+      employees: Number(form.employees.replace(/,/g, "")) || 0,
+      wellnessScore: 0,
+      wellnessLabel: "Good",
+      risk: form.risk as WellnessRisk,
+      status: form.status as BranchStatus,
+      departmentRows: [],
     };
-    onUpdate({ ...organization, branches: [...organization.branches, branch] });
+    setBranches((current) => [...current, branch]);
+    setExpandedBranchId(branch.id);
+    setAddBranchOpen(false);
     onToast("Branch added locally.");
   }
 
-  function addDepartment(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId
+  function createDepartment(form: DepartmentOverviewForm) {
+    const targetBranchId = form.branchId || addDepartmentBranchId;
+    if (!targetBranchId) return;
+    setBranches((current) =>
+      current.map((branch) =>
+        branch.id === targetBranchId
           ? {
               ...branch,
-              departments: [
-                ...branch.departments,
+              departments: branch.departments + 1,
+              departmentRows: [
+                ...branch.departmentRows,
                 {
-                  id: `dept-${Date.now()}`,
-                  name: "New Department",
-                  branchId,
-                  employees: 0,
-                  wellnessScore: 0,
-                  risk: "Low",
-                  latestActivation: "Not scheduled",
-                  status: "Active",
+                  id: `department-${Date.now()}`,
+                  name: form.name || "New Department",
+                  employees: Number(form.employees.replace(/,/g, "")) || 0,
+                  wellnessScore: Number(form.wellnessScore) || 0,
+                  risk: form.risk as WellnessRisk,
+                  latestActivation: form.notes || "Not scheduled",
+                  status: form.status as BranchStatus,
                 },
               ],
             }
           : branch,
       ),
-    });
+    );
+    setAddDepartmentBranchId(null);
     onToast("Department added locally.");
   }
 
-  function archiveBranch(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId ? { ...branch, status: "Archived" } : branch,
+  function deleteDepartment(branchId: string, departmentId: string) {
+    if (!window.confirm("Delete this department?")) return;
+    setBranches((current) =>
+      current.map((branch) =>
+        branch.id === branchId
+          ? {
+              ...branch,
+              departments: Math.max(0, branch.departments - 1),
+              departmentRows: branch.departmentRows.filter((department) => department.id !== departmentId),
+            }
+          : branch,
       ),
-    });
-    onToast("Branch archived locally.");
+    );
+    onToast("Department deleted locally.");
   }
 
   return (
-    <div className="space-y-3">
-      <button type="button" onClick={addBranch} className="rounded-2xl bg-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black">
-        Add branch
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Branch</span><span>Region</span><span>Town</span><span>Employees</span><span>Departments</span><span>Actions</span>
+    <div className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[14px] font-semibold text-black">Branches Overview</h2>
+        <span className="sr-only">Branches overview for {organizationName}</span>
+        <div className="flex items-center gap-2">
+          <AdminButton
+            onClick={() => setAddBranchOpen(true)}
+            icon={AddCircle}
+            size="xs"
+            variant="primary"
+          >
+            Add Branch
+          </AdminButton>
+          <AdminIconButton>
+            <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
+            <span className="sr-only">More branch actions</span>
+          </AdminIconButton>
         </div>
-        {organization.branches.map((branch) => (
-          <div key={branch.id} className="border-t border-card-border">
-            <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 px-4 py-3 text-[12px] text-black">
-              <span className="font-semibold">{branch.name}<span className="block font-normal text-black/55">{branch.address}</span></span>
-              <span>{branch.region}</span>
-              <span>{branch.town}</span>
-              <span>{branch.employees}</span>
-              <span>{branch.departments.length}</span>
-              <span className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => addDepartment(branch.id)} className="text-[12px] font-semibold text-primary">Add department</button>
-                <button type="button" onClick={() => archiveBranch(branch.id)} className="text-[12px] font-semibold text-black/60">Archive</button>
-              </span>
-            </div>
-            {branch.departments.map((department) => (
-              <div key={department.id} className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#fbfcfd] px-4 py-2 text-[12px] text-black/70">
-                <span className="pl-6">{department.name}</span>
-                <span>{branch.name}</span>
-                <span>{department.status}</span>
-                <span>{department.employees}</span>
-                <span>{department.wellnessScore}%</span>
-                <span><RiskBadge risk={department.risk} /></span>
+      </header>
+
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricCard icon={Building2} value={String(totalBranches)} label="Total Branches" subtext="Across 2 provinces" tone="info" />
+        <AdminMetricCard icon={ClipboardCheck} value={String(totalDepartments)} label="Total Departments" subtext="Across all branches" tone="warning" />
+        <AdminMetricCard icon={UsersRound} value={totalEmployees.toLocaleString()} label="Total Employees" subtext="Across all branches" tone="success" />
+        <AdminMetricCard icon={HeartPulse} value={String(averageWellnessScore)} label="Avg. Wellness Score" subtext="Across all branches" tone="danger" />
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_30px_rgba(15,23,42,0.045)]">
+        <div className="divide-y divide-card-border">
+          {branches.map((branch) => {
+            const isExpanded = expandedBranchId === branch.id;
+            return (
+              <div key={branch.id}>
+                <button
+                  type="button"
+                  onClick={() => toggleBranch(branch.id)}
+                  className="grid w-full cursor-pointer grid-cols-[24px_minmax(220px,1.5fr)_0.55fr_0.7fr_0.9fr_0.7fr_0.65fr_36px] items-center gap-2.5 px-4 py-2.5 text-left text-[12px] text-black transition hover:bg-[#f8fafc]"
+                  style={{ fontSize: 12, lineHeight: "16px" }}
+                >
+                  <ArrowDown className={cn("h-[18px] w-[18px] text-black/55 transition-transform duration-200", isExpanded ? "" : "-rotate-90")} aria-hidden="true" />
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-primary/15 bg-primary/10 text-primary">
+                      <Building2 className="h-[18px] w-[18px]" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-[12px] font-semibold leading-4">{branch.name}</span>
+                        {branch.primary ? <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[12px] font-medium text-primary">Primary</span> : null}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[12px] leading-4 text-black/55">{branch.locationLines.join(", ")}</span>
+                    </span>
+                  </span>
+                  <BranchMetric label="Departments" value={String(branch.departments)} />
+                  <BranchMetric label="Employees" value={branch.employees.toLocaleString()} />
+                  <span className="flex items-center gap-2">
+                    <CircularScore value={branch.wellnessScore} />
+                    <span className="font-medium text-black/70">{branch.wellnessLabel}</span>
+                  </span>
+                  <RiskBadge risk={branch.risk} />
+                  <BranchStatusBadge status={branch.status} />
+                  <span className="flex justify-end">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg text-black transition hover:bg-[#eef2f6]">
+                      <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
+                    </span>
+                  </span>
+                </button>
+
+                <div className={cn("grid transition-[grid-template-rows] duration-200 ease-out", isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                  <div className="overflow-hidden">
+                    <div className="border-t border-card-border bg-[#fbfcfd] px-4 py-4">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="text-[12px] font-semibold leading-4 text-black">Departments ({branch.departments})</h3>
+                        <AdminButton
+                          onClick={() => setAddDepartmentBranchId(branch.id)}
+                          icon={AddCircle}
+                          size="xs"
+                          variant="outlinePrimary"
+                        >
+                          Add Department
+                        </AdminButton>
+                      </div>
+                      <div className="overflow-hidden rounded-xl border border-card-border bg-white text-[12px]" style={{ fontSize: 12, lineHeight: "16px" }}>
+                        <div className="grid grid-cols-[1.1fr_0.5fr_0.7fr_0.6fr_1.1fr_0.6fr_70px] gap-3 bg-[#f8fafc] px-4 py-2.5 text-[12px] font-semibold leading-4 text-black">
+                          <span>Department Name</span>
+                          <span>Employees</span>
+                          <span>Wellness Score</span>
+                          <span>Risk Level</span>
+                          <span>Latest Activation</span>
+                          <span>Status</span>
+                          <span>Actions</span>
+                        </div>
+                        {branch.departmentRows.slice(0, branch.id === "head-office-sandton" ? 5 : branch.departmentRows.length).map((department) => (
+                          <div key={department.id} className="grid grid-cols-[1.1fr_0.5fr_0.7fr_0.6fr_1.1fr_0.6fr_70px] items-center gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black transition hover:bg-[#f8fafc]">
+                            <span className="font-medium">{department.name}</span>
+                            <span>{department.employees}</span>
+                            <span className="inline-flex items-center gap-2">
+                              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                              {department.wellnessScore}
+                            </span>
+                            <RiskBadge risk={department.risk} />
+                            <span className="text-black/65">{department.latestActivation}</span>
+                            <BranchStatusBadge status={department.status} />
+                            <span className="flex items-center gap-1">
+                              <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg text-primary transition hover:bg-primary/10">
+                                <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
+                                <span className="sr-only">Edit department</span>
+                              </button>
+                              <button type="button" onClick={() => deleteDepartment(branch.id, department.id)} className="flex h-7 w-7 items-center justify-center rounded-lg text-pulse-red transition hover:bg-pulse-red/10">
+                                <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
+                                <span className="sr-only">Delete department</span>
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {branch.id === "head-office-sandton" ? (
+                        <button type="button" className="mt-3 inline-flex items-center gap-1 rounded-none border-0 bg-transparent p-0 text-[12px] font-medium leading-4 text-primary transition hover:text-black" style={{ fontSize: 12, lineHeight: "16px" }}>
+                          View all 14 departments
+                          <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <p className="text-[12px] text-black/55">Showing 1 to {branches.length} of {branches.length} branches</p>
+
+      {addBranchOpen ? <AddBranchModal onClose={() => setAddBranchOpen(false)} onSubmit={createBranch} /> : null}
+      {addDepartmentBranchId ? (
+        <AddDepartmentModal
+          branches={branches}
+          defaultBranchId={expandedBranch?.id}
+          onClose={() => setAddDepartmentBranchId(null)}
+          onSubmit={createDepartment}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function BranchMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <span>
+      <span className="block text-[12px] leading-4 text-black/55">{label}</span>
+      <span className="mt-0.5 block text-[12px] font-semibold leading-4 text-black">{value}</span>
+    </span>
+  );
+}
+
+function CircularScore({ value }: { value: number }) {
+  return (
+    <span
+      className="grid h-8 w-8 place-items-center rounded-full text-[10px] font-semibold text-success"
+      style={{ background: `conic-gradient(#22c55e ${value * 3.6}deg, #e5e7eb 0deg)` }}
+    >
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-white">{value}</span>
+    </span>
+  );
+}
+
+function BranchStatusBadge({ status }: { status: BranchStatus }) {
+  const tone: Record<BranchStatus, "success" | "warning" | "neutral"> = {
+    Active: "success",
+    Paused: "warning",
+    Archived: "neutral",
+  };
+  return <AdminBadge tone={tone[status]}>{status}</AdminBadge>;
+}
+
+function AddBranchModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: BranchOverviewForm) => void }) {
+  const [form, setForm] = useState<BranchOverviewForm>({
+    name: "",
+    country: "South Africa",
+    province: "",
+    town: "",
+    address: "",
+    employees: "",
+    primary: false,
+    status: "Active",
+    risk: "Low",
+    contactName: "",
+    email: "",
+    phone: "",
+  });
+
+  return (
+    <Modal title="Add Branch" onClose={onClose}>
+      <form
+        className="grid gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit(form);
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <TextInput label="Branch Name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
+          <TextInput label="Country" value={form.country} onChange={(country) => setForm((current) => ({ ...current, country }))} />
+          <TextInput label="Province" value={form.province} onChange={(province) => setForm((current) => ({ ...current, province }))} />
+          <TextInput label="Town" value={form.town} onChange={(town) => setForm((current) => ({ ...current, town }))} />
+          <TextInput label="Address" value={form.address} onChange={(address) => setForm((current) => ({ ...current, address }))} />
+          <TextInput label="Employee Count" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} />
+          <SelectInput label="Status" value={form.status} options={["Active", "Paused", "Archived"]} onChange={(status) => setForm((current) => ({ ...current, status: status as BranchStatus }))} />
+          <SelectInput label="Risk" value={form.risk} options={riskOptions} onChange={(risk) => setForm((current) => ({ ...current, risk: risk as WellnessRisk }))} />
+          <TextInput label="Contact Name" value={form.contactName} onChange={(contactName) => setForm((current) => ({ ...current, contactName }))} />
+          <TextInput label="Email" value={form.email} onChange={(email) => setForm((current) => ({ ...current, email }))} />
+          <TextInput label="Phone" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} />
+          <label className="flex items-center gap-2 self-end rounded-2xl border border-card-border px-3 py-2 text-[12px] font-semibold text-black">
+            <input type="checkbox" checked={form.primary} onChange={(event) => setForm((current) => ({ ...current, primary: event.target.checked }))} />
+            Primary Branch
+          </label>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="submit" className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">Add Branch</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function AddDepartmentModal({
+  branches,
+  defaultBranchId,
+  onClose,
+  onSubmit,
+}: {
+  branches: BranchOverview[];
+  defaultBranchId?: string;
+  onClose: () => void;
+  onSubmit: (form: DepartmentOverviewForm) => void;
+}) {
+  const [form, setForm] = useState<DepartmentOverviewForm>({
+    name: "",
+    branchId: defaultBranchId ?? branches[0]?.id ?? "",
+    lead: "",
+    employees: "",
+    risk: "Low",
+    wellnessScore: "",
+    status: "Active",
+    notes: "",
+  });
+
+  return (
+    <Modal title="Add Department" onClose={onClose}>
+      <form
+        className="grid gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit(form);
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <TextInput label="Department Name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
+          <label className="grid gap-1 text-[12px] font-semibold text-black">
+            Branch
+            <select value={form.branchId} onChange={(event) => setForm((current) => ({ ...current, branchId: event.target.value }))} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
+              {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+            </select>
+          </label>
+          <TextInput label="Department Lead" value={form.lead} onChange={(lead) => setForm((current) => ({ ...current, lead }))} />
+          <TextInput label="Employees" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} />
+          <SelectInput label="Risk" value={form.risk} options={riskOptions} onChange={(risk) => setForm((current) => ({ ...current, risk: risk as WellnessRisk }))} />
+          <TextInput label="Wellness Score" value={form.wellnessScore} onChange={(wellnessScore) => setForm((current) => ({ ...current, wellnessScore }))} />
+          <SelectInput label="Status" value={form.status} options={["Active", "Paused", "Archived"]} onChange={(status) => setForm((current) => ({ ...current, status: status as BranchStatus }))} />
+          <TextInput label="Notes" value={form.notes} onChange={(notes) => setForm((current) => ({ ...current, notes }))} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="submit" className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">Add Department</button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -1336,7 +1703,7 @@ function OperationsSection({ title, icon: Icon, children }: { title: string; ico
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-black" aria-hidden="true" />
+        <Icon className="h-[18px] w-[18px] text-black" aria-hidden="true" />
         <h2 className="text-[14px] font-semibold text-black">{title}</h2>
       </div>
       {children}
@@ -1368,7 +1735,7 @@ function ClientPortalTab({
   return (
     <div className="space-y-3">
       <button type="button" onClick={onInvite} className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
-        <User className="h-4 w-4" aria-hidden="true" />
+        <User className="h-[18px] w-[18px]" aria-hidden="true" />
         Invite Client User
       </button>
       <div className="overflow-hidden rounded-2xl border border-card-border">
@@ -1533,7 +1900,7 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
         <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
           <h2 className="text-[14px] font-semibold text-black">{title}</h2>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-2xl border border-card-border text-black transition hover:bg-black hover:text-white">
-            <CloseSquare className="h-4 w-4" aria-hidden="true" />
+            <CloseSquare className="h-[18px] w-[18px]" aria-hidden="true" />
             <span className="sr-only">Close</span>
           </button>
         </div>
@@ -1629,7 +1996,7 @@ function StateBanner({ tone, title, detail }: { tone: "warning" | "error" | "inf
 function EmptyState() {
   return (
     <div className="grid place-items-center px-4 py-12 text-center">
-      <Building2 className="h-8 w-8 text-black/35" aria-hidden="true" />
+      <Building2 className="h-[18px] w-[18px] text-black/35" aria-hidden="true" />
       <p className="mt-3 text-[14px] font-semibold text-black">No organizations match this view</p>
       <p className="mt-1 text-[12px] text-black/55">Adjust search or filters to return organizations.</p>
     </div>
