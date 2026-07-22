@@ -25,7 +25,7 @@ export function PortalMetricCard({
   tone = "primary",
 }: PortalMetricCardProps) {
   return (
-    <article className="rounded-lg border border-card-border bg-surface p-5 shadow-[0_12px_30px_var(--card-shadow)]">
+    <article className="rounded-lg border border-[#d0d5dd] bg-surface p-5 shadow-[0_12px_30px_var(--card-shadow)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{label}</p>

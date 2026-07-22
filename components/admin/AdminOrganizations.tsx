@@ -510,7 +510,7 @@ export function AdminOrganizations() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             >
               <Download className="h-[18px] w-[18px]" aria-hidden="true" />
               Export
@@ -533,7 +533,7 @@ export function AdminOrganizations() {
           <SummaryCard title="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} tone="danger" />
         </section>
 
-      <section className="rounded-2xl border border-card-border bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
+      <section className="rounded-2xl border border-[#d0d5dd] bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
           <label className="relative">
             <Search className="pointer-events-none absolute right-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
@@ -544,7 +544,7 @@ export function AdminOrganizations() {
                 setPage(1);
               }}
               placeholder="Search organizations..."
-              className="h-10 w-full rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-full rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
             />
           </label>
           <FilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
@@ -561,7 +561,7 @@ export function AdminOrganizations() {
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -603,8 +603,8 @@ export function AdminOrganizations() {
       ) : null}
       {error ? <StateBanner tone="error" title="Unable to load organizations" detail={error} /> : null}
 
-      <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] gap-3 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+      <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] gap-3 border-b border-[#d0d5dd] bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
           {["Organization", "Industry", "Primary Location", "Branches", "Employees", "Package", "Contract Period", "Wellness Risk", "Status", "Actions"].map((label) => (
             <span key={label} className="min-w-0">{label}</span>
           ))}
@@ -613,7 +613,7 @@ export function AdminOrganizations() {
         {isLoading ? <LoadingState /> : null}
         {!isLoading && filteredOrganizations.length === 0 ? <EmptyState /> : null}
         {!isLoading && paginatedOrganizations.length > 0 ? (
-          <div className="divide-y divide-card-border">
+          <div className="divide-y divide-[#d0d5dd]">
             {paginatedOrganizations.map((organization) => (
               <Link
                 key={organization.id}
@@ -651,7 +651,7 @@ export function AdminOrganizations() {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-card-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#d0d5dd] px-4 py-3">
           <p className="text-[12px] text-black/60">
             Page {page} of {totalPages}
           </p>
@@ -662,7 +662,7 @@ export function AdminOrganizations() {
                 setPageSize(Number(event.target.value));
                 setPage(1);
               }}
-              className="h-8 rounded-2xl border border-card-border bg-white px-2 text-[12px] text-black outline-none"
+              className="h-8 rounded-2xl border border-[#d0d5dd] bg-white px-2 text-[12px] text-black outline-none"
             >
               {[4, 6, 8].map((size) => <option key={size} value={size}>{size} rows</option>)}
             </select>
@@ -670,7 +670,7 @@ export function AdminOrganizations() {
               type="button"
               onClick={() => setPage((value) => Math.max(1, value - 1))}
               disabled={page === 1}
-              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowLeft2 className="h-[18px] w-[18px]" aria-hidden="true" />
               Previous
@@ -679,7 +679,7 @@ export function AdminOrganizations() {
               type="button"
               onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
               disabled={page === totalPages}
-              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
               <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -752,7 +752,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
 
   if (!organization) {
     return (
-      <section className="rounded-2xl border border-card-border bg-white p-6 text-black shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+      <section className="rounded-2xl border border-[#d0d5dd] bg-white p-6 text-black shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
         <p className="text-[14px] font-semibold">Organization not found</p>
         <p className="mt-2 text-[12px] text-black/60">Return to the organizations list and select an available organization.</p>
         <Link href="/admin/organizations" className="mt-4 inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
@@ -773,7 +773,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
         <span className="text-black">{organization.name}</span>
       </div>
 
-      <section className="rounded-lg border border-card-border bg-white px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
+      <section className="rounded-lg border border-[#d0d5dd] bg-white px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <LogoMark organization={organization} size="xl" />
@@ -827,7 +827,7 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
         </div>
       </section>
 
-      <div className="border-b border-card-border">
+      <div className="border-b border-[#d0d5dd]">
         <div className="flex overflow-x-auto">
               {detailTabs.map((tab) => {
                 const Icon = tab.icon;
@@ -846,13 +846,13 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
       </div>
 
       <section className="-mt-4">
-        <section className="rounded-b-2xl rounded-t-none border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)]">
+        <section className="rounded-b-2xl rounded-t-none border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)]">
           {activeTab === "Overview" ? (
             <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="p-5">
                 <OrganizationOverviewForm organization={organization} editing={isEditing} onUpdate={updateOrganization} onToast={showToast} />
               </div>
-              <div className="border-t border-card-border p-5 xl:border-l xl:border-t-0">
+              <div className="border-t border-[#d0d5dd] p-5 xl:border-l xl:border-t-0">
                 <WellnessRiskGauge risk={organization.risk} />
               </div>
             </div>
@@ -912,7 +912,7 @@ function SummaryCard({
           ? "text-pulse-red border-pulse-red/35 bg-pulse-red/10"
           : "text-primary border-primary/35 bg-primary/10";
   return (
-    <div className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
+    <div className="rounded-2xl border border-[#d0d5dd] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
       <div className="flex items-center gap-4">
         <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border", toneClass)}>
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -934,7 +934,7 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+        className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -961,7 +961,7 @@ function LogoMark({ organization, size = "sm" }: { organization: Organization; s
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
+        "flex shrink-0 items-center justify-center border border-[#d0d5dd] bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
         size === "xl"
           ? "h-20 w-20 rounded-md bg-white text-[20px] text-primary shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
           : size === "lg"
@@ -1164,12 +1164,12 @@ function ReadonlyField({
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-9 w-full rounded-lg border border-card-border bg-white px-3 text-[12px] text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+          className="h-9 w-full rounded-lg border border-[#d0d5dd] bg-white px-3 text-[12px] text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
         >
           {(options ?? [value]).map((option) => <option key={option}>{option}</option>)}
         </select>
       ) : editable ? (
-        <span className="flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-3 focus-within:border-primary/45 focus-within:ring-4 focus-within:ring-primary/10">
+        <span className="flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-3 focus-within:border-primary/45 focus-within:ring-4 focus-within:ring-primary/10">
           {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
           <input
             value={value}
@@ -1178,7 +1178,7 @@ function ReadonlyField({
           />
         </span>
       ) : (
-        <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-card-border px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
+        <span className={cn("flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] px-3 text-[12px] text-black", muted ? "bg-[#f2f4f7] text-black/55" : "bg-white")}>
           {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
           <span className="min-w-0 flex-1 truncate">{select ? value : label.includes("Date") && value.includes("-") ? formatShortDate(value) : value}</span>
           {select ? <ArrowDown className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
@@ -1244,7 +1244,7 @@ function ContactsTab({
 
       <div className="grid gap-3 lg:grid-cols-2">
         {organization.contacts.map((contact) => (
-          <div key={contact.id} className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
+          <div key={contact.id} className="rounded-2xl border border-[#d0d5dd] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.035)]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1336,12 +1336,12 @@ function ContactModal({
           <TextInput label="Email" value={form.email} onChange={(email) => setForm((current) => ({ ...current, email }))} required />
           <TextInput label="Phone" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} />
           <SelectInput label="Preferred communication method" value={form.method} options={["Email", "Phone", "WhatsApp", "Portal"]} onChange={(method) => setForm((current) => ({ ...current, method: method as ContactMethod }))} />
-          <label className="flex items-center gap-2 self-end rounded-2xl border border-card-border px-3 py-2 text-[12px] font-semibold text-black">
+          <label className="flex items-center gap-2 self-end rounded-2xl border border-[#d0d5dd] px-3 py-2 text-[12px] font-semibold text-black">
             <input
               type="checkbox"
               checked={form.primary}
               onChange={(event) => setForm((current) => ({ ...current, primary: event.target.checked }))}
-              className="h-4 w-4 rounded border-card-border text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
             />
             Primary contact
           </label>
@@ -1351,11 +1351,11 @@ function ContactModal({
           <textarea
             value={form.notes}
             onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-            className="min-h-20 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10"
+            className="min-h-20 rounded-2xl border border-[#d0d5dd] px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10"
           />
         </label>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black transition hover:bg-black hover:text-white">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-[#d0d5dd] px-4 text-[12px] font-semibold text-black transition hover:bg-black hover:text-white">Cancel</button>
           <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">
             {contact ? "Save contact" : "Add contact"}
           </button>
@@ -1584,8 +1584,8 @@ function BranchesTab({
         <AdminMetricCard icon={HeartPulse} value={String(averageWellnessScore)} label="Avg. Wellness Score" subtext="Across all branches" tone="danger" />
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_30px_rgba(15,23,42,0.045)]">
-        <div className="divide-y divide-card-border">
+      <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.045)]">
+        <div className="divide-y divide-[#d0d5dd]">
           {branches.map((branch) => {
             const isExpanded = expandedBranchId === branch.id;
             return (
@@ -1626,7 +1626,7 @@ function BranchesTab({
 
                 <div className={cn("grid transition-[grid-template-rows] duration-200 ease-out", isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
                   <div className="overflow-hidden">
-                    <div className="border-t border-card-border bg-[#fbfcfd] px-4 py-4">
+                    <div className="border-t border-[#d0d5dd] bg-[#fbfcfd] px-4 py-4">
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                         <h3 className="text-[12px] font-semibold leading-4 text-black">Departments ({branch.departments})</h3>
                         <AdminButton
@@ -1638,7 +1638,7 @@ function BranchesTab({
                           Add Department
                         </AdminButton>
                       </div>
-                      <div className="overflow-hidden rounded-xl border border-card-border bg-white text-[12px]" style={{ fontSize: 12, lineHeight: "16px" }}>
+                      <div className="overflow-hidden rounded-xl border border-[#d0d5dd] bg-white text-[12px]" style={{ fontSize: 12, lineHeight: "16px" }}>
                         <div className="grid grid-cols-[1.1fr_0.5fr_0.7fr_0.6fr_1.1fr_0.6fr_70px] gap-3 bg-[#f8fafc] px-4 py-2.5 text-[12px] font-semibold leading-4 text-black">
                           <span>Department Name</span>
                           <span>Employees</span>
@@ -1649,7 +1649,7 @@ function BranchesTab({
                           <span>Actions</span>
                         </div>
                         {branch.departmentRows.slice(0, branch.id === "head-office-sandton" ? 5 : branch.departmentRows.length).map((department) => (
-                          <div key={department.id} className="grid grid-cols-[1.1fr_0.5fr_0.7fr_0.6fr_1.1fr_0.6fr_70px] items-center gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black transition hover:bg-[#f8fafc]">
+                          <div key={department.id} className="grid grid-cols-[1.1fr_0.5fr_0.7fr_0.6fr_1.1fr_0.6fr_70px] items-center gap-3 border-t border-[#d0d5dd] px-4 py-3 text-[12px] text-black transition hover:bg-[#f8fafc]">
                             <span className="font-medium">{department.name}</span>
                             <span>{department.employees}</span>
                             <span className="inline-flex items-center gap-2">
@@ -1768,13 +1768,13 @@ function AddBranchModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
           <TextInput label="Contact Name" value={form.contactName} onChange={(contactName) => setForm((current) => ({ ...current, contactName }))} />
           <TextInput label="Email" value={form.email} onChange={(email) => setForm((current) => ({ ...current, email }))} />
           <TextInput label="Phone" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} />
-          <label className="flex items-center gap-2 self-end rounded-2xl border border-card-border px-3 py-2 text-[12px] font-semibold text-black">
+          <label className="flex items-center gap-2 self-end rounded-2xl border border-[#d0d5dd] px-3 py-2 text-[12px] font-semibold text-black">
             <input type="checkbox" checked={form.primary} onChange={(event) => setForm((current) => ({ ...current, primary: event.target.checked }))} />
             Primary Branch
           </label>
         </div>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-[#d0d5dd] px-4 text-[12px] font-semibold text-black">Cancel</button>
           <button type="submit" className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">Add Branch</button>
         </div>
       </form>
@@ -1817,7 +1817,7 @@ function AddDepartmentModal({
           <TextInput label="Department Name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
           <label className="grid gap-1 text-[12px] font-semibold text-black">
             Branch
-            <select value={form.branchId} onChange={(event) => setForm((current) => ({ ...current, branchId: event.target.value }))} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
+            <select value={form.branchId} onChange={(event) => setForm((current) => ({ ...current, branchId: event.target.value }))} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
               {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
             </select>
           </label>
@@ -1829,7 +1829,7 @@ function AddDepartmentModal({
           <TextInput label="Notes" value={form.notes} onChange={(notes) => setForm((current) => ({ ...current, notes }))} />
         </div>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-[#d0d5dd] px-4 text-[12px] font-semibold text-black">Cancel</button>
           <button type="submit" className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">Add Department</button>
         </div>
       </form>
@@ -1876,7 +1876,7 @@ function ContractField({ label, value }: { label: string; value: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label}</span>
-      <span className="flex min-h-9 items-center rounded-lg border border-card-border bg-[#f8fafc] px-3 py-2 text-[12px] font-semibold text-black">
+      <span className="flex min-h-9 items-center rounded-lg border border-[#d0d5dd] bg-[#f8fafc] px-3 py-2 text-[12px] font-semibold text-black">
         {value}
       </span>
     </label>
@@ -1964,12 +1964,12 @@ function ClientPortalTab({
         <User className="h-[18px] w-[18px]" aria-hidden="true" />
         Invite Client User
       </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
+      <div className="overflow-hidden rounded-2xl border border-[#d0d5dd]">
         <div className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
           <span>Name</span><span>Email</span><span>Role</span><span>Invitation</span><span>Last active</span><span>Actions</span>
         </div>
         {organization.clientUsers.map((user) => (
-          <div key={user.id} className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
+          <div key={user.id} className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 border-t border-[#d0d5dd] px-4 py-3 text-[12px] text-black">
             <span className="font-semibold">{user.name}</span>
             <span className="truncate">{user.email}</span>
             <span>{user.role}</span>
@@ -1989,12 +1989,12 @@ function ClientPortalTab({
 
 function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
+    <div className="overflow-hidden rounded-2xl border border-[#d0d5dd]">
       <div className="grid gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
       {rows.map((row) => (
-        <div key={row.join("-")} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+        <div key={row.join("-")} className="grid gap-3 border-t border-[#d0d5dd] px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
           {row.map((cell) => <span key={cell} className="min-w-0 truncate">{cell}</span>)}
         </div>
       ))}
@@ -2004,9 +2004,9 @@ function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
 
 function SimpleList({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-2xl border border-card-border bg-white p-4">
+    <div className="rounded-2xl border border-[#d0d5dd] bg-white p-4">
       <h3 className="text-[14px] font-semibold text-black">{title}</h3>
-      <div className="mt-3 divide-y divide-card-border">
+      <div className="mt-3 divide-y divide-[#d0d5dd]">
         {items.map((item) => <p key={item} className="py-3 text-[12px] leading-5 text-black/70">{item}</p>)}
       </div>
     </div>
@@ -2043,7 +2043,7 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
         <ContactFields title="Contact 1" prefix="contact1" form={form} setForm={setForm} />
         <ContactFields title="Contact 2" prefix="contact2" form={form} setForm={setForm} />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-[#d0d5dd] px-4 text-[12px] font-semibold text-black">Cancel</button>
           <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Create organization</button>
         </div>
       </form>
@@ -2092,17 +2092,17 @@ function InviteClientUserModal({
         <SelectInput label="Client role" value={payload.role} options={["Client Admin", "Client Viewer"]} onChange={(role) => setPayload((current) => ({ ...current, role: role as ClientRole }))} />
         <label className="grid gap-1 text-[12px] font-semibold text-black">
           Organization
-          <select value={payload.organizationId} onChange={(event) => setPayload((current) => ({ ...current, organizationId: event.target.value }))} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10">
+          <select value={payload.organizationId} onChange={(event) => setPayload((current) => ({ ...current, organizationId: event.target.value }))} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10">
             {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
           </select>
         </label>
         <label className="grid gap-1 text-[12px] font-semibold text-black">
           Optional personalized message
-          <textarea value={payload.message} onChange={(event) => setPayload((current) => ({ ...current, message: event.target.value }))} className="min-h-24 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10" />
+          <textarea value={payload.message} onChange={(event) => setPayload((current) => ({ ...current, message: event.target.value }))} className="min-h-24 rounded-2xl border border-[#d0d5dd] px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10" />
         </label>
         <StateBanner tone="info" title="Frontend-only invitation simulation" detail="The simulated email includes organization name, Pulse80 portal information, user role, a secure time-limited invitation link, and instructions to create a password. No permanent password is emailed." />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-[#d0d5dd] px-4 text-[12px] font-semibold text-black">Cancel</button>
           <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Send invitation</button>
         </div>
       </form>
@@ -2113,10 +2113,10 @@ function InviteClientUserModal({
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true">
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
-        <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
+        <div className="flex items-center justify-between border-b border-[#d0d5dd] px-5 py-4">
           <h2 className="text-[14px] font-semibold text-black">{title}</h2>
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-2xl border border-card-border text-black transition hover:bg-black hover:text-white">
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-2xl border border-[#d0d5dd] text-black transition hover:bg-black hover:text-white">
             <CloseSquare className="h-[18px] w-[18px]" aria-hidden="true" />
             <span className="sr-only">Close</span>
           </button>
@@ -2129,8 +2129,8 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
 
 function LogoUpload({ value, onChange }: { value?: string; onChange: (value?: string) => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-card-border bg-[#f8fafc] p-3">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-card-border bg-white bg-cover bg-center text-[12px] font-semibold text-black" style={value ? { backgroundImage: `url(${value})` } : undefined}>
+    <div className="flex items-center gap-3 rounded-2xl border border-[#d0d5dd] bg-[#f8fafc] p-3">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d0d5dd] bg-white bg-cover bg-center text-[12px] font-semibold text-black" style={value ? { backgroundImage: `url(${value})` } : undefined}>
         {value ? null : "Logo"}
       </span>
       <label className="cursor-pointer text-[12px] font-semibold text-primary transition hover:text-black">
@@ -2182,7 +2182,7 @@ function DetailLogoUpload({
       <LogoMark organization={organization} />
       <label
         className={cn(
-          "flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65 transition",
+          "flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-[#d0d5dd] bg-white px-4 text-[12px] text-black/65 transition",
           disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer hover:border-primary/40 hover:text-black",
         )}
       >
@@ -2198,7 +2198,7 @@ function DetailLogoUpload({
       </label>
       <label
         className={cn(
-          "inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white",
+          "inline-flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white",
           disabled ? "pointer-events-none opacity-45" : "cursor-pointer",
         )}
       >
@@ -2216,7 +2216,7 @@ function DetailLogoUpload({
         type="button"
         disabled={disabled || !organization.logo}
         onClick={() => onChange(undefined)}
-        className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+        className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
       >
         <Trash className="h-[18px] w-[18px]" aria-hidden="true" />
         Remove
@@ -2242,7 +2242,7 @@ function ContactFields({
 }) {
   const role = form[`${prefix}Role`];
   return (
-    <fieldset className="rounded-2xl border border-card-border p-4">
+    <fieldset className="rounded-2xl border border-[#d0d5dd] p-4">
       <legend className="px-2 text-[14px] font-semibold text-black">{title}</legend>
       <div className="grid gap-3 md:grid-cols-2">
         <TextInput label="Full name" value={form[`${prefix}Name`]} onChange={(value) => setForm((current) => ({ ...current, [`${prefix}Name`]: value }))} />
@@ -2260,7 +2260,7 @@ function TextInput({ label, value, onChange, required = false }: { label: string
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10" />
+      <input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10" />
     </label>
   );
 }
@@ -2269,7 +2269,7 @@ function SelectInput({ label, value, options, onChange }: { label: string; value
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
         {options.map((option) => <option key={option}>{option}</option>)}
       </select>
     </label>

@@ -5,6 +5,7 @@ import {
   ArrowDown as IconsaxArrowDown,
   ArrowDown2 as IconsaxArrowDown2,
   ArrowLeft2 as IconsaxArrowLeft2,
+  ArrowRotateLeft as IconsaxArrowRotateLeft,
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
   CloseCircle as IconsaxCloseCircle,
@@ -35,6 +36,7 @@ import {
   Profile2User as IconsaxProfile2User,
   ProfileCircle as IconsaxProfileCircle,
   Refresh as IconsaxRefresh,
+  RotateLeft as IconsaxRotateLeft,
   SearchNormal1 as IconsaxSearch,
   Setting2 as IconsaxSettings,
   ShieldTick as IconsaxShieldTick,
@@ -74,6 +76,7 @@ export const AlertCircle = withDefaultVariant(IconsaxWarning2);
 export const ArrowDown = withDefaultVariant(IconsaxArrowDown2);
 export const ArrowDownRight = withDefaultVariant(IconsaxArrowDown);
 export const ArrowLeft2 = withDefaultVariant(IconsaxArrowLeft2);
+export const ArrowRotateLeft = withDefaultVariant(IconsaxArrowRotateLeft);
 export const ArrowRight = withDefaultVariant(IconsaxArrowRight);
 export const ArrowUpRight = withDefaultVariant(IconsaxArrowUp);
 export const BarChart3 = withDefaultVariant(IconsaxChart2);
@@ -108,6 +111,7 @@ export const Microscope = withDefaultVariant(IconsaxMicroscope);
 export const MoreHorizontal = withDefaultVariant(IconsaxMore);
 export const ProfileCircle = withDefaultVariant(IconsaxProfileCircle);
 export const Refresh = withDefaultVariant(IconsaxRefresh);
+export const RotateLeft = withDefaultVariant(IconsaxRotateLeft);
 export const Search = withDefaultVariant(IconsaxSearch);
 export const Settings = withDefaultVariant(IconsaxSettings);
 export const ShieldCheck = withDefaultVariant(IconsaxShieldTick);

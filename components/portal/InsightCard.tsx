@@ -16,7 +16,7 @@ const insightToneStyles: Record<Tone, string> = {
   success: "border-success/20 bg-success/5",
   warning: "border-warning/25 bg-warning/5",
   danger: "border-pulse-red/20 bg-pulse-red/5",
-  neutral: "border-card-border bg-soft-bg",
+  neutral: "border-[#d0d5dd] bg-soft-bg",
 };
 
 export function InsightCard({ title, detail, tone = "primary" }: InsightCardProps) {
@@ -46,19 +46,19 @@ export function InsightCard({ title, detail, tone = "primary" }: InsightCardProp
           aria-modal="true"
           aria-labelledby={`${title}-insight-title`}
         >
-          <div className="w-full max-w-lg rounded-2xl border border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
-            <div className="border-b border-card-border px-5 py-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
+            <div className="border-b border-[#d0d5dd] px-5 py-4">
               <h3 id={`${title}-insight-title`} className="text-[14px] font-semibold leading-5 text-black">
                 {title}
               </h3>
               <p className="mt-2 text-[12px] leading-5 text-black">{detail}</p>
             </div>
             <div className="px-5 py-4">
-              <p className="rounded-2xl border border-card-border bg-[#f8fafc] p-4 text-[12px] leading-5 text-black">
+              <p className="rounded-2xl border border-[#d0d5dd] bg-[#f8fafc] p-4 text-[12px] leading-5 text-black">
                 Suggested next step: review the underlying cohort, compare against the previous reporting period, and assign an owner before the next activation.
               </p>
             </div>
-            <div className="flex justify-end border-t border-card-border px-5 py-4">
+            <div className="flex justify-end border-t border-[#d0d5dd] px-5 py-4">
               <button
                 type="button"
                 onClick={() => setOpen(false)}

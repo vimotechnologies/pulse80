@@ -138,7 +138,7 @@ export function PortalSidebarGroup({
         )}
       >
         <div className="min-h-0">
-          <div className="ml-5 mt-1 space-y-1 border-l border-card-border pl-2">
+          <div className="ml-5 mt-1 space-y-1 border-l border-[#d0d5dd] pl-2">
             {group.children.map((child) => {
               const ChildIcon = child.icon;
               const childActive = pathname === child.href;

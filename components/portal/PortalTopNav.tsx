@@ -16,7 +16,7 @@ export function PortalTopNav({
   sidebarCollapsed = false,
 }: PortalTopNavProps) {
   return (
-    <header className="sticky top-0 z-20 border-b border-card-border bg-surface/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-[#d0d5dd] bg-surface/95 backdrop-blur">
       <div
         className={cn(
           "flex h-20 items-center gap-4 px-4 transition-[margin] duration-300 sm:px-6 lg:px-8",
@@ -41,18 +41,18 @@ export function PortalTopNav({
             <input
               type="search"
               placeholder={`Search ${portalName.toLowerCase()}`}
-              className="h-10 w-64 rounded-lg border border-card-border bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-64 rounded-lg border border-[#d0d5dd] bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <button
             type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:text-navy"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:text-navy"
             aria-label="Notifications"
           >
             <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
             <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-pulse-red" />
           </button>
-          <div className="flex items-center gap-3 rounded-lg border border-card-border bg-surface py-1.5 pl-2 pr-3">
+          <div className="flex items-center gap-3 rounded-lg border border-[#d0d5dd] bg-surface py-1.5 pl-2 pr-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
               {userLabel
                 .split(" ")

@@ -102,7 +102,7 @@ const metricToneStyles: Record<MetricTone, string> = {
   success: "border-success/20 bg-success/10 text-success",
   warning: "border-warning/25 bg-warning/10 text-warning",
   danger: "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
-  neutral: "border-card-border bg-soft-bg text-muted",
+  neutral: "border-[#d0d5dd] bg-soft-bg text-muted",
 };
 
 function field(record: DataRecord, label: string) {
@@ -526,7 +526,7 @@ export function DataToolbar<RecordType extends DataRecord>({
         <SearchInput value={query} onChange={onQueryChange} placeholder={placeholder} />
         <div className="flex flex-wrap items-center gap-2">
           {tabs ? <FilterTabs tabs={tabs} activeTab={activeTab} onChange={onTabChange} /> : null}
-          <label className="flex h-10 items-center gap-2 rounded-lg border border-card-border bg-surface px-3 text-xs font-semibold text-muted">
+          <label className="flex h-10 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-surface px-3 text-xs font-semibold text-muted">
             <Sort className="h-[18px] w-[18px]" aria-hidden="true" />
             <select
               value={sortKey}
@@ -578,7 +578,7 @@ export function SearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-lg border border-card-border bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted hover:border-primary/30 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
+        className="h-11 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted hover:border-primary/30 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
       />
     </div>
   );
@@ -602,7 +602,7 @@ export function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-lg border border-card-border bg-surface px-3 text-sm text-navy outline-none transition hover:border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="mt-2 h-10 w-full rounded-lg border border-[#d0d5dd] bg-surface px-3 text-sm text-navy outline-none transition hover:border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/10"
       >
         {filter.options.map((option) => (
           <option key={option}>{option}</option>
@@ -632,7 +632,7 @@ export function FilterTabs({
             "h-10 rounded-lg border px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
             activeTab === tab
               ? "border-primary bg-primary text-white shadow-sm"
-              : "border-card-border bg-surface text-muted hover:border-primary/30 hover:text-navy",
+              : "border-[#d0d5dd] bg-surface text-muted hover:border-primary/30 hover:text-navy",
           )}
         >
           {tab}
@@ -731,18 +731,18 @@ export function DataTableHeader<RecordType extends DataRecord>({
     <thead className="sticky top-0 z-10 bg-soft-bg">
       <tr>
         {enableBulkActions ? (
-          <th className="w-12 border-b border-card-border px-4 py-3">
+          <th className="w-12 border-b border-[#d0d5dd] px-4 py-3">
             <input
               type="checkbox"
               checked={allSelected}
               onChange={onToggleAll}
-              className="h-4 w-4 rounded border-card-border text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
               aria-label="Select all rows"
             />
           </th>
         ) : null}
         {columns.map((column) => (
-          <th key={column.key} className={cn("border-b border-card-border px-4 py-3", column.className)}>
+          <th key={column.key} className={cn("border-b border-[#d0d5dd] px-4 py-3", column.className)}>
             <button
               type="button"
               onClick={() => onSort(column)}
@@ -754,7 +754,7 @@ export function DataTableHeader<RecordType extends DataRecord>({
             </button>
           </th>
         ))}
-        <th className="w-32 border-b border-card-border px-4 py-3 text-right text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
+        <th className="w-32 border-b border-[#d0d5dd] px-4 py-3 text-right text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
           Actions
         </th>
       </tr>
@@ -780,15 +780,15 @@ export function DataTableRow<RecordType extends DataRecord>({
   onSelectedChange: (checked: boolean) => void;
 }) {
   return (
-    <tr className="group border-b border-card-border transition hover:bg-soft-bg/70">
+    <tr className="group border-b border-[#d0d5dd] transition hover:bg-soft-bg/70">
       {enableBulkActions ? (
-        <td className="border-b border-card-border px-4 py-4">
+        <td className="border-b border-[#d0d5dd] px-4 py-4">
           <input
             type="checkbox"
             checked={selected}
             onChange={(event) => onSelectedChange(event.target.checked)}
             onClick={(event) => event.stopPropagation()}
-            className="h-4 w-4 rounded border-card-border text-primary focus:ring-primary"
+            className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
             aria-label={`Select ${record.title}`}
           />
         </td>
@@ -796,7 +796,7 @@ export function DataTableRow<RecordType extends DataRecord>({
       {columns.map((column) => (
         <td
           key={`${record.id}-${column.key}`}
-          className={cn("border-b border-card-border px-4 py-4 align-middle text-sm text-navy", column.className)}
+          className={cn("border-b border-[#d0d5dd] px-4 py-4 align-middle text-sm text-navy", column.className)}
         >
           <button
             type="button"
@@ -807,7 +807,7 @@ export function DataTableRow<RecordType extends DataRecord>({
           </button>
         </td>
       ))}
-      <td className="border-b border-card-border px-4 py-4 text-right">{actions}</td>
+      <td className="border-b border-[#d0d5dd] px-4 py-4 text-right">{actions}</td>
     </tr>
   );
 }
@@ -839,24 +839,24 @@ export function RowActionMenu<RecordType extends DataRecord>({
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:border-primary/30 hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:border-primary/30 hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         aria-label={`Open actions for ${record.title}`}
       >
         <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
       </button>
       {open ? (
-        <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-card-border bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
+        <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-[#d0d5dd] bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
           <ActionItem icon={Eye} label="View details" onClick={onView} />
           <ActionItem icon={Edit} label="Edit locally" onClick={onEdit} />
           <ActionItem icon={Download} label="Download" onClick={onDownload} />
           <ActionItem icon={Refresh} label={record.status === "Published" ? "Unpublish" : "Update status"} onClick={onCycleStatus} />
           {onRoleChange ? (
-            <label className="mt-1 block border-t border-card-border px-3 py-2 text-xs font-semibold text-muted">
+            <label className="mt-1 block border-t border-[#d0d5dd] px-3 py-2 text-xs font-semibold text-muted">
               Role
               <select
                 value={record.filters.role}
                 onChange={(event) => onRoleChange(event.target.value)}
-                className="mt-2 h-9 w-full rounded-lg border border-card-border bg-soft-bg px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                className="mt-2 h-9 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
               >
                 {["Operations Lead", "Clinical Reviewer", "Finance", "Viewer"].map((role) => (
                   <option key={role}>{role}</option>
@@ -922,9 +922,9 @@ export function DetailDrawer<RecordType extends DataRecord>({
   onAction: () => void;
 }) {
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]">
+    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]">
       <div className="flex h-full flex-col">
-        <div className="border-b border-card-border p-5">
+        <div className="border-b border-[#d0d5dd] p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">{eyebrow}</p>
@@ -934,7 +934,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-card-border text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#d0d5dd] text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
               aria-label="Close details"
             >
               <CloseCircle className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -947,7 +947,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
 
           <div className="grid gap-3 sm:grid-cols-2">
             {record.details.map((item) => (
-              <div key={`${record.id}-${item.label}`} className="rounded-lg border border-card-border bg-soft-bg p-4">
+              <div key={`${record.id}-${item.label}`} className="rounded-lg border border-[#d0d5dd] bg-soft-bg p-4">
                 <p className="text-xs font-semibold text-muted">{item.label}</p>
                 <p className={cn("mt-2 text-sm font-semibold leading-6 text-navy", item.tone ? toneText(item.tone) : "")}>
                   {item.value}
@@ -960,7 +960,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
             <h3 className="text-base font-semibold text-navy">Key metadata</h3>
             <div className="mt-4 grid gap-3">
               {record.fields.map((item) => (
-                <div key={`${record.id}-field-${item.label}`} className="flex items-center justify-between gap-4 rounded-lg border border-card-border bg-white p-3">
+                <div key={`${record.id}-field-${item.label}`} className="flex items-center justify-between gap-4 rounded-lg border border-[#d0d5dd] bg-white p-3">
                   <span className="text-sm font-semibold text-muted">{item.label}</span>
                   <span className="text-sm font-semibold text-navy">{item.value}</span>
                 </div>
@@ -988,7 +988,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
               <h3 className="text-base font-semibold text-navy">Readiness checklist</h3>
               <div className="mt-3 space-y-3">
                 {record.checklist.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg border border-card-border bg-white p-3">
+                  <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg border border-[#d0d5dd] bg-white p-3">
                     <span className="text-sm font-semibold text-navy">{item.label}</span>
                     <StatusBadge status={item.done ? "Complete" : "Pending"} tone={item.done ? "success" : "warning"} />
                   </div>
@@ -998,7 +998,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2 border-t border-card-border p-5">
+        <div className="flex flex-wrap gap-2 border-t border-[#d0d5dd] p-5">
           <ActionButton onClick={onEdit}>
             <Edit className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
             Edit details
@@ -1031,7 +1031,7 @@ export function Pagination({
   onRowsPerPageChange: (value: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-card-border bg-surface px-4 py-3 text-sm text-muted shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-[#d0d5dd] bg-surface px-4 py-3 text-sm text-muted shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <span>
         Page <strong className="text-navy">{page}</strong> of <strong className="text-navy">{totalPages}</strong> · {totalRows} records
       </span>
@@ -1041,7 +1041,7 @@ export function Pagination({
           <select
             value={rowsPerPage}
             onChange={(event) => onRowsPerPageChange(Number(event.target.value))}
-            className="h-9 rounded-lg border border-card-border bg-surface px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="h-9 rounded-lg border border-[#d0d5dd] bg-surface px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
           >
             {[5, 10, 20].map((value) => (
               <option key={value} value={value}>
@@ -1112,12 +1112,12 @@ export function LoadingState() {
   return (
     <DashboardWidget className="overflow-hidden" aria-label="Loading records">
       {[0, 1, 2, 3, 4].map((item) => (
-        <div key={item} className="grid grid-cols-5 gap-4 border-b border-card-border p-4">
-          <div className="h-4 animate-pulse rounded bg-card-border" />
-          <div className="h-4 animate-pulse rounded bg-card-border" />
-          <div className="h-4 animate-pulse rounded bg-card-border" />
-          <div className="h-4 animate-pulse rounded bg-card-border" />
-          <div className="h-4 animate-pulse rounded bg-card-border" />
+        <div key={item} className="grid grid-cols-5 gap-4 border-b border-[#d0d5dd] p-4">
+          <div className="h-4 animate-pulse rounded bg-[#d0d5dd]" />
+          <div className="h-4 animate-pulse rounded bg-[#d0d5dd]" />
+          <div className="h-4 animate-pulse rounded bg-[#d0d5dd]" />
+          <div className="h-4 animate-pulse rounded bg-[#d0d5dd]" />
+          <div className="h-4 animate-pulse rounded bg-[#d0d5dd]" />
         </div>
       ))}
     </DashboardWidget>
@@ -1170,8 +1170,8 @@ function ListModal<RecordType extends DataRecord>({
   const isArchive = mode === "archive";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-lg border border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.18)]">
-        <div className="border-b border-card-border p-5">
+      <div className="w-full max-w-2xl rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.18)]">
+        <div className="border-b border-[#d0d5dd] p-5">
           <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
             {isArchive ? "Confirmation" : title}
           </p>
@@ -1203,7 +1203,7 @@ function ListModal<RecordType extends DataRecord>({
             </div>
           )}
         </div>
-        <div className="flex flex-wrap justify-end gap-2 border-t border-card-border p-5">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-[#d0d5dd] p-5">
           <ActionButton variant="secondary" onClick={onClose}>
             Cancel
           </ActionButton>

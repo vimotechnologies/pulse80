@@ -10,7 +10,7 @@ export function DashboardCard({ children, className }: DashboardCardProps) {
   return (
     <section
       className={cn(
-        "rounded-lg border border-card-border bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
+        "rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
         className,
       )}
     >

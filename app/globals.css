@@ -108,6 +108,7 @@ select {
 
 button {
   cursor: pointer;
+  border-radius: var(--pulse-radius-lg);
 }
 
 button.bg-primary,
@@ -133,6 +134,19 @@ a.bg-primary *,
 .pulse-portal-sidebar :is(a, button):hover,
 .pulse-portal-sidebar :is(a, button):focus-visible {
   color: #000000 !important;
+}
+
+:is(button, a[role="button"], .pulse-button, .pulse-icon-button) {
+  border-radius: var(--pulse-radius-lg) !important;
+}
+
+:is(section, article, div)[class*="shadow"][class*="border"] {
+  border-color: var(--card-border) !important;
+  border-radius: var(--pulse-radius-lg) !important;
+}
+
+:is(section, article, div)[class*="shadow"][class*="border"]:hover {
+  border-color: var(--card-border) !important;
 }
 
 button:disabled,

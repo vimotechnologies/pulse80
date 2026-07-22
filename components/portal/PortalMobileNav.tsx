@@ -99,13 +99,13 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
 
       <div
         className={cn(
-          "fixed inset-x-3 bottom-24 z-50 overflow-hidden rounded-2xl border border-card-border bg-surface shadow-[0_20px_60px_rgba(7,22,51,0.18)] transition lg:hidden",
+          "fixed inset-x-3 bottom-24 z-50 overflow-hidden rounded-2xl border border-[#d0d5dd] bg-surface shadow-[0_20px_60px_rgba(7,22,51,0.18)] transition lg:hidden",
           expanded
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-card-border px-4 py-4">
+        <div className="flex items-center gap-3 border-b border-[#d0d5dd] px-4 py-4">
           <Image
             src="/brand/pulse80-mark.png"
             alt="Pulse80"
@@ -145,7 +145,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
         </nav>
       </div>
 
-      <nav className="fixed inset-x-3 bottom-3 z-50 grid h-[76px] grid-cols-5 items-center rounded-[24px] border border-card-border bg-surface/95 px-2 shadow-[0_18px_55px_rgba(7,22,51,0.16)] backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-50 grid h-[76px] grid-cols-5 items-center rounded-[24px] border border-[#d0d5dd] bg-surface/95 px-2 shadow-[0_18px_55px_rgba(7,22,51,0.16)] backdrop-blur lg:hidden">
         {quickItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;

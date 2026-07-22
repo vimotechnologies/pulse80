@@ -35,7 +35,7 @@ export function MetricWidget({
   return (
     <DashboardWidget
       interactive
-      className="rounded-2xl border-card-border bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.08)]"
+      className="rounded-2xl border-[#d0d5dd] bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.08)]"
     >
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
