@@ -26,9 +26,7 @@ import {
   Mail,
   MoreHorizontal,
   Refresh,
-  Search,
   ShieldCheck,
-  Sort,
   Trash,
   User,
   UsersRound,
@@ -40,6 +38,15 @@ import {
   AdminMetricCard,
   AdminTabButton,
 } from "@/components/admin/ui/PulseAdminUI";
+import { MetricCardShell } from "@/components/ui/MetricCardShell";
+import { PulseCard } from "@/components/ui/PulseCard";
+import { ResizableGridTable } from "@/components/ui/ResizableGridTable";
+import {
+  ListClearButton,
+  ListFilterCard,
+  ListFilterField,
+  ListSearchField,
+} from "@/components/ui/ListFilterCard";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -208,12 +215,17 @@ const statusOptions: OrganizationStatus[] = [
 ];
 
 const riskOptions: WellnessRisk[] = ["Low", "Medium", "High", "Critical"];
-const sortOptions = [
-  { value: "Organization name", label: "Sort by: Organization (A-Z)" },
-  { value: "Employee count", label: "Sort by: Employees" },
-  { value: "Contract end date", label: "Sort by: Contract Expiry" },
-  { value: "Wellness risk", label: "Sort by: Wellness Risk" },
-  { value: "Latest activation", label: "Sort by: Latest Activation" },
+const organizationTableColumns = [
+  { key: "organization", label: "Organization", width: 240, minWidth: 200 },
+  { key: "industry", label: "Industry", width: 160, minWidth: 132 },
+  { key: "location", label: "Primary Location", width: 180, minWidth: 148 },
+  { key: "branches", label: "Branches", width: 92, minWidth: 84 },
+  { key: "employees", label: "Employees", width: 112, minWidth: 96 },
+  { key: "package", label: "Package", width: 196, minWidth: 156 },
+  { key: "contract", label: "Contract Period", width: 164, minWidth: 140 },
+  { key: "risk", label: "Wellness Risk", width: 132, minWidth: 116 },
+  { key: "status", label: "Status", width: 132, minWidth: 112 },
+  { key: "actions", label: "Actions", width: 88, minWidth: 76 },
 ];
 const roleLabelOptions = [
   "HR Manager",
@@ -399,7 +411,8 @@ export function AdminOrganizations() {
   const [countryFilter, setCountryFilter] = useState("All");
   const [townFilter, setTownFilter] = useState("All");
   const [expiryFilter, setExpiryFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("Organization name");
+  const sortBy = "Organization name";
+  const [filterResetSignal, setFilterResetSignal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [addOpen, setAddOpen] = useState(false);
@@ -527,54 +540,25 @@ export function AdminOrganizations() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard title="Total Organizations" value="24" detail="All client organizations" icon={Building2} />
-          <SummaryCard title="Active Contracts" value="18" detail="With active contracts" icon={ClipboardCheck} tone="success" />
-          <SummaryCard title="Contracts Expiring Soon" value="4" detail="Within 60 days" icon={Clock} tone="warning" />
-          <SummaryCard title="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} tone="danger" />
+          <MetricCardShell label="Total Organizations" value="24" detail="All client organizations" icon={Building2} />
+          <MetricCardShell label="Active Contracts" value="18" detail="With active contracts" icon={ClipboardCheck} />
+          <MetricCardShell label="Contracts Expiring Soon" value="4" detail="Within 60 days" icon={Clock} />
+          <MetricCardShell label="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} />
         </section>
 
-      <section className="rounded-2xl border border-[#d0d5dd] bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
-        <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
-          <label className="relative">
-            <Search className="pointer-events-none absolute right-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Search organizations..."
-              className="h-10 w-full rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:ring-4 focus:ring-primary/10"
-            />
-          </label>
-          <FilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
-          <FilterSelect label="Industry" value={industryFilter} options={["All", ...industries]} onChange={setIndustryFilter} />
-          <FilterSelect label="Package" value={packageFilter} options={["All", ...packageOptions]} onChange={setPackageFilter} />
-          <FilterSelect label="Wellness Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
-          <FilterSelect label="Country" value={countryFilter} options={["All", ...countries]} onChange={setCountryFilter} />
-        </div>
-        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(160px,0.9fr)_minmax(180px,1.1fr)_minmax(280px,1.7fr)_auto_1fr]">
-          <FilterSelect label="Town / Province" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
-          <FilterSelect label="Contract Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
-          <label className="relative">
-            <span className="sr-only">Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:ring-4 focus:ring-primary/10"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-3 text-[#43536b]">
-              <ArrowDown className="h-[18px] w-[18px]" aria-hidden="true" />
-              <Sort className="h-[18px] w-[18px]" aria-hidden="true" />
-              <Refresh className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-          </label>
-          <button
-            type="button"
+      <ListFilterCard
+        search={
+          <ListSearchField
+            value={query}
+            onChange={(value) => {
+              setQuery(value);
+              setPage(1);
+            }}
+            placeholder="Search organizations..."
+          />
+        }
+        actions={
+          <ListClearButton
             onClick={() => {
               setQuery("");
               setStatusFilter("All");
@@ -584,15 +568,21 @@ export function AdminOrganizations() {
               setCountryFilter("All");
               setTownFilter("All");
               setExpiryFilter("All");
-              setSortBy("Organization name");
+              setFilterResetSignal((value) => value + 1);
               setPage(1);
             }}
-            className="inline-flex h-10 items-center justify-center px-2 text-[12px] font-semibold text-primary transition hover:text-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-          >
-            Clear Filters
-          </button>
-        </div>
-      </section>
+          />
+        }
+        filterGridClassName="xl:grid-cols-[minmax(120px,0.85fr)_minmax(180px,1.2fr)_minmax(180px,1.2fr)_minmax(150px,1fr)_minmax(140px,1fr)_minmax(160px,1.05fr)_minmax(160px,1.05fr)_minmax(170px,1.1fr)]"
+      >
+        <ListFilterField key={`status-${filterResetSignal}`} label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
+        <ListFilterField key={`industry-${filterResetSignal}`} label="Industry" value={industryFilter} options={["All", ...industries]} onChange={setIndustryFilter} />
+        <ListFilterField key={`package-${filterResetSignal}`} label="Package" value={packageFilter} options={["All", ...packageOptions]} onChange={setPackageFilter} />
+        <ListFilterField key={`risk-${filterResetSignal}`} label="Wellness Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
+        <ListFilterField key={`country-${filterResetSignal}`} label="Country" value={countryFilter} options={["All", ...countries]} onChange={setCountryFilter} />
+        <ListFilterField key={`town-${filterResetSignal}`} label="Town / Province" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
+        <ListFilterField key={`expiry-${filterResetSignal}`} label="Contract Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
+      </ListFilterCard>
 
       {contractsExpiringSoon(organizations) > 0 ? (
         <StateBanner
@@ -603,39 +593,37 @@ export function AdminOrganizations() {
       ) : null}
       {error ? <StateBanner tone="error" title="Unable to load organizations" detail={error} /> : null}
 
-      <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] gap-3 border-b border-[#d0d5dd] bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          {["Organization", "Industry", "Primary Location", "Branches", "Employees", "Package", "Contract Period", "Wellness Risk", "Status", "Actions"].map((label) => (
-            <span key={label} className="min-w-0">{label}</span>
-          ))}
-        </div>
-
+      <PulseCard className="overflow-hidden">
         {isLoading ? <LoadingState /> : null}
         {!isLoading && filteredOrganizations.length === 0 ? <EmptyState /> : null}
         {!isLoading && paginatedOrganizations.length > 0 ? (
-          <div className="divide-y divide-[#d0d5dd]">
-            {paginatedOrganizations.map((organization) => (
+          <ResizableGridTable
+            columns={organizationTableColumns}
+            rows={paginatedOrganizations}
+            getRowKey={(organization) => organization.id}
+            framed={false}
+            renderRow={(organization, gridTemplateColumns) => (
               <Link
-                key={organization.id}
                 href={`/admin/organizations/${organization.id}`}
-                className="grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                className="grid w-full cursor-pointer items-center px-5 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                style={{ gridTemplateColumns }}
               >
-                <span className="flex min-w-0 items-center gap-3">
+                <span className="flex min-w-0 items-center gap-3 pr-4">
                   <LogoMark organization={organization} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{organization.name}</span>
                     <span className="block truncate text-black/55">{organization.code}</span>
                   </span>
                 </span>
-                <span className="min-w-0 truncate text-black/70">{organization.industry}</span>
-                <span className="min-w-0 truncate text-black/70">
+                <span className="min-w-0 truncate pr-4 text-black/70">{organization.industry}</span>
+                <span className="min-w-0 truncate pr-4 text-black/70">
                   <span className="mr-2" aria-hidden="true">{countryFlag(organization.country)}</span>
                   {organization.primaryLocation}
                 </span>
-                <span>{displayBranchCount(organization)}</span>
-                <span>{organization.employees.toLocaleString()}</span>
-                <span className="min-w-0 truncate text-black/70">{organization.package}</span>
-                <span className="text-black/70">{formatDateRange(organization.contractStart, organization.contractEnd)}</span>
+                <span className="pr-4">{displayBranchCount(organization)}</span>
+                <span className="pr-4">{organization.employees.toLocaleString()}</span>
+                <span className="min-w-0 truncate pr-4 text-black/70">{organization.package}</span>
+                <span className="pr-4 text-black/70">{formatDateRange(organization.contractStart, organization.contractEnd)}</span>
                 <RiskBadge risk={organization.risk} />
                 <StatusBadge status={organization.status} />
                 <span className="flex justify-end gap-1">
@@ -647,8 +635,8 @@ export function AdminOrganizations() {
                   </span>
                 </span>
               </Link>
-            ))}
-          </div>
+            )}
+          />
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#d0d5dd] px-4 py-3">
@@ -686,7 +674,7 @@ export function AdminOrganizations() {
             </button>
           </div>
         </div>
-      </section>
+      </PulseCard>
 
       {addOpen ? (
         <AddOrganizationModal
@@ -887,63 +875,6 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
         </div>
       ) : null}
     </div>
-  );
-}
-
-function SummaryCard({
-  title,
-  value,
-  detail,
-  icon: Icon,
-  tone = "primary",
-}: {
-  title: string;
-  value: string;
-  detail: string;
-  icon: typeof Building2;
-  tone?: "primary" | "success" | "warning" | "danger";
-}) {
-  const toneClass =
-    tone === "success"
-      ? "text-success border-success/35 bg-success/10"
-      : tone === "warning"
-        ? "text-warning border-warning/40 bg-warning/10"
-        : tone === "danger"
-          ? "text-pulse-red border-pulse-red/35 bg-pulse-red/10"
-          : "text-primary border-primary/35 bg-primary/10";
-  return (
-    <div className="rounded-2xl border border-[#d0d5dd] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
-      <div className="flex items-center gap-4">
-        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border", toneClass)}>
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </span>
-        <div>
-          <p className="text-[12px] font-medium leading-4 text-black">{title}</p>
-          <p className="mt-1 text-[24px] font-semibold leading-7 text-black">{value}</p>
-        </div>
-      </div>
-      <p className="mt-5 text-[12px] leading-4 text-black/60">{detail}</p>
-    </div>
-  );
-}
-
-function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return (
-    <label className="relative">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:ring-4 focus:ring-primary/10"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option === "All" ? label : option}
-          </option>
-        ))}
-      </select>
-      <ArrowDown className="pointer-events-none absolute right-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
-    </label>
   );
 }
 
