@@ -544,7 +544,7 @@ export function AdminOrganizations() {
                 setPage(1);
               }}
               placeholder="Search organizations..."
-              className="h-10 w-full rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-full rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:ring-4 focus:ring-primary/10"
             />
           </label>
           <FilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
@@ -561,7 +561,7 @@ export function AdminOrganizations() {
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:ring-4 focus:ring-primary/10"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -934,7 +934,7 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+        className="h-10 w-full appearance-none rounded-lg border border-[#d0d5dd] bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:ring-4 focus:ring-primary/10"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -1164,12 +1164,12 @@ function ReadonlyField({
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-9 w-full rounded-lg border border-[#d0d5dd] bg-white px-3 text-[12px] text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
+          className="h-9 w-full rounded-lg border border-[#d0d5dd] bg-white px-3 text-[12px] text-black outline-none transition focus:ring-4 focus:ring-primary/10"
         >
           {(options ?? [value]).map((option) => <option key={option}>{option}</option>)}
         </select>
       ) : editable ? (
-        <span className="flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-3 focus-within:border-primary/45 focus-within:ring-4 focus-within:ring-primary/10">
+        <span className="flex h-9 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-white px-3 focus-within:ring-4 focus-within:ring-primary/10">
           {Icon ? <Icon className="h-[18px] w-[18px] shrink-0 text-[#475467]" aria-hidden="true" /> : null}
           <input
             value={value}
@@ -1817,7 +1817,7 @@ function AddDepartmentModal({
           <TextInput label="Department Name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
           <label className="grid gap-1 text-[12px] font-semibold text-black">
             Branch
-            <select value={form.branchId} onChange={(event) => setForm((current) => ({ ...current, branchId: event.target.value }))} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
+            <select value={form.branchId} onChange={(event) => setForm((current) => ({ ...current, branchId: event.target.value }))} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:ring-4 focus:ring-primary/10">
               {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
             </select>
           </label>
@@ -2183,7 +2183,7 @@ function DetailLogoUpload({
       <label
         className={cn(
           "flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-[#d0d5dd] bg-white px-4 text-[12px] text-black/65 transition",
-          disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer hover:border-primary/40 hover:text-black",
+          disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer hover:text-black",
         )}
       >
         <Download className="h-[18px] w-[18px] rotate-180 text-black/55" aria-hidden="true" />
@@ -2260,7 +2260,7 @@ function TextInput({ label, value, onChange, required = false }: { label: string
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10" />
+      <input required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:ring-4 focus:ring-primary/10" />
     </label>
   );
 }
@@ -2269,7 +2269,7 @@ function SelectInput({ label, value, options, onChange }: { label: string; value
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-[#d0d5dd] px-3 text-[12px] font-normal outline-none transition focus:ring-4 focus:ring-primary/10">
         {options.map((option) => <option key={option}>{option}</option>)}
       </select>
     </label>

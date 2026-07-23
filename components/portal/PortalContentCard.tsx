@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PulseCard } from "@/components/ui/PulseCard";
 import { cn } from "@/lib/utils/cn";
 
 type PortalContentCardProps = {
@@ -19,12 +20,7 @@ export function PortalContentCard({
   bodyClassName,
 }: PortalContentCardProps) {
   return (
-    <section
-      className={cn(
-        "rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
-        className,
-      )}
-    >
+    <PulseCard className={cn("bg-surface", className)}>
       {title || description || action ? (
         <div className="flex items-start justify-between gap-4 border-b border-[#d0d5dd] px-5 py-4">
           <div>
@@ -39,6 +35,6 @@ export function PortalContentCard({
         </div>
       ) : null}
       <div className={cn("p-5", bodyClassName)}>{children}</div>
-    </section>
+    </PulseCard>
   );
 }

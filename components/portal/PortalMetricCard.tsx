@@ -1,4 +1,5 @@
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
+import { PulseCard } from "@/components/ui/PulseCard";
 import { cn } from "@/lib/utils/cn";
 
 type PortalMetricCardProps = {
@@ -25,7 +26,7 @@ export function PortalMetricCard({
   tone = "primary",
 }: PortalMetricCardProps) {
   return (
-    <article className="rounded-lg border border-[#d0d5dd] bg-surface p-5 shadow-[0_12px_30px_var(--card-shadow)]">
+    <PulseCard as="article" className="bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{label}</p>
@@ -43,6 +44,6 @@ export function PortalMetricCard({
         </span>
       </div>
       <p className="mt-5 text-sm leading-6 text-subtle">{detail}</p>
-    </article>
+    </PulseCard>
   );
 }

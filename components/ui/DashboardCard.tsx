@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PulseCard } from "@/components/ui/PulseCard";
 import { cn } from "@/lib/utils/cn";
 
 type DashboardCardProps = {
@@ -8,13 +9,8 @@ type DashboardCardProps = {
 
 export function DashboardCard({ children, className }: DashboardCardProps) {
   return (
-    <section
-      className={cn(
-        "rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
-        className,
-      )}
-    >
+    <PulseCard className={cn("bg-surface", className)}>
       {children}
-    </section>
+    </PulseCard>
   );
 }

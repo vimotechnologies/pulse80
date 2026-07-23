@@ -10,7 +10,7 @@ type FormInputProps = InputHTMLAttributes<HTMLInputElement> & {
 
 const stateStyles = {
   default:
-    "border-[#d0d5dd] bg-surface focus:border-primary focus:ring-primary/10",
+    "border-[#d0d5dd] bg-surface focus:ring-primary/10",
   error:
     "border-pulse-red/50 bg-pulse-red/5 focus:border-pulse-red focus:ring-pulse-red/10",
   warning:

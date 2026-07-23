@@ -20,7 +20,7 @@ export function TopNav() {
           <input
             type="search"
             placeholder="Search organizations, reports, practitioners"
-            className="h-11 w-full max-w-xl rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-4 text-sm outline-none transition placeholder:text-muted focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
+            className="h-11 w-full max-w-xl rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-4 text-sm outline-none transition placeholder:text-muted focus:bg-surface focus:ring-4 focus:ring-primary/10"
           />
         </div>
         <div className="ml-auto flex items-center gap-3">

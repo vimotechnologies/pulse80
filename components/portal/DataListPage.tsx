@@ -578,7 +578,7 @@ export function SearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted hover:border-primary/30 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
+        className="h-11 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted focus:bg-surface focus:ring-4 focus:ring-primary/10"
       />
     </div>
   );
@@ -602,7 +602,7 @@ export function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-lg border border-[#d0d5dd] bg-surface px-3 text-sm text-navy outline-none transition hover:border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="mt-2 h-10 w-full rounded-lg border border-[#d0d5dd] bg-surface px-3 text-sm text-navy outline-none transition focus:ring-4 focus:ring-primary/10"
       >
         {filter.options.map((option) => (
           <option key={option}>{option}</option>
@@ -632,7 +632,7 @@ export function FilterTabs({
             "h-10 rounded-lg border px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
             activeTab === tab
               ? "border-primary bg-primary text-white shadow-sm"
-              : "border-[#d0d5dd] bg-surface text-muted hover:border-primary/30 hover:text-navy",
+              : "border-[#d0d5dd] bg-surface text-muted hover:text-navy",
           )}
         >
           {tab}
@@ -839,7 +839,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:border-primary/30 hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         aria-label={`Open actions for ${record.title}`}
       >
         <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -856,7 +856,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
               <select
                 value={record.filters.role}
                 onChange={(event) => onRoleChange(event.target.value)}
-                className="mt-2 h-9 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                className="mt-2 h-9 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg px-2 text-xs text-navy outline-none focus:ring-4 focus:ring-primary/10"
               >
                 {["Operations Lead", "Clinical Reviewer", "Finance", "Viewer"].map((role) => (
                   <option key={role}>{role}</option>
@@ -1041,7 +1041,7 @@ export function Pagination({
           <select
             value={rowsPerPage}
             onChange={(event) => onRowsPerPageChange(Number(event.target.value))}
-            className="h-9 rounded-lg border border-[#d0d5dd] bg-surface px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="h-9 rounded-lg border border-[#d0d5dd] bg-surface px-2 text-xs text-navy outline-none focus:ring-4 focus:ring-primary/10"
           >
             {[5, 10, 20].map((value) => (
               <option key={value} value={value}>

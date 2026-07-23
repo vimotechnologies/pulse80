@@ -41,7 +41,7 @@ export function PortalTopNav({
             <input
               type="search"
               placeholder={`Search ${portalName.toLowerCase()}`}
-              className="h-10 w-64 rounded-lg border border-[#d0d5dd] bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-64 rounded-lg border border-[#d0d5dd] bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <button

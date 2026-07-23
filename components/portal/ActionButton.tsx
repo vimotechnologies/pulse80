@@ -11,7 +11,7 @@ const variantStyles = {
   primary:
     "bg-primary text-white shadow-sm hover:bg-primary-light active:bg-primary disabled:bg-primary/45",
   secondary:
-    "border border-[#d0d5dd] bg-surface text-navy shadow-sm hover:border-primary/35 hover:bg-soft-bg active:bg-primary/10 disabled:text-muted",
+    "border border-[#d0d5dd] bg-surface text-navy shadow-sm hover:bg-soft-bg active:bg-primary/10 disabled:text-muted",
   ghost:
     "text-primary hover:bg-primary/10 active:bg-primary/15 disabled:text-muted",
 };

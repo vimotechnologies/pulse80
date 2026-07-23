@@ -45,7 +45,7 @@ export function PortalPlaceholderPage({
             {focus.map((item, index) => (
               <div
                 key={item}
-                className="rounded-lg border border-[#d0d5dd] bg-soft-bg p-4 transition hover:-translate-y-0.5 hover:border-primary/25 hover:bg-white"
+                className="rounded-lg border border-[#d0d5dd] bg-soft-bg p-4 transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-semibold text-navy">{item}</p>

@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "@/components/icons/IconsaxIcons";
+import { PulseCard } from "@/components/ui/PulseCard";
 import type { MetricCardData } from "@/types/dashboard";
 import { cn } from "@/lib/utils/cn";
 
@@ -15,7 +16,7 @@ export function MetricCard({ metric }: MetricCardProps) {
         : ArrowRight;
 
   return (
-    <article className="rounded-lg border border-[#d0d5dd] bg-surface p-5 shadow-[0_12px_30px_var(--card-shadow)]">
+    <PulseCard as="article" className="bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{metric.label}</p>
@@ -37,6 +38,6 @@ export function MetricCard({ metric }: MetricCardProps) {
         <TrendIcon className="h-[18px] w-[18px]" aria-hidden="true" />
         <span>{metric.change}</span>
       </div>
-    </article>
+    </PulseCard>
   );
 }

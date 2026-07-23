@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   PortalSidebarGroup,
@@ -26,6 +26,7 @@ export function PortalSidebar({
   onToggleCollapsed,
 }: PortalSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const items = portalConfigs[portalKey].items;
   const activeGroups = useMemo(
     () =>
@@ -119,6 +120,7 @@ export function PortalSidebar({
         <div className="mx-2 mb-3 border-t border-slate-200" />
         <button
           type="button"
+          onClick={() => router.push("/login")}
           className={cn(
             "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-normal text-subtle transition hover:bg-slate-100 hover:text-subtle",
             collapsed ? "justify-center px-0" : "gap-3 px-3",
