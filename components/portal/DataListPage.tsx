@@ -9,17 +9,23 @@ import {
   Download,
   Edit,
   Eye,
-  Filter,
   MoreHorizontal,
   Refresh,
-  Search,
-  Sort,
   Trash,
 } from "@/components/icons/IconsaxIcons";
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { FormInput } from "@/components/portal/FormInput";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import {
+  ListClearButton,
+  ListFilterCard,
+  ListFilterField,
+  ListSearchField,
+  practitionerFilterGridClass,
+} from "@/components/ui/ListFilterCard";
+import { MetricCardShell } from "@/components/ui/MetricCardShell";
+import { ResizableGridTable, type ResizableGridColumn } from "@/components/ui/ResizableGridTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
@@ -97,14 +103,6 @@ type DataListPageProps<RecordType extends DataRecord> = {
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
 };
 
-const metricToneStyles: Record<MetricTone, string> = {
-  primary: "border-primary/20 bg-primary/10 text-primary",
-  success: "border-success/20 bg-success/10 text-success",
-  warning: "border-warning/25 bg-warning/10 text-warning",
-  danger: "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
-  neutral: "border-[#d0d5dd] bg-soft-bg text-muted",
-};
-
 function field(record: DataRecord, label: string) {
   return record.fields.find((item) => item.label === label)?.value ?? "";
 }
@@ -134,11 +132,12 @@ export function DataListPage<RecordType extends DataRecord>({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState(columns[0]?.key ?? "title");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const sortKey = columns[0]?.key ?? "title";
+  const sortDirection: "asc" | "desc" = "asc";
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [filterResetSignal, setFilterResetSignal] = useState(0);
 
   const filteredRecords = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -195,6 +194,7 @@ export function DataListPage<RecordType extends DataRecord>({
     setFilters(Object.fromEntries(config.filters.map((item) => [item.key, "All"])));
     setActiveTab(config.tabs?.[0] ?? "All");
     setPage(1);
+    setFilterResetSignal((value) => value + 1);
   }
 
   function refreshList() {
@@ -204,15 +204,6 @@ export function DataListPage<RecordType extends DataRecord>({
       setLoading(false);
       showToast(`${config.title} refreshed with local mock data.`);
     }, 550);
-  }
-
-  function toggleSort(column: DataColumn<RecordType>) {
-    if (sortKey === column.key) {
-      setSortDirection((value) => (value === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(column.key);
-    setSortDirection("asc");
   }
 
   function submitModal() {
@@ -349,26 +340,14 @@ export function DataListPage<RecordType extends DataRecord>({
           setPage(1);
         }}
         placeholder={config.searchPlaceholder}
-        tabs={config.tabs}
-        activeTab={activeTab}
-        onTabChange={(value) => {
-          setActiveTab(value);
-          setPage(1);
-        }}
         filters={config.filters}
         values={filters}
         onFilterChange={(key, value) => {
           setFilters((items) => ({ ...items, [key]: value }));
           setPage(1);
         }}
-        sortOptions={columns}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={(value) => {
-          setSortKey(value);
-          setPage(1);
-        }}
-        onExport={() => showToast("Export prepared as a placeholder.")}
+        onClearFilters={resetFilters}
+        resetSignal={filterResetSignal}
       />
 
       {selectedIds.length > 0 ? (
@@ -390,9 +369,6 @@ export function DataListPage<RecordType extends DataRecord>({
           <DataTable
             columns={columns}
             records={pageRecords}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSort={toggleSort}
             onOpen={setSelected}
             enableBulkActions={enableBulkActions}
             selectedIds={selectedIds}
@@ -472,182 +448,63 @@ export function DataListPage<RecordType extends DataRecord>({
 export function ListSummaryMetric({ metric }: { metric: DataMetric }) {
   const Icon = metric.icon;
   return (
-    <DashboardWidget interactive className="p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
-            {metric.label}
-          </p>
-          <p className="mt-2 text-xl font-semibold text-navy">{metric.value}</p>
-          <p className="mt-1 text-xs leading-5 text-subtle">{metric.detail}</p>
-        </div>
-        <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg border", metricToneStyles[metric.tone])}>
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </span>
-      </div>
-    </DashboardWidget>
+    <MetricCardShell label={metric.label} value={metric.value} detail={metric.detail} icon={Icon} />
   );
 }
 
-export function DataToolbar<RecordType extends DataRecord>({
+export function DataToolbar({
   query,
   onQueryChange,
   placeholder,
-  tabs,
-  activeTab,
-  onTabChange,
   filters,
   values,
   onFilterChange,
-  sortOptions,
-  sortKey,
-  sortDirection,
-  onSortChange,
-  onExport,
+  onClearFilters,
+  resetSignal,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
   placeholder: string;
-  tabs?: string[];
-  activeTab: string;
-  onTabChange: (value: string) => void;
   filters: DataFilter[];
   values: Record<string, string>;
   onFilterChange: (key: string, value: string) => void;
-  sortOptions: DataColumn<RecordType>[];
-  sortKey: string;
-  sortDirection: "asc" | "desc";
-  onSortChange: (value: string) => void;
-  onExport: () => void;
+  onClearFilters: () => void;
+  resetSignal: number;
 }) {
   return (
-    <DashboardWidget className="p-4">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <SearchInput value={query} onChange={onQueryChange} placeholder={placeholder} />
-        <div className="flex flex-wrap items-center gap-2">
-          {tabs ? <FilterTabs tabs={tabs} activeTab={activeTab} onChange={onTabChange} /> : null}
-          <label className="flex h-10 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-surface px-3 text-xs font-semibold text-muted">
-            <Sort className="h-[18px] w-[18px]" aria-hidden="true" />
-            <select
-              value={sortKey}
-              onChange={(event) => onSortChange(event.target.value)}
-              className="bg-transparent text-navy outline-none"
-              aria-label="Sort records"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label} {sortKey === option.key ? `(${sortDirection})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <ActionButton variant="secondary" className="h-10 px-3" onClick={onExport}>
-            <Download className="mr-2 h-[18px] w-[18px]" aria-hidden="true" />
-            Export
-          </ActionButton>
-        </div>
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {filters.map((filterItem) => (
-          <FilterSelect
-            key={filterItem.key}
-            filter={filterItem}
-            value={values[filterItem.key] ?? "All"}
-            onChange={(value) => onFilterChange(filterItem.key, value)}
-          />
-        ))}
-      </div>
-    </DashboardWidget>
-  );
-}
-
-export function SearchInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" aria-hidden="true" />
-      <input
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="h-11 w-full rounded-lg border border-[#d0d5dd] bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted focus:bg-surface focus:ring-4 focus:ring-primary/10"
-      />
-    </div>
-  );
-}
-
-export function FilterSelect({
-  filter,
-  value,
-  onChange,
-}: {
-  filter: DataFilter;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="flex items-center gap-2 text-xs font-semibold text-muted">
-        <Filter className="h-[18px] w-[18px]" aria-hidden="true" />
-        {filter.label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-lg border border-[#d0d5dd] bg-surface px-3 text-sm text-navy outline-none transition focus:ring-4 focus:ring-primary/10"
-      >
-        {filter.options.map((option) => (
-          <option key={option}>{option}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-export function FilterTabs({
-  tabs,
-  activeTab,
-  onChange,
-}: {
-  tabs: string[];
-  activeTab: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => onChange(tab)}
-          className={cn(
-            "h-10 rounded-lg border px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-            activeTab === tab
-              ? "border-primary bg-primary text-white shadow-sm"
-              : "border-[#d0d5dd] bg-surface text-muted hover:text-navy",
-          )}
-        >
-          {tab}
-        </button>
+    <ListFilterCard
+      search={<ListSearchField value={query} onChange={onQueryChange} placeholder={placeholder} />}
+      actions={<ListClearButton onClick={onClearFilters} />}
+      filterGridClassName={practitionerFilterGridClass}
+    >
+      {filters.map((filterItem) => (
+        <ListFilterField
+          key={`${filterItem.key}-${resetSignal}`}
+          label={filterItem.label}
+          value={values[filterItem.key] ?? "All"}
+          options={filterItem.options}
+          onChange={(value) => onFilterChange(filterItem.key, value)}
+        />
       ))}
-    </div>
+    </ListFilterCard>
   );
+}
+
+function columnWidth(label: string, index: number) {
+  const normalized = label.toLowerCase();
+  if (index === 0) return 280;
+  if (normalized.includes("organization")) return 180;
+  if (normalized.includes("date") || normalized.includes("period")) return 150;
+  if (normalized.includes("services") || normalized.includes("impact")) return 190;
+  if (normalized.includes("practitioner") || normalized.includes("employee")) return 160;
+  if (normalized.includes("progress") || normalized.includes("readiness")) return 150;
+  if (normalized.includes("status") || normalized.includes("priority") || normalized.includes("risk")) return 132;
+  return 150;
 }
 
 export function DataTable<RecordType extends DataRecord>({
   columns,
   records,
-  sortKey,
-  sortDirection,
-  onSort,
   onOpen,
   renderActions,
   enableBulkActions,
@@ -656,9 +513,6 @@ export function DataTable<RecordType extends DataRecord>({
 }: {
   columns: DataColumn<RecordType>[];
   records: RecordType[];
-  sortKey: string;
-  sortDirection: "asc" | "desc";
-  onSort: (column: DataColumn<RecordType>) => void;
   onOpen: (record: RecordType) => void;
   renderActions: (record: RecordType) => ReactNode;
   enableBulkActions: boolean;
@@ -666,149 +520,95 @@ export function DataTable<RecordType extends DataRecord>({
   onSelectedIdsChange: (ids: string[]) => void;
 }) {
   const allSelected = records.length > 0 && records.every((record) => selectedIds.includes(record.id));
-
-  return (
-    <DashboardWidget className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-[980px] w-full border-separate border-spacing-0 text-left">
-          <DataTableHeader
-            columns={columns}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSort={onSort}
-            enableBulkActions={enableBulkActions}
-            allSelected={allSelected}
-            onToggleAll={() =>
-              onSelectedIdsChange(
-                allSelected
-                  ? selectedIds.filter((id) => !records.some((record) => record.id === id))
-                  : [...new Set([...selectedIds, ...records.map((record) => record.id)])],
-              )
-            }
-          />
-          <tbody>
-            {records.map((record) => (
-              <DataTableRow
-                key={record.id}
-                record={record}
-                columns={columns}
-                onOpen={() => onOpen(record)}
-                actions={renderActions(record)}
-                enableBulkActions={enableBulkActions}
-                selected={selectedIds.includes(record.id)}
-                onSelectedChange={(checked) =>
+  const tableColumns: ResizableGridColumn[] = [
+    ...(enableBulkActions
+      ? [
+          {
+            key: "select",
+            label: "Select",
+            width: 56,
+            minWidth: 48,
+            header: (
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() =>
                   onSelectedIdsChange(
-                    checked ? [...selectedIds, record.id] : selectedIds.filter((id) => id !== record.id),
+                    allSelected
+                      ? selectedIds.filter((id) => !records.some((record) => record.id === id))
+                      : [...new Set([...selectedIds, ...records.map((record) => record.id)])],
                   )
                 }
+                className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
+                aria-label="Select all rows"
               />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DashboardWidget>
-  );
-}
+            ),
+          },
+        ]
+      : []),
+    ...columns.map((column, index) => ({
+      key: column.key,
+      label: column.label,
+      width: columnWidth(column.label, index),
+      minWidth: index === 0 ? 220 : 112,
+    })),
+    {
+      key: "actions",
+      label: "Actions",
+      width: 96,
+      minWidth: 88,
+      headerClassName: "text-right",
+      header: <span className="block truncate text-right">Actions</span>,
+    },
+  ];
 
-export function DataTableHeader<RecordType extends DataRecord>({
-  columns,
-  sortKey,
-  sortDirection,
-  onSort,
-  enableBulkActions,
-  allSelected,
-  onToggleAll,
-}: {
-  columns: DataColumn<RecordType>[];
-  sortKey: string;
-  sortDirection: "asc" | "desc";
-  onSort: (column: DataColumn<RecordType>) => void;
-  enableBulkActions: boolean;
-  allSelected: boolean;
-  onToggleAll: () => void;
-}) {
   return (
-    <thead className="sticky top-0 z-10 bg-soft-bg">
-      <tr>
-        {enableBulkActions ? (
-          <th className="w-12 border-b border-[#d0d5dd] px-4 py-3">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={onToggleAll}
-              className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
-              aria-label="Select all rows"
-            />
-          </th>
-        ) : null}
-        {columns.map((column) => (
-          <th key={column.key} className={cn("border-b border-[#d0d5dd] px-4 py-3", column.className)}>
-            <button
-              type="button"
-              onClick={() => onSort(column)}
-              className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted transition hover:text-navy"
-            >
-              {column.label}
-              <Sort className={cn("h-[18px] w-[18px]", sortKey === column.key ? "text-primary" : "text-muted")} aria-hidden="true" />
-              {sortKey === column.key ? <span className="sr-only">sorted {sortDirection}</span> : null}
-            </button>
-          </th>
-        ))}
-        <th className="w-32 border-b border-[#d0d5dd] px-4 py-3 text-right text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
-          Actions
-        </th>
-      </tr>
-    </thead>
-  );
-}
-
-export function DataTableRow<RecordType extends DataRecord>({
-  record,
-  columns,
-  onOpen,
-  actions,
-  enableBulkActions,
-  selected,
-  onSelectedChange,
-}: {
-  record: RecordType;
-  columns: DataColumn<RecordType>[];
-  onOpen: () => void;
-  actions: ReactNode;
-  enableBulkActions: boolean;
-  selected: boolean;
-  onSelectedChange: (checked: boolean) => void;
-}) {
-  return (
-    <tr className="group border-b border-[#d0d5dd] transition hover:bg-soft-bg/70">
-      {enableBulkActions ? (
-        <td className="border-b border-[#d0d5dd] px-4 py-4">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={(event) => onSelectedChange(event.target.checked)}
-            onClick={(event) => event.stopPropagation()}
-            className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
-            aria-label={`Select ${record.title}`}
-          />
-        </td>
-      ) : null}
-      {columns.map((column) => (
-        <td
-          key={`${record.id}-${column.key}`}
-          className={cn("border-b border-[#d0d5dd] px-4 py-4 align-middle text-sm text-navy", column.className)}
+    <ResizableGridTable
+      columns={tableColumns}
+      rows={records}
+      getRowKey={(record) => record.id}
+      renderRow={(record, gridTemplateColumns) => (
+        <div
+          className="grid w-full cursor-pointer items-center px-5 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc]"
+          style={{ gridTemplateColumns }}
+          onClick={() => onOpen(record)}
         >
-          <button
-            type="button"
-            onClick={onOpen}
-            className="block w-full text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-          >
-            {column.render(record)}
-          </button>
-        </td>
-      ))}
-      <td className="border-b border-[#d0d5dd] px-4 py-4 text-right">{actions}</td>
-    </tr>
+          {enableBulkActions ? (
+            <span className="pr-4">
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(record.id)}
+                onChange={(event) =>
+                  onSelectedIdsChange(
+                    event.target.checked ? [...selectedIds, record.id] : selectedIds.filter((id) => id !== record.id),
+                  )
+                }
+                onClick={(event) => event.stopPropagation()}
+                className="h-4 w-4 rounded border-[#d0d5dd] text-primary focus:ring-primary"
+                aria-label={`Select ${record.title}`}
+              />
+            </span>
+          ) : null}
+          {columns.map((column) => (
+            <button
+              key={`${record.id}-${column.key}`}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpen(record);
+              }}
+              className={cn(
+                "min-w-0 pr-4 text-left text-[12px] text-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+                column.className,
+              )}
+            >
+              {column.render(record)}
+            </button>
+          ))}
+          <span className="flex justify-end">{renderActions(record)}</span>
+        </div>
+      )}
+    />
   );
 }
 
@@ -839,7 +639,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-black transition hover:bg-black hover:text-white active:scale-[0.96] active:bg-primary active:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         aria-label={`Open actions for ${record.title}`}
       >
         <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
