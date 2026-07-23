@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -42,6 +44,27 @@ const features = [
   },
 ];
 
+const demoLogins = [
+  {
+    label: "Admin Portal",
+    email: "admin@pulse80.com",
+    password: "admin123",
+    path: "/admin/dashboard",
+  },
+  {
+    label: "Client Portal",
+    email: "client@pulse80.com",
+    password: "client123",
+    path: "/client/dashboard",
+  },
+  {
+    label: "Practitioner Portal",
+    email: "health@pulse80.com",
+    password: "health123",
+    path: "/practitioner/dashboard",
+  },
+] as const;
+
 function iconTone(color: string) {
   switch (color) {
     case "red":
@@ -56,7 +79,30 @@ function iconTone(color: string) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const match = demoLogins.find(
+      (demo) =>
+        demo.email.toLowerCase() === email.trim().toLowerCase() &&
+        demo.password === password,
+    );
+
+    if (!match) {
+      setError("Enter a valid Pulse80 demo email and password.");
+      return;
+    }
+
+    setError("");
+    setIsSigningIn(true);
+    window.setTimeout(() => router.push(match.path), 350);
+  }
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#E6F5FF_0%,#F6FAFD_38%,#FFFFFF_100%)] px-2 py-2 text-[#071633] sm:px-5 sm:py-3 lg:px-6">
@@ -162,7 +208,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
+            <form className="mt-5 space-y-4 sm:mt-7 sm:space-y-5" onSubmit={handleSubmit}>
               <div>
                 <label
                   htmlFor="email"
@@ -176,6 +222,11 @@ export default function LoginPage() {
                   <input
                     id="email"
                     type="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setError("");
+                    }}
                     autoComplete="email"
                     placeholder="Enter your email"
                     className="pulse-login-input h-full w-full rounded-2xl bg-transparent pl-14 pr-5 text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
@@ -196,6 +247,11 @@ export default function LoginPage() {
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setError("");
+                    }}
                     autoComplete="current-password"
                     placeholder="Enter your password"
                     className="pulse-login-input h-full w-full rounded-2xl bg-transparent pl-14 pr-14 text-sm text-[#071633] outline-none placeholder:text-[#8090A7]"
@@ -229,12 +285,19 @@ export default function LoginPage() {
                 </button>
               </div>
 
+              {error ? (
+                <div className="rounded-2xl bg-[#FFF1F3] px-4 py-3 text-xs font-semibold leading-5 text-[#D51439]">
+                  {error}
+                </div>
+              ) : null}
+
               <button
-                type="button"
-                className="group flex h-11 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#1F73FF] to-[#0F63F4] text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow sm:h-[52px]"
+                type="submit"
+                disabled={isSigningIn}
+                className="group flex h-11 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#1F73FF] to-[#0F63F4] text-sm font-bold !text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow disabled:cursor-not-allowed disabled:opacity-70 sm:h-[52px]"
               >
-                Sign in
-                <ArrowRight className="h-[18px] w-[18px] transition group-hover:translate-x-1" />
+                {isSigningIn ? "Signing in..." : "Sign in"}
+                <ArrowRight className="h-[18px] w-[18px] !text-white transition group-hover:translate-x-1" />
               </button>
             </form>
 
