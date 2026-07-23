@@ -1,5 +1,5 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "@/components/icons/IconsaxIcons";
-import { PulseCard } from "@/components/ui/PulseCard";
+import { MetricCardShell } from "@/components/ui/MetricCardShell";
 import type { MetricCardData } from "@/types/dashboard";
 import { cn } from "@/lib/utils/cn";
 
@@ -16,21 +16,10 @@ export function MetricCard({ metric }: MetricCardProps) {
         : ArrowRight;
 
   return (
-    <PulseCard as="article" className="bg-surface p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-muted">{metric.label}</p>
-          <p className="mt-3 text-xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
-            {metric.value}
-          </p>
-        </div>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <metric.icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </span>
-      </div>
+    <MetricCardShell label={metric.label} value={metric.value} icon={metric.icon}>
       <div
         className={cn(
-          "mt-5 flex items-center gap-1.5 text-sm font-medium",
+          "mt-3 flex items-center gap-1.5 text-[12px] font-medium",
           metric.trend === "down" ? "text-pulse-red" : "text-success",
           metric.trend === "neutral" && "text-muted",
         )}
@@ -38,6 +27,6 @@ export function MetricCard({ metric }: MetricCardProps) {
         <TrendIcon className="h-[18px] w-[18px]" aria-hidden="true" />
         <span>{metric.change}</span>
       </div>
-    </PulseCard>
+    </MetricCardShell>
   );
 }

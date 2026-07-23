@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   AddCircle,
-  ArrowDown,
-  ArrowRotateLeft,
   CalendarCheck,
   CloseSquare,
   Download,
@@ -14,6 +12,15 @@ import {
   UsersRound,
 } from "@/components/icons/IconsaxIcons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { MetricCardShell } from "@/components/ui/MetricCardShell";
+import { ResizableGridTable } from "@/components/ui/ResizableGridTable";
+import {
+  ListClearButton,
+  ListFilterCard,
+  ListFilterField,
+  ListSearchField,
+  practitionerFilterGridClass,
+} from "@/components/ui/ListFilterCard";
 import { cn } from "@/lib/utils/cn";
 
 type PractitionerStatus = "Active" | "Inactive" | "Pending";
@@ -174,6 +181,17 @@ const practitioners: Practitioner[] = [
   },
 ];
 
+const practitionerTableColumns = [
+  { key: "practitioner", label: "Practitioner", width: 244, minWidth: 208 },
+  { key: "profession", label: "Profession", width: 180, minWidth: 160 },
+  { key: "location", label: "Location", width: 172, minWidth: 148 },
+  { key: "availability", label: "Availability", width: 136, minWidth: 120 },
+  { key: "verification", label: "Verification", width: 144, minWidth: 128 },
+  { key: "assignments", label: "Upcoming Assignments", width: 164, minWidth: 148 },
+  { key: "rating", label: "Rating", width: 112, minWidth: 96 },
+  { key: "status", label: "Status", width: 112, minWidth: 96 },
+];
+
 const filterOptions = {
   status: ["All", "Active", "Inactive", "Pending"],
   profession: ["All", "Occupational Health Physician", "Physiotherapist", "Clinical Psychologist", "General Practitioner", "Dietitian", "Optometrist", "Counsellor"],
@@ -195,16 +213,7 @@ export default function AdminPractitionersPage() {
     availability: "All",
     verification: "All",
   });
-  const [touchedFilters, setTouchedFilters] = useState<Record<FilterKey, boolean>>({
-    status: false,
-    profession: false,
-    country: false,
-    location: false,
-    availability: false,
-    verification: false,
-  });
-  const [sortBy, setSortBy] = useState("Name A-Z");
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [filterResetSignal, setFilterResetSignal] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPractitionerId, setSelectedPractitionerId] = useState<string | null>(null);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, PractitionerStatus>>({});
@@ -231,12 +240,8 @@ export default function AdminPractitionersPage() {
       return matchesQuery && matchesStatus && matchesProfession && matchesCountry && matchesLocation && matchesAvailability && matchesVerification;
     });
 
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "Assignments") return b.upcomingAssignments - a.upcomingAssignments;
-      if (sortBy === "Rating") return (b.rating ?? 0) - (a.rating ?? 0);
-      return a.name.localeCompare(b.name);
-    });
-  }, [filters, practitionerRecords, query, sortBy]);
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }, [filters, practitionerRecords, query]);
 
   const selectedPractitioner = practitionerRecords.find((practitioner) => practitioner.id === selectedPractitionerId) ?? null;
 
@@ -255,20 +260,11 @@ export default function AdminPractitionersPage() {
       availability: "All",
       verification: "All",
     });
-    setTouchedFilters({
-      status: false,
-      profession: false,
-      country: false,
-      location: false,
-      availability: false,
-      verification: false,
-    });
-    setSortBy("Name A-Z");
+    setFilterResetSignal((value) => value + 1);
   }
 
   function updateFilter(key: FilterKey, value: string) {
     setFilters((current) => ({ ...current, [key]: value }));
-    setTouchedFilters((current) => ({ ...current, [key]: true }));
   }
 
   return (
@@ -308,44 +304,18 @@ export default function AdminPractitionersPage() {
         <MetricCard icon={ShieldCheck} label="Credentials Expiring" value="7" detail="Require renewal" />
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.045)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="relative w-full max-w-xl">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-black/55" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name or license number"
-              className="h-11 w-full rounded-lg border border-[#d0d5dd] bg-white pl-11 pr-4 text-[14px] text-black outline-none transition placeholder:text-black/45 focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white active:scale-[0.98] active:bg-primary active:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-            >
-              <ArrowRotateLeft className="h-[18px] w-[18px]" aria-hidden="true" />
-              Clear Filters
-            </button>
-            <div className="flex rounded-lg bg-[#f2f4f7] p-1">
-              <ViewButton active={view === "list"} onClick={() => setView("list")} label="List" />
-              <ViewButton active={view === "grid"} onClick={() => setView("grid")} label="Grid" />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-[minmax(120px,0.85fr)_minmax(190px,1.35fr)_minmax(140px,1fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(170px,1.1fr)]">
-          <FilterSelect label="Status" value={filters.status} placeholder={!touchedFilters.status} options={filterOptions.status} onChange={(status) => updateFilter("status", status)} />
-          <FilterSelect label="Profession" value={filters.profession} placeholder={!touchedFilters.profession} options={filterOptions.profession} onChange={(profession) => updateFilter("profession", profession)} />
-          <FilterSelect label="Country" value={filters.country} placeholder={!touchedFilters.country} options={filterOptions.country} onChange={(country) => updateFilter("country", country)} />
-          <FilterSelect label="Location" value={filters.location} placeholder={!touchedFilters.location} options={filterOptions.location} onChange={(location) => updateFilter("location", location)} />
-          <FilterSelect label="Availability" value={filters.availability} placeholder={!touchedFilters.availability} options={filterOptions.availability} onChange={(availability) => updateFilter("availability", availability)} />
-          <FilterSelect label="Verification" value={filters.verification} placeholder={!touchedFilters.verification} options={filterOptions.verification} onChange={(verification) => updateFilter("verification", verification)} />
-          <FilterSelect label="Sort by" value={sortBy} options={["Name A-Z", "Assignments", "Rating"]} onChange={setSortBy} />
-        </div>
-      </section>
+      <ListFilterCard
+        search={<ListSearchField value={query} onChange={setQuery} placeholder="Search by name or license number" />}
+        actions={<ListClearButton onClick={clearFilters} />}
+        filterGridClassName={practitionerFilterGridClass}
+      >
+        <ListFilterField key={`status-${filterResetSignal}`} label="Status" value={filters.status} options={filterOptions.status} onChange={(status) => updateFilter("status", status)} />
+        <ListFilterField key={`profession-${filterResetSignal}`} label="Profession" value={filters.profession} options={filterOptions.profession} onChange={(profession) => updateFilter("profession", profession)} />
+        <ListFilterField key={`country-${filterResetSignal}`} label="Country" value={filters.country} options={filterOptions.country} onChange={(country) => updateFilter("country", country)} />
+        <ListFilterField key={`location-${filterResetSignal}`} label="Location" value={filters.location} options={filterOptions.location} onChange={(location) => updateFilter("location", location)} />
+        <ListFilterField key={`availability-${filterResetSignal}`} label="Availability" value={filters.availability} options={filterOptions.availability} onChange={(availability) => updateFilter("availability", availability)} />
+        <ListFilterField key={`verification-${filterResetSignal}`} label="Verification" value={filters.verification} options={filterOptions.verification} onChange={(verification) => updateFilter("verification", verification)} />
+      </ListFilterCard>
 
       {visiblePractitioners.length === 0 ? (
         <section className="rounded-lg bg-white p-10 text-center shadow-[0_12px_32px_rgba(15,23,42,0.045)]">
@@ -358,10 +328,8 @@ export default function AdminPractitionersPage() {
             Clear filters
           </button>
         </section>
-      ) : view === "list" ? (
-        <PractitionerTable practitioners={visiblePractitioners} onSelect={(practitioner) => setSelectedPractitionerId(practitioner.id)} />
       ) : (
-        <PractitionerGrid practitioners={visiblePractitioners} onSelect={(practitioner) => setSelectedPractitionerId(practitioner.id)} />
+        <PractitionerTable practitioners={visiblePractitioners} onSelect={(practitioner) => setSelectedPractitionerId(practitioner.id)} />
       )}
 
       <div className="flex flex-col gap-3 text-[12px] text-black/65 md:flex-row md:items-center md:justify-between">
@@ -421,18 +389,7 @@ function MetricCard({
   value: string;
   detail: string;
 }) {
-  return (
-    <div className="relative min-h-[104px] rounded-lg bg-white p-5 pr-16 shadow-[0_12px_32px_rgba(15,23,42,0.045)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.07)]">
-      <span className="absolute right-5 top-5 flex h-[18px] w-[18px] items-center justify-center text-black">
-        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-      </span>
-      <div>
-        <p className="text-[13px] font-medium text-black/75">{label}</p>
-        <p className="mt-1 font-semibold leading-7 text-black" style={{ fontSize: 24, lineHeight: "28px" }}>{value}</p>
-        <p className="mt-1 text-[12px] text-black/60">{detail}</p>
-      </div>
-    </div>
-  );
+  return <MetricCardShell label={label} value={value} detail={detail} icon={Icon} />;
 }
 
 function ToolbarButton({ icon: Icon, children, onClick }: { icon: typeof Download; children: string; onClick: () => void }) {
@@ -448,96 +405,41 @@ function ToolbarButton({ icon: Icon, children, onClick }: { icon: typeof Downloa
   );
 }
 
-function FilterSelect({
-  label,
-  value,
-  options,
-  placeholder = false,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  placeholder?: boolean;
-  onChange: (value: string) => void;
-}) {
-  const displayValue = placeholder && value === "All" ? label : value;
-  const selectValue = placeholder && value === "All" ? "" : value;
-
-  return (
-    <label className="group relative block h-9">
-      <span className="sr-only">{label}</span>
-      <span className="pointer-events-none flex h-9 w-full items-center truncate rounded-lg border border-[#d0d5dd] bg-white px-3 pr-8 text-[12px] font-medium text-black transition group-focus-within:ring-4 group-focus-within:ring-primary/10">
-        {displayValue}
-      </span>
-      <select
-        value={selectValue}
-        onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 h-9 w-full cursor-pointer appearance-none rounded-lg border border-[#d0d5dd] bg-transparent opacity-0 outline-none"
-        title={displayValue}
-      >
-        {placeholder && value === "All" ? (
-          <option value="" disabled>
-            {label}
-          </option>
-        ) : null}
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
-      </select>
-      <ArrowDown className="pointer-events-none absolute right-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-black/60" aria-hidden="true" />
-    </label>
-  );
-}
-
-function ViewButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "h-9 !rounded-[12px] px-4 text-[12px] font-semibold transition active:scale-[0.98] active:bg-primary active:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-        active ? "bg-white text-primary shadow-sm" : "text-black/65 hover:bg-black hover:text-white",
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
 function PractitionerTable({ practitioners, onSelect }: { practitioners: Practitioner[]; onSelect: (practitioner: Practitioner) => void }) {
   return (
-    <section className="overflow-hidden rounded-lg bg-white shadow-[0_12px_32px_rgba(15,23,42,0.045)]">
-      <div className="grid grid-cols-[1.35fr_1fr_0.95fr_0.75fr_0.8fr_0.9fr_0.55fr_0.6fr] gap-4 bg-[#f8fafc] px-5 py-3 text-[11px] font-semibold uppercase text-black/70">
-        <span>Practitioner</span><span>Profession</span><span>Location</span><span>Availability</span><span>Verification</span><span>Upcoming Assignments</span><span>Rating</span><span>Status</span>
-      </div>
-      {practitioners.map((practitioner) => (
+    <ResizableGridTable
+      columns={practitionerTableColumns}
+      rows={practitioners}
+      getRowKey={(practitioner) => practitioner.id}
+      renderRow={(practitioner, gridTemplateColumns) => (
         <button
-          key={practitioner.id}
           type="button"
           onClick={() => onSelect(practitioner)}
-          className="grid w-full cursor-pointer grid-cols-[1.35fr_1fr_0.95fr_0.75fr_0.8fr_0.9fr_0.55fr_0.6fr] items-center gap-4 border-t border-[#d0d5dd] px-5 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          className="grid w-full cursor-pointer items-center px-5 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          style={{ gridTemplateColumns }}
         >
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3 pr-4">
             <Avatar name={practitioner.name} />
             <div className="min-w-0">
               <p className="truncate font-semibold">{practitioner.name}</p>
               <p className="mt-1 truncate text-black/60">{practitioner.credential}</p>
             </div>
           </div>
-          <span className="leading-5">{practitioner.profession}</span>
-          <span className="leading-5">{practitioner.location}</span>
+          <span className="pr-4 leading-5">{practitioner.profession}</span>
+          <span className="pr-4 leading-5">{practitioner.location}</span>
           <AvailabilityBadge value={practitioner.availability} />
-          <span>
+          <span className="pr-4">
             <span className={cn("flex items-center gap-1 font-semibold", practitioner.verification === "Verified" ? "text-success" : "text-warning")}>
               <ShieldCheck className="h-[14px] w-[14px]" aria-hidden="true" />
               {practitioner.verification}
             </span>
             <span className="mt-1 block text-black/60">{practitioner.verificationBody}</span>
           </span>
-          <span>
+          <span className="pr-4">
             <span className="font-semibold">{practitioner.upcomingAssignments}</span>
             <span className="mt-1 block text-black/60">Next: {practitioner.nextAssignment}</span>
           </span>
-          <span>
+          <span className="pr-4">
             {practitioner.rating ? (
               <>
                 <span className="font-semibold text-black"><span className="text-warning">★</span> {practitioner.rating}</span>
@@ -552,36 +454,8 @@ function PractitionerTable({ practitioners, onSelect }: { practitioners: Practit
           </span>
           <StatusBadge status={practitioner.status} tone={practitioner.status === "Active" ? "success" : practitioner.status === "Pending" ? "warning" : "neutral"} />
         </button>
-      ))}
-    </section>
-  );
-}
-
-function PractitionerGrid({ practitioners, onSelect }: { practitioners: Practitioner[]; onSelect: (practitioner: Practitioner) => void }) {
-  return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {practitioners.map((practitioner) => (
-        <button
-          key={practitioner.id}
-          type="button"
-          onClick={() => onSelect(practitioner)}
-          className="rounded-lg bg-white p-5 text-left shadow-[0_12px_32px_rgba(15,23,42,0.045)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-        >
-          <div className="flex items-start gap-3">
-            <Avatar name={practitioner.name} />
-            <div className="min-w-0">
-              <h2 className="truncate text-[14px] font-semibold text-black">{practitioner.name}</h2>
-              <p className="mt-1 text-[12px] text-black/60">{practitioner.profession}</p>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-2 text-[12px] text-black">
-            <span>{practitioner.location}</span>
-            <AvailabilityBadge value={practitioner.availability} />
-            <span>{practitioner.upcomingAssignments} upcoming assignments</span>
-          </div>
-        </button>
-      ))}
-    </section>
+      )}
+    />
   );
 }
 

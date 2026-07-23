@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode, SVGAttributes } from "react";
+import { MetricCardShell } from "@/components/ui/MetricCardShell";
 import { cn } from "@/lib/utils/cn";
 
 type AdminIcon = ComponentType<SVGAttributes<SVGElement> & { size?: number | string; color?: string }>;
@@ -146,7 +147,6 @@ export function AdminMetricCard({
   value,
   label,
   subtext,
-  tone = "info",
 }: {
   icon: AdminIcon;
   value: string;
@@ -154,18 +154,5 @@ export function AdminMetricCard({
   subtext: string;
   tone?: keyof typeof badgeStyles;
 }) {
-  return (
-    <div className="pulse-metric-card">
-      <div className="flex items-center gap-3">
-        <span className={cn("pulse-metric-icon", badgeStyles[tone])}>
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <p className="pulse-metric-value">{value}</p>
-          <p className={pulseAdmin.text.label}>{label}</p>
-        </div>
-      </div>
-      <p className={cn(pulseAdmin.text.muted, "mt-3")}>{subtext}</p>
-    </div>
-  );
+  return <MetricCardShell label={label} value={value} detail={subtext} icon={Icon} />;
 }

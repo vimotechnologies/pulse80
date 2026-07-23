@@ -554,6 +554,16 @@ textarea:disabled {
   line-height: 16px;
 }
 
+.pulse-resizable-table th {
+  min-width: 96px;
+  overflow: hidden;
+  resize: horizontal;
+}
+
+.pulse-resizable-table th:first-child {
+  min-width: 48px;
+}
+
 .pulse-form-control {
   background: var(--pulse-field-bg);
   border: 1px solid var(--pulse-divider);

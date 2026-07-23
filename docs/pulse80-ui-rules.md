@@ -68,6 +68,21 @@ Pulse80 should feel light, clinical, minimal, enterprise, and premium. The inter
 - Do not style full page sections as floating cards.
 - Keep card radius at `rounded-lg` or similar restrained values unless a component already has an approved shape.
 - Use subtle borders and soft shadows.
+- Portal filter/search cards must use `components/ui/ListFilterCard.tsx`.
+- Portal metric cards must use `MetricCardShell`, `PortalMetricCard`, or a wrapper that delegates to the shared metric shell.
+- Portal cards should use `PulseCard` directly or through an approved wrapper; avoid local one-off card borders, shadows, or radius values.
+
+## List Tables
+
+- All portal list tables must feel related across Admin, Client, and Practitioner portals.
+- Use `ResizableGridTable` for CSS-grid list tables, especially custom operational tables like Organizations and Practitioners.
+- Use the shared `DataListPage` table for report, screening, result, activation, insight, recommendation, billing, user, client, and practitioner workspace lists.
+- Table row dividers must be straight grey lines using the Pulse80 divider color, not rounded or pill-like row borders.
+- Table columns should be resizable by the user.
+- Filter/search sections above tables must use the shared `ListFilterCard`, `ListSearchField`, `ListFilterField`, and `ListClearButton`.
+- Filter/search cards may contain only search, Clear Filters, and filter dropdown fields.
+- Do not place sort controls, export buttons, tabs, or list/grid view toggles inside filter/search cards.
+- Dropdowns should show the filter label as the first-view placeholder, then show `All` only after the user explicitly selects `All`.
 
 ## Forms
 
