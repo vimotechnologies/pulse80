@@ -12,20 +12,20 @@ const logoConfig = {
   full: {
     src: brand.assets.logoFull,
     alt: "Pulse80 logo",
-    width: 260,
-    height: 92,
+    width: 280,
+    height: 108,
   },
   "no-tagline": {
     src: brand.assets.logoNoTagline,
     alt: "Pulse80",
-    width: 190,
-    height: 58,
+    width: 210,
+    height: 68,
   },
   mark: {
     src: brand.assets.mark,
     alt: "Pulse80 mark",
     width: 44,
-    height: 44,
+    height: 53,
   },
 };
 

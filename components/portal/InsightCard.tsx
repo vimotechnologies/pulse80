@@ -28,7 +28,7 @@ export function InsightCard({ title, detail, tone = "primary" }: InsightCardProp
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "w-full cursor-pointer rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(7,22,51,0.07)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
+          "w-full cursor-pointer rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(20,43,83,0.07)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
           insightToneStyles[tone],
         )}
       >

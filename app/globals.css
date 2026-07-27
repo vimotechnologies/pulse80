@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6fafd;
-  --foreground: #071633;
-  --primary-blue: #4aaaea;
-  --light-blue: #6ab9ef;
-  --pulse-red: #d51439;
-  --dark-navy: #071633;
-  --soft-background: #f6fafd;
-  --card-border: #e4eef7;
+  --background: #f7f8fa;
+  --foreground: #142b53;
+  --primary-blue: #142b53;
+  --light-blue: #526580;
+  --pulse-red: #ba1325;
+  --dark-navy: #142b53;
+  --soft-background: #f7f8fa;
+  --card-border: #dfe3e8;
   --success-green: #10b981;
   --warning-amber: #f59e0b;
   --surface: #ffffff;
   --muted-text: #64748b;
   --subtle-text: #475569;
   --soft-text-on-navy: #e2e8f0;
-  --card-shadow: rgba(7, 22, 51, 0.05);
-  --elevated-shadow: rgba(7, 22, 51, 0.08);
-  --primary-shadow: rgba(74, 170, 234, 0.26);
-  --deep-shadow: rgba(7, 22, 51, 0.12);
+  --card-shadow: rgba(20, 43, 83, 0.05);
+  --elevated-shadow: rgba(20, 43, 83, 0.08);
+  --primary-shadow: rgba(20, 43, 83, 0.22);
+  --deep-shadow: rgba(20, 43, 83, 0.12);
   --pulse-hover: #f8fafc;
   --pulse-admin-bg: #e4e7ec;
   --pulse-field-bg: #ffffff;
@@ -47,9 +47,9 @@
   --pulse-transition: 150ms ease;
   --pulse-transition-slow: 200ms ease;
   --pulse-card-shadow: 0 12px 30px rgba(15, 23, 42, 0.045);
-  --pulse-card-shadow-strong: 0 16px 40px rgba(7, 22, 51, 0.08);
+  --pulse-card-shadow-strong: 0 16px 40px rgba(20, 43, 83, 0.08);
   --pulse-control-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
-  --pulse-primary-shadow-soft: 0 8px 20px rgba(0, 102, 255, 0.18);
+  --pulse-primary-shadow-soft: 0 8px 20px rgba(20, 43, 83, 0.18);
 
   /* Typography controls: edit text spacing and font settings here. */
   --pulse-font-family: var(--font-axiforma), sans-serif;
@@ -226,6 +226,16 @@ select:disabled,
 textarea:disabled {
   background: var(--pulse-field-disabled);
   color: var(--muted-text);
+}
+
+.pulse-login-input,
+.pulse-login-input:focus {
+  height: 100%;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none !important;
+  padding: 0;
 }
 
 ::selection {

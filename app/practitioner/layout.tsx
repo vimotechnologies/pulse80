@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { portalConfigs } from "@/data/portal-phase-two";
+import { requireRole } from "@/lib/auth/session";
 
-export default function PractitionerPortalLayout({
+export default async function PractitionerPortalLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  await requireRole("practitioner");
   const config = portalConfigs.practitioner;
 
   return (

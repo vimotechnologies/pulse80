@@ -24,7 +24,7 @@ export function PortalTopNav({
         )}
       >
         <Image
-          src="/brand/pulse80-mark.png"
+          src="/brand/pulse80-mark.svg"
           alt="Pulse80"
           width={42}
           height={42}

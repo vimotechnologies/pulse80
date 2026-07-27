@@ -20,6 +20,7 @@ import {
   DocumentText as IconsaxDocumentText,
   Edit2 as IconsaxEdit,
   Eye as IconsaxEye,
+  EyeSlash as IconsaxEyeSlash,
   Filter as IconsaxFilter,
   Health as IconsaxHealth,
   Heart as IconsaxHeart,
@@ -93,6 +94,7 @@ export const CreditCard = withDefaultVariant(IconsaxCard);
 export const Download = withDefaultVariant(IconsaxDocumentDownload);
 export const Edit = withDefaultVariant(IconsaxEdit);
 export const Eye = withDefaultVariant(IconsaxEye);
+export const EyeSlash = withDefaultVariant(IconsaxEyeSlash);
 export const FileBarChart = withDefaultVariant(IconsaxDocumentText);
 export const FileText = withDefaultVariant(IconsaxDocumentText);
 export const Filter = withDefaultVariant(IconsaxFilter);

@@ -845,7 +845,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
         <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
       </button>
       {open ? (
-        <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-[#d0d5dd] bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
+        <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-[#d0d5dd] bg-surface p-1 text-left shadow-[0_18px_44px_rgba(20,43,83,0.14)]">
           <ActionItem icon={Eye} label="View details" onClick={onView} />
           <ActionItem icon={Edit} label="Edit locally" onClick={onEdit} />
           <ActionItem icon={Download} label="Download" onClick={onDownload} />
@@ -922,7 +922,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
   onAction: () => void;
 }) {
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]">
+    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(20,43,83,0.16)]">
       <div className="flex h-full flex-col">
         <div className="border-b border-[#d0d5dd] p-5">
           <div className="flex items-start justify-between gap-4">
@@ -1170,7 +1170,7 @@ function ListModal<RecordType extends DataRecord>({
   const isArchive = mode === "archive";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.18)]">
+      <div className="w-full max-w-2xl rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_24px_70px_rgba(20,43,83,0.18)]">
         <div className="border-b border-[#d0d5dd] p-5">
           <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
             {isArchive ? "Confirmation" : title}

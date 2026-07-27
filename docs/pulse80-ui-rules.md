@@ -43,8 +43,8 @@ Pulse80 should feel light, clinical, minimal, enterprise, and premium. The inter
 
 ## Logo Usage
 
-- Expanded portal sidebars use `/brand/pulse80-logo-no-tagline.png`.
-- Compact or collapsed areas use `/brand/pulse80-mark.png`.
+- Expanded portal sidebars use `/brand/pulse80-logo-no-tagline.svg`.
+- Compact or collapsed areas use `/brand/pulse80-mark.svg`.
 - The logo should not sit inside an unnecessary white box.
 - On mobile login, the logo should be centered above the form.
 
