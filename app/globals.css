@@ -238,6 +238,72 @@ textarea:disabled {
   padding: 0;
 }
 
+@media (max-width: 767px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .pulse-portal-content,
+  .pulse-portal-content > *,
+  .pulse-portal-content section,
+  .pulse-portal-content article {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pulse-portal-content :is(img, svg, canvas) {
+    max-width: 100%;
+  }
+
+  .pulse-portal-content [class*="overflow-hidden"]:has([class*=" grid-cols-["]) {
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pulse-portal-content [class*=" grid-cols-["] {
+    min-width: 680px;
+  }
+
+  .pulse-portal-content [role="dialog"],
+  .pulse-portal-content [aria-modal="true"] {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-height: 700px) {
+  .pulse-login-logo {
+    margin-bottom: 4px;
+  }
+
+  .pulse-login-logo > div {
+    height: 60px;
+  }
+
+  .pulse-login-card {
+    padding: 12px 16px;
+  }
+
+  .pulse-login-form {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .pulse-login-form > div > div:last-child,
+  .pulse-login-form > button[type="submit"] {
+    height: 40px;
+  }
+
+  .pulse-login-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+  }
+}
+
 ::selection {
   background: color-mix(in srgb, var(--primary-blue) 28%, white);
   color: var(--dark-navy);

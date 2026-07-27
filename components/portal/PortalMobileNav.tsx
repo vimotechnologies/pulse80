@@ -99,7 +99,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
 
       <div
         className={cn(
-          "fixed inset-x-3 bottom-24 z-50 overflow-hidden rounded-2xl border border-[#d0d5dd] bg-surface shadow-[0_20px_60px_rgba(20,43,83,0.18)] transition lg:hidden",
+          "pulse-mobile-menu fixed inset-x-2 bottom-24 z-50 overflow-hidden rounded-2xl border border-[#d0d5dd] bg-surface shadow-[0_20px_60px_rgba(20,43,83,0.18)] transition sm:inset-x-3 lg:hidden",
           expanded
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
@@ -145,7 +145,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
         </nav>
       </div>
 
-      <nav className="fixed inset-x-3 bottom-3 z-50 grid h-[76px] grid-cols-5 items-center rounded-[24px] border border-[#d0d5dd] bg-surface/95 px-2 shadow-[0_18px_55px_rgba(20,43,83,0.16)] backdrop-blur lg:hidden">
+      <nav className="pulse-mobile-nav fixed inset-x-2 bottom-2 z-50 grid h-[68px] grid-cols-5 items-center rounded-[22px] border border-[#d0d5dd] bg-surface/95 px-1 shadow-[0_18px_55px_rgba(20,43,83,0.16)] backdrop-blur sm:inset-x-3 sm:bottom-3 sm:h-[76px] sm:rounded-[24px] sm:px-2 lg:hidden">
         {quickItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
@@ -157,7 +157,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
                 type="button"
                 onClick={() => setExpanded((value) => !value)}
                 className={cn(
-                  "mx-auto flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold text-muted transition",
+                  "mx-auto flex h-12 w-12 flex-col items-center justify-center gap-1 rounded-2xl text-[9px] font-semibold text-muted transition sm:h-14 sm:w-14 sm:text-[10px]",
                   expanded && "bg-primary/10 text-primary",
                 )}
                 aria-expanded={expanded}
@@ -174,11 +174,11 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative mx-auto -mt-8 flex h-[72px] w-[72px] items-center justify-center rounded-[26px] bg-[linear-gradient(135deg,#142B53,#BA1325)] text-white shadow-[0_18px_34px_rgba(20,43,83,0.28)] transition hover:-translate-y-0.5"
+                className="relative mx-auto -mt-7 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[linear-gradient(135deg,#142B53,#BA1325)] text-white shadow-[0_18px_34px_rgba(20,43,83,0.28)] transition hover:-translate-y-0.5 sm:-mt-8 sm:h-[72px] sm:w-[72px] sm:rounded-[26px]"
                 aria-label="Dashboard"
                 onClick={() => setExpanded(false)}
               >
-                <span className="absolute inset-1 rounded-[22px] border border-white/25" />
+                <span className="absolute inset-1 rounded-[20px] border border-white/25 sm:rounded-[22px]" />
                 <Icon className="relative h-[18px] w-[18px]" aria-hidden="true" />
               </Link>
             );
@@ -190,7 +190,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
               href={item.href}
               onClick={() => setExpanded(false)}
               className={cn(
-                "mx-auto flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-semibold text-muted transition hover:bg-primary/10 hover:text-navy",
+                "mx-auto flex h-12 w-12 flex-col items-center justify-center gap-1 rounded-2xl text-[9px] font-semibold text-muted transition hover:bg-primary/10 hover:text-navy sm:h-14 sm:w-14 sm:text-[10px]",
                 active && "bg-primary/10 text-primary",
               )}
             >

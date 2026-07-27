@@ -39,14 +39,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#f7f8fa] px-5 py-10 text-navy sm:px-8">
+    <main className="pulse-login-page relative flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-[#f7f8fa] px-4 py-3 text-navy sm:px-8 sm:py-6">
       <div className="absolute inset-x-0 top-0 h-1.5 bg-[linear-gradient(90deg,#142B53_0%,#142B53_78%,#BA1325_78%,#BA1325_100%)]" />
       <div className="pointer-events-none absolute -left-40 -top-48 h-[430px] w-[430px] rounded-full border-[74px] border-navy/[0.035]" />
       <div className="pointer-events-none absolute -bottom-52 -right-36 h-[480px] w-[480px] rounded-full border-[82px] border-pulse-red/[0.045]" />
 
       <div className="relative w-full max-w-[480px]">
-        <div className="mb-7 flex justify-center">
-          <div className="relative h-[118px] w-full max-w-[390px]">
+        <div className="pulse-login-logo mb-2 flex justify-center sm:mb-4">
+          <div className="relative h-[76px] w-full max-w-[330px] sm:h-[96px] sm:max-w-[370px]">
             <Image
               src="/brand/pulse80-logo-full.svg"
               alt="Pulse80 — workplace wellness insights reimagined"
@@ -58,7 +58,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <section className="rounded-[24px] border border-[#dfe3e8] bg-white p-6 shadow-[0_24px_70px_rgba(20,43,83,0.1)] sm:p-9">
+        <section className="pulse-login-card rounded-[20px] border border-[#dfe3e8] bg-white p-4 shadow-[0_18px_48px_rgba(20,43,83,0.08)] sm:rounded-[24px] sm:p-7">
           <div className="text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-pulse-red">
               Secure portal access
@@ -68,7 +68,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+          <form className="pulse-login-form mt-5 space-y-3.5 sm:mt-6 sm:space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="text-[12px] font-semibold text-navy">
                 Email address
@@ -148,7 +148,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 flex items-center justify-center gap-2 border-t border-[#e3e6eb] pt-5 text-[10px] text-navy/45">
+          <div className="pulse-login-footer mt-4 flex items-center justify-center gap-2 border-t border-[#e3e6eb] pt-3 text-[10px] text-navy/45 sm:mt-5 sm:pt-4">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" />
             Protected Pulse80 environment
           </div>
