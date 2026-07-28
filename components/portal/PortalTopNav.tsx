@@ -24,12 +24,12 @@ export function PortalTopNav({
         )}
       >
         <Image
-          src="/brand/pulse80-mark.png"
+          src="/brand/pulse80-logo-no-tagline.svg"
           alt="Pulse80"
-          width={42}
-          height={42}
+          width={150}
+          height={46}
           priority
-          className="h-9 w-9 lg:hidden"
+          className="h-auto w-28 shrink-0 sm:w-32 lg:hidden"
         />
 
         <div className="ml-auto flex items-center gap-3">

@@ -64,7 +64,7 @@ export function PortalSidebar({
             aria-expanded={false}
           >
             <Image
-              src="/brand/pulse80-mark.png"
+              src="/brand/pulse80-mark.svg"
               alt="Pulse80"
               fill
               sizes="40px"
@@ -76,7 +76,7 @@ export function PortalSidebar({
           <>
             <div className="relative h-[52px] w-40 shrink-0">
               <Image
-                src="/brand/pulse80-logo-no-tagline.png"
+                src="/brand/pulse80-logo-no-tagline.svg"
                 alt="Pulse80"
                 fill
                 sizes="160px"

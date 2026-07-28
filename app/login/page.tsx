@@ -56,7 +56,27 @@ function iconTone(color: string) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = await loginAction({ email, password, remember });
+    if (!result.ok) {
+      setLoading(false);
+      setError(result.error);
+      return;
+    }
+    router.replace(result.destination);
+    router.refresh();
+  }
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#E6F5FF_0%,#F6FAFD_38%,#FFFFFF_100%)] px-2 py-2 text-[#071633] sm:px-5 sm:py-3 lg:px-6">
@@ -118,7 +138,6 @@ export default function LoginPage() {
               })}
             </div>
           </div>
-
         </div>
 
         <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-white px-5 py-4 sm:px-8 sm:py-6 lg:px-10 xl:px-12">
@@ -211,6 +230,7 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+            </div>
 
               <div className="flex items-center justify-between gap-3">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#445B7B] sm:gap-3 sm:text-sm">
@@ -225,9 +245,10 @@ export default function LoginPage() {
                   type="button"
                   className="text-xs font-semibold text-blue-600 hover:text-blue-700 sm:text-sm"
                 >
-                  Forgot password?
+                  <Eye className="h-[18px] w-[18px]" />
                 </button>
               </div>
+            </div>
 
               <button
                 type="button"
@@ -245,17 +266,20 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <footer className="hidden shrink-0 items-center justify-center gap-4 py-2 text-xs text-[#526887] lg:flex">
-        <ShieldCheck className="h-4 w-4" />
-        <span>Your data is secure and private.</span>
-        <span className="h-4 w-px bg-[#DDE8F3]" />
-        <button
-          type="button"
-          className="font-semibold text-blue-600 hover:text-blue-700"
-        >
-          Privacy Policy
-        </button>
-      </footer>
+            <a
+              href="mailto:support@pulse80insights.com?subject=Pulse80%20password%20assistance"
+              className="block text-center text-[10px] font-normal text-muted underline-offset-2 transition hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            >
+              Forgot password? Contact Pulse80 administrator.
+            </a>
+          </form>
+
+          <div className="mt-4 flex items-center justify-center gap-2 border-t border-[#e3e6eb] pt-3 text-[10px] text-navy/45 sm:mt-5 sm:pt-4">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            Protected Pulse80 environment
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

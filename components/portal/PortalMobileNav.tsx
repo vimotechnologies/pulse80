@@ -107,15 +107,15 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
       >
         <div className="flex items-center gap-3 border-b border-card-border px-4 py-4">
           <Image
-            src="/brand/pulse80-mark.png"
+            src="/brand/pulse80-logo-no-tagline.svg"
             alt="Pulse80"
-            width={40}
-            height={40}
-            className="h-9 w-9"
+            width={150}
+            height={46}
+            className="h-auto w-32 shrink-0"
           />
-          <div>
-            <p className="text-sm font-semibold text-navy">{portalName}</p>
-            <p className="text-xs text-muted">Portal navigation</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-navy">{portalName}</p>
+            <p className="truncate text-xs text-muted">Portal navigation</p>
           </div>
         </div>
 
