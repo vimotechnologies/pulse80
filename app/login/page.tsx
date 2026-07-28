@@ -48,7 +48,7 @@ export default function LoginPage() {
 
         <section className="rounded-[20px] border border-[#dfe3e8] bg-white p-4 shadow-[0_18px_48px_rgba(20,43,83,0.08)] sm:rounded-[24px] sm:p-7">
           <div className="text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-pulse-red">Secure portal access</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Secure portal access</p>
             <p className="mt-3 text-[13px] leading-6 text-navy/60">Sign in to continue to your Pulse80 workspace.</p>
           </div>
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="name@company.com"
-                  className="pulse-login-input h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-navy outline-none placeholder:text-navy/35"
+                  className="pulse-login-input h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-navy outline-none placeholder:text-[12px] placeholder:text-navy/35"
                 />
               </div>
             </div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between gap-4">
                 <label htmlFor="password" className="text-[12px] font-semibold text-navy">Password</label>
-                <button type="button" className="text-[11px] font-semibold text-pulse-red transition hover:text-navy">Forgot password?</button>
+                <button type="button" className="text-[12px] font-semibold text-navy transition hover:text-navy/70">Forgot password?</button>
               </div>
               <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-[#d8dde5] bg-white px-4 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
                 <Lock className="h-[18px] w-[18px] shrink-0 text-navy/45" aria-hidden="true" />
@@ -83,7 +83,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
-                  className="pulse-login-input h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-navy outline-none placeholder:text-navy/35"
+                  className="pulse-login-input h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-navy outline-none placeholder:text-[12px] placeholder:text-navy/35"
                 />
                 <button
                   type="button"
