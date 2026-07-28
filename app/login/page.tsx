@@ -48,7 +48,7 @@ export default function LoginPage() {
 
         <section className="rounded-[20px] border border-[#dfe3e8] bg-white p-4 shadow-[0_18px_48px_rgba(20,43,83,0.08)] sm:rounded-[24px] sm:p-7">
           <div className="text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Secure portal access</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-navy">Secure portal access</p>
             <p className="mt-3 text-[13px] leading-6 text-navy/60">Sign in to continue to your Pulse80 workspace.</p>
           </div>
 
@@ -70,10 +70,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between gap-4">
-                <label htmlFor="password" className="text-[12px] font-semibold text-navy">Password</label>
-                <button type="button" className="text-[12px] font-semibold text-navy transition hover:text-navy/70">Forgot password?</button>
-              </div>
+              <label htmlFor="password" className="text-[12px] font-semibold text-navy">Password</label>
               <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-[#d8dde5] bg-white px-4 transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
                 <Lock className="h-[18px] w-[18px] shrink-0 text-navy/45" aria-hidden="true" />
                 <input
@@ -116,6 +113,13 @@ export default function LoginPage() {
               {loading ? "Signing in…" : "Sign in securely"}
               <ArrowRight className="h-[18px] w-[18px] transition group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
+
+            <a
+              href="mailto:support@pulse80insights.com?subject=Pulse80%20password%20assistance"
+              className="block text-center text-[10px] font-normal text-muted underline-offset-2 transition hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            >
+              Forgot password? Contact Pulse80 administrator.
+            </a>
           </form>
 
           <div className="mt-4 flex items-center justify-center gap-2 border-t border-[#e3e6eb] pt-3 text-[10px] text-navy/45 sm:mt-5 sm:pt-4">
