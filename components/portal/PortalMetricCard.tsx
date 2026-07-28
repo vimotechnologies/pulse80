@@ -29,7 +29,7 @@ export function PortalMetricCard({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted">{label}</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
+          <p className="mt-3 text-xl font-semibold tracking-[var(--pulse-tracking-heading)] text-navy">
             {value}
           </p>
         </div>

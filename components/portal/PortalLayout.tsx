@@ -28,7 +28,7 @@ export function PortalLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-soft-bg">
+    <div className={cn("min-h-screen", portalKey === "admin" ? "bg-[#f7f7f7]" : "bg-soft-bg")}>
       <PortalSidebar
         portalKey={portalKey}
         portalName={portalName}

@@ -42,7 +42,7 @@ export function StatusBadge({ status, tone = "neutral" }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex h-7 items-center rounded-full border px-3 text-xs font-semibold capitalize",
+        "inline-flex h-7 items-center rounded-full border px-3 text-[12px] font-semibold capitalize",
         toneStyles[tone],
       )}
     >

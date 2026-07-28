@@ -14,7 +14,7 @@ import {
   Microscope,
   Settings,
 } from "@/components/icons/IconsaxIcons";
-import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
+import type { PortalNavEntry, PortalNavItem } from "@/components/portal/PortalSidebarItem";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
 
@@ -29,6 +29,10 @@ type QuickNavItem = PortalNavItem & {
 
 function findItem(items: PortalNavItem[], label: string) {
   return items.find((item) => item.label === label);
+}
+
+function flattenNavItems(items: PortalNavEntry[]): PortalNavItem[] {
+  return items.flatMap((item) => (item.type === "group" ? item.children : [item]));
 }
 
 function mobileItems(portalKey: PortalKey, items: PortalNavItem[]): QuickNavItem[] {
@@ -77,7 +81,7 @@ function mobileItems(portalKey: PortalKey, items: PortalNavItem[]): QuickNavItem
 export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const items = portalConfigs[portalKey].items;
+  const items = useMemo(() => flattenNavItems(portalConfigs[portalKey].items), [portalKey]);
   const quickItems = useMemo(() => mobileItems(portalKey, items), [items, portalKey]);
 
   return (

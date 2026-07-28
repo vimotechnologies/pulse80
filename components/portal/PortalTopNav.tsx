@@ -32,19 +32,18 @@ export function PortalTopNav({
           className="h-auto w-28 shrink-0 sm:w-32 lg:hidden"
         />
 
-        <div className="relative hidden flex-1 sm:block">
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            placeholder={`Search ${portalName.toLowerCase()}`}
-            className="h-11 w-full max-w-xl rounded-lg border border-card-border bg-soft-bg pl-11 pr-4 text-sm outline-none transition placeholder:text-muted focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
-          />
-        </div>
-
         <div className="ml-auto flex items-center gap-3">
+          <div className="relative hidden sm:block">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              placeholder={`Search ${portalName.toLowerCase()}`}
+              className="h-10 w-64 rounded-lg border border-card-border bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
+            />
+          </div>
           <button
             type="button"
             className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:text-navy"

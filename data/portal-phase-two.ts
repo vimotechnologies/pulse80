@@ -14,9 +14,10 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
+  User,
   UsersRound,
 } from "@/components/icons/IconsaxIcons";
-import type { PortalNavItem } from "@/components/portal/PortalSidebarItem";
+import type { PortalNavEntry } from "@/components/portal/PortalSidebarItem";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 
 export type PortalKey = "admin" | "client" | "practitioner";
@@ -31,7 +32,7 @@ export type PortalConfig = {
   dashboardDescription: string;
   userLabel: string;
   userRole: string;
-  items: PortalNavItem[];
+  items: PortalNavEntry[];
 };
 
 export type PortalMetric = {
@@ -42,6 +43,11 @@ export type PortalMetric = {
   icon: IconsaxIcon;
   progress?: number;
   actionLabel?: string;
+  trend?: {
+    value: string;
+    direction: "up" | "down";
+    tone: "success" | "danger";
+  };
 };
 
 export type PortalListItem = {
@@ -84,16 +90,44 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
     userRole: "Operations Lead",
     items: [
       { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      {
+        label: "Requests & Proposals",
+        href: "/admin/requests",
+        icon: FileText,
+      },
       { label: "Organizations", href: "/admin/organizations", icon: Building2 },
-      { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
-      { label: "Screenings", href: "/admin/screenings", icon: Microscope },
-      { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },
-      { label: "Results", href: "/admin/results", icon: HeartPulse },
-      { label: "Reports", href: "/admin/reports", icon: FileBarChart },
-      { label: "Insights", href: "/admin/insights", icon: BarChart3 },
-      { label: "Recommendations", href: "/admin/recommendations", icon: Lightbulb },
-      { label: "Billing", href: "/admin/billing", icon: CreditCard },
-      { label: "Users", href: "/admin/users", icon: UsersRound },
+      {
+        type: "group",
+        label: "Wellness Operations",
+        icon: CalendarCheck,
+        children: [
+          { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
+          { label: "Mobilisation", href: "/admin/mobilisation", icon: Activity },
+          { label: "Screenings", href: "/admin/screenings", icon: Microscope },
+          { label: "Results", href: "/admin/results", icon: HeartPulse },
+        ],
+      },
+      {
+        type: "group",
+        label: "Practitioner Network",
+        icon: Stethoscope,
+        children: [
+          { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },
+          { label: "Verification", href: "/admin/practitioner-verification", icon: ShieldCheck },
+          { label: "Assignments", href: "/admin/practitioner-assignments", icon: ClipboardCheck },
+        ],
+      },
+      {
+        type: "group",
+        label: "Intelligence",
+        icon: BarChart3,
+        children: [
+          { label: "Reports", href: "/admin/reports", icon: FileBarChart },
+          { label: "Insights", href: "/admin/insights", icon: BarChart3 },
+          { label: "Recommendations", href: "/admin/recommendations", icon: Lightbulb },
+        ],
+      },
+      { label: "Users & Roles", href: "/admin/users", icon: UsersRound },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
@@ -130,7 +164,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
       { label: "Dashboard", href: "/practitioner/dashboard", icon: LayoutDashboard },
       { label: "Assignments", href: "/practitioner/assignments", icon: CalendarCheck },
       { label: "Screenings", href: "/practitioner/screenings", icon: ClipboardCheck },
-      { label: "Profile", href: "/practitioner/profile", icon: Stethoscope },
+      { label: "Profile", href: "/practitioner/profile", icon: User },
       { label: "Documents", href: "/practitioner/documents", icon: FileText },
       { label: "Payments", href: "/practitioner/payments", icon: CreditCard },
       { label: "Settings", href: "/practitioner/settings", icon: Settings },
@@ -142,49 +176,52 @@ export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
   admin: {
     metrics: [
       {
-        label: "Active Organizations",
-        value: "42",
-        detail: "36 retained accounts, 6 onboarding",
+        label: "Upcoming Wellness Days",
+        value: "24",
+        detail: "Next: ACME Corp on May 24",
         tone: "primary",
-        icon: Building2,
-        progress: 86,
-        actionLabel: "View organizations",
-      },
-      {
-        label: "Upcoming Activations",
-        value: "18",
-        detail: "6 scheduled this week",
-        tone: "warning",
         icon: CalendarCheck,
-        progress: 68,
-        actionLabel: "Open schedule",
+        trend: {
+          value: "18% vs last week",
+          direction: "up",
+          tone: "success",
+        },
       },
       {
-        label: "Verified Practitioners",
-        value: "126",
-        detail: "38 available today",
+        label: "Pending Client Approvals",
+        value: "12",
+        detail: "4 proposals awaiting review",
+        tone: "danger",
+        icon: ClipboardCheck,
+        trend: {
+          value: "8% vs last week",
+          direction: "down",
+          tone: "danger",
+        },
+      },
+      {
+        label: "Practitioners to Mobilise",
+        value: "36",
+        detail: "Across 9 upcoming events",
         tone: "success",
         icon: Stethoscope,
-        progress: 82,
-        actionLabel: "Review capacity",
+        trend: {
+          value: "5% vs last week",
+          direction: "down",
+          tone: "success",
+        },
       },
       {
-        label: "Reports Published",
-        value: "87",
-        detail: "12 published this month",
-        tone: "primary",
+        label: "Reports Awaiting Review",
+        value: "7",
+        detail: "Across 5 organisations",
+        tone: "danger",
         icon: FileBarChart,
-        progress: 74,
-        actionLabel: "View reports",
-      },
-      {
-        label: "Employees Reached",
-        value: "31.4k",
-        detail: "+3.2k this quarter",
-        tone: "success",
-        icon: ClipboardCheck,
-        progress: 79,
-        actionLabel: "View reach",
+        trend: {
+          value: "17% vs last week",
+          direction: "up",
+          tone: "danger",
+        },
       },
     ],
     sections: [
@@ -649,11 +686,23 @@ export const placeholderPages: Record<
     description: "Manage client organization profiles, contacts, segments, and account health.",
     focus: ["Organization registry", "Contract status", "Client contacts"],
   },
+  "/admin/requests": {
+    eyebrow: "Admin Operations",
+    title: "Requests & Proposals",
+    description: "Review inbound wellness requests, proposal drafts, and commercial handoff readiness.",
+    focus: ["Pending requests", "Proposal drafts", "Client handoff"],
+  },
   "/admin/activations": {
     eyebrow: "Admin Operations",
     title: "Activations",
     description: "Plan, schedule, and monitor onsite and virtual wellness activations.",
     focus: ["Activation calendar", "Readiness checklist", "Delivery status"],
+  },
+  "/admin/mobilisation": {
+    eyebrow: "Admin Operations",
+    title: "Mobilisation",
+    description: "Coordinate pre-activation confirmations, site readiness, and employee communication tasks.",
+    focus: ["Site readiness", "Employee notices", "Confirmation queue"],
   },
   "/admin/screenings": {
     eyebrow: "Admin Operations",
@@ -666,6 +715,18 @@ export const placeholderPages: Record<
     title: "Practitioners",
     description: "Manage verified practitioner profiles, availability, documents, and assignments.",
     focus: ["Credentialing", "Availability", "Assignment history"],
+  },
+  "/admin/practitioner-verification": {
+    eyebrow: "Admin Operations",
+    title: "Practitioner Verification",
+    description: "Review practitioner credentials, document expiry, and verification readiness.",
+    focus: ["Credential queue", "Document expiry", "Verification notes"],
+  },
+  "/admin/practitioner-assignments": {
+    eyebrow: "Admin Operations",
+    title: "Practitioner Assignments",
+    description: "Match practitioners to activations, monitor coverage, and flag assignment gaps.",
+    focus: ["Coverage planning", "Assignment gaps", "Capacity matching"],
   },
   "/admin/results": {
     eyebrow: "Admin Operations",

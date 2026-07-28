@@ -1,6 +1,5 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { AdminOrganizations } from "@/components/admin/AdminOrganizations";
 
 export default function AdminOrganizationsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/organizations"]} />;
+  return <AdminOrganizations />;
 }
