@@ -10,10 +10,12 @@ import {
   FileBarChart,
   FileText,
   LayoutDashboard,
+  Logout,
   Menu,
   Microscope,
   Settings,
 } from "@/components/icons/IconsaxIcons";
+import { logoutAction } from "@/app/actions/auth";
 import type { PortalNavEntry, PortalNavItem } from "@/components/portal/PortalSidebarItem";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
@@ -142,6 +144,15 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
               </Link>
             );
           })}
+          <form action={logoutAction} className="mt-2 border-t border-card-border pt-2">
+            <button
+              type="submit"
+              className="flex h-12 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-pulse-red transition hover:bg-pulse-red/10"
+            >
+              <Logout className="h-5 w-5" aria-hidden="true" />
+              Sign out
+            </button>
+          </form>
         </nav>
       </div>
 

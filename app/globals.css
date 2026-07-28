@@ -26,6 +26,7 @@
   --pulse-tracking-title: -0.02em;
   --pulse-tracking-heading: -0.025em;
   --pulse-tracking-eyebrow: -0.08em;
+  --pulse-login-copy-size: 13px;
 }
 
 @theme inline {
@@ -74,6 +75,46 @@ select {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 76%, var(--light-blue)), var(--soft-background) 48%, color-mix(in srgb, var(--surface) 82%, var(--soft-background))),
     var(--soft-background);
+}
+
+.pulse-login-page {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.pulse-login-eyebrow {
+  color: var(--dark-navy);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pulse-login-copy,
+.pulse-login-submit,
+.pulse-login-input,
+.pulse-login-input::placeholder {
+  font-size: var(--pulse-login-copy-size);
+}
+
+.pulse-login-help {
+  color: var(--muted-text);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pulse-login-help-link {
+  color: var(--dark-navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pulse-login-help-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .pulse-login-card {

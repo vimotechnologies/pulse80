@@ -11,6 +11,7 @@ import {
 import { ArrowLeft2, Logout } from "@/components/icons/IconsaxIcons";
 import { portalConfigs, type PortalKey } from "@/data/portal-phase-two";
 import { cn } from "@/lib/utils/cn";
+import { logoutAction } from "@/app/actions/auth";
 
 type PortalSidebarProps = {
   portalKey: PortalKey;
@@ -117,23 +118,20 @@ export function PortalSidebar({
 
       <div className="px-3 pb-4">
         <div className="mx-2 mb-3 border-t border-slate-200" />
-        <button
-          type="button"
-          className={cn(
-            "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
-            collapsed ? "justify-center px-0" : "gap-3 px-3",
-          )}
-          style={{ fontSize: "14px", lineHeight: "20px" }}
-          aria-label="Sign out"
-          title={collapsed ? "Sign out" : undefined}
-        >
-          <Logout className="h-5 w-5 text-black" aria-hidden="true" />
-          {!collapsed ? (
-            <span className="leading-5" style={{ fontSize: "14px", lineHeight: "20px" }}>
-              Sign out
-            </span>
-          ) : null}
-        </button>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className={cn(
+              "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-medium leading-5 text-black transition hover:bg-slate-100 hover:text-black",
+              collapsed ? "justify-center px-0" : "gap-3 px-3",
+            )}
+            aria-label="Sign out"
+            title={collapsed ? "Sign out" : undefined}
+          >
+            <Logout className="h-5 w-5 text-black" aria-hidden="true" />
+            {!collapsed ? <span>Sign out</span> : null}
+          </button>
+        </form>
       </div>
     </aside>
   );

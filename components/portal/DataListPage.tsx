@@ -21,6 +21,14 @@ import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { FormInput } from "@/components/portal/FormInput";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  UnifiedTablePagination,
+  UnifiedTableSurface,
+  UnifiedTableViewport,
+  unifiedTableCellClass,
+  unifiedTableHeaderClass,
+} from "@/components/ui/UnifiedDataTable";
+import { UnifiedMetricCard } from "@/components/ui/UnifiedMetricCard";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
@@ -95,14 +103,6 @@ type DataListPageProps<RecordType extends DataRecord> = {
   enableBulkActions?: boolean;
   onCycleStatus?: (record: RecordType) => Partial<RecordType>;
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
-};
-
-const metricToneStyles: Record<MetricTone, string> = {
-  primary: "border-primary/20 bg-primary/10 text-primary",
-  success: "border-success/20 bg-success/10 text-success",
-  warning: "border-warning/25 bg-warning/10 text-warning",
-  danger: "border-pulse-red/20 bg-pulse-red/10 text-pulse-red",
-  neutral: "border-card-border bg-soft-bg text-muted",
 };
 
 function field(record: DataRecord, label: string) {
@@ -397,6 +397,19 @@ export function DataListPage<RecordType extends DataRecord>({
             enableBulkActions={enableBulkActions}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
+            pagination={
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                rowsPerPage={rowsPerPage}
+                totalRows={sortedRecords.length}
+                onPageChange={setPage}
+                onRowsPerPageChange={(value) => {
+                  setRowsPerPage(value);
+                  setPage(1);
+                }}
+              />
+            }
             renderActions={(record) => (
               <RowActionMenu
                 record={record}
@@ -421,17 +434,6 @@ export function DataListPage<RecordType extends DataRecord>({
                 }
               />
             )}
-          />
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            rowsPerPage={rowsPerPage}
-            totalRows={sortedRecords.length}
-            onPageChange={setPage}
-            onRowsPerPageChange={(value) => {
-              setRowsPerPage(value);
-              setPage(1);
-            }}
           />
         </>
       ) : null}
@@ -470,22 +472,13 @@ export function DataListPage<RecordType extends DataRecord>({
 }
 
 export function ListSummaryMetric({ metric }: { metric: DataMetric }) {
-  const Icon = metric.icon;
   return (
-    <DashboardWidget interactive className="p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
-            {metric.label}
-          </p>
-          <p className="mt-2 text-xl font-semibold text-navy">{metric.value}</p>
-          <p className="mt-1 text-xs leading-5 text-subtle">{metric.detail}</p>
-        </div>
-        <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg border", metricToneStyles[metric.tone])}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-      </div>
-    </DashboardWidget>
+    <UnifiedMetricCard
+      label={metric.label}
+      value={metric.value}
+      detail={metric.detail}
+      icon={metric.icon}
+    />
   );
 }
 
@@ -653,6 +646,7 @@ export function DataTable<RecordType extends DataRecord>({
   enableBulkActions,
   selectedIds,
   onSelectedIdsChange,
+  pagination,
 }: {
   columns: DataColumn<RecordType>[];
   records: RecordType[];
@@ -664,13 +658,14 @@ export function DataTable<RecordType extends DataRecord>({
   enableBulkActions: boolean;
   selectedIds: string[];
   onSelectedIdsChange: (ids: string[]) => void;
+  pagination: ReactNode;
 }) {
   const allSelected = records.length > 0 && records.every((record) => selectedIds.includes(record.id));
 
   return (
-    <DashboardWidget className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-[980px] w-full border-separate border-spacing-0 text-left">
+    <UnifiedTableSurface>
+      <UnifiedTableViewport>
+        <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left">
           <DataTableHeader
             columns={columns}
             sortKey={sortKey}
@@ -705,8 +700,9 @@ export function DataTable<RecordType extends DataRecord>({
             ))}
           </tbody>
         </table>
-      </div>
-    </DashboardWidget>
+      </UnifiedTableViewport>
+      {pagination}
+    </UnifiedTableSurface>
   );
 }
 
@@ -728,10 +724,10 @@ export function DataTableHeader<RecordType extends DataRecord>({
   onToggleAll: () => void;
 }) {
   return (
-    <thead className="sticky top-0 z-10 bg-soft-bg">
+    <thead className="sticky top-0 z-10 bg-[#f8fafc]">
       <tr>
         {enableBulkActions ? (
-          <th className="w-12 border-b border-card-border px-4 py-3">
+          <th className={cn("w-12", unifiedTableHeaderClass)}>
             <input
               type="checkbox"
               checked={allSelected}
@@ -742,11 +738,11 @@ export function DataTableHeader<RecordType extends DataRecord>({
           </th>
         ) : null}
         {columns.map((column) => (
-          <th key={column.key} className={cn("border-b border-card-border px-4 py-3", column.className)}>
+          <th key={column.key} className={cn(unifiedTableHeaderClass, column.className)}>
             <button
               type="button"
               onClick={() => onSort(column)}
-              className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted transition hover:text-navy"
+              className="flex items-center gap-2 text-[12px] font-semibold text-black transition hover:text-primary"
             >
               {column.label}
               <Sort className={cn("h-4 w-4", sortKey === column.key ? "text-primary" : "text-muted")} aria-hidden="true" />
@@ -754,7 +750,7 @@ export function DataTableHeader<RecordType extends DataRecord>({
             </button>
           </th>
         ))}
-        <th className="w-32 border-b border-card-border px-4 py-3 text-right text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-muted">
+        <th className={cn("w-24 text-right", unifiedTableHeaderClass)}>
           Actions
         </th>
       </tr>
@@ -780,9 +776,9 @@ export function DataTableRow<RecordType extends DataRecord>({
   onSelectedChange: (checked: boolean) => void;
 }) {
   return (
-    <tr className="group border-b border-card-border transition hover:bg-soft-bg/70">
+    <tr className="group transition hover:bg-[#f8fafc]">
       {enableBulkActions ? (
-        <td className="border-b border-card-border px-4 py-4">
+        <td className={unifiedTableCellClass}>
           <input
             type="checkbox"
             checked={selected}
@@ -796,7 +792,7 @@ export function DataTableRow<RecordType extends DataRecord>({
       {columns.map((column) => (
         <td
           key={`${record.id}-${column.key}`}
-          className={cn("border-b border-card-border px-4 py-4 align-middle text-sm text-navy", column.className)}
+          className={cn(unifiedTableCellClass, column.className)}
         >
           <button
             type="button"
@@ -807,7 +803,7 @@ export function DataTableRow<RecordType extends DataRecord>({
           </button>
         </td>
       ))}
-      <td className="border-b border-card-border px-4 py-4 text-right">{actions}</td>
+      <td className={cn(unifiedTableCellClass, "text-right")}>{actions}</td>
     </tr>
   );
 }
@@ -832,14 +828,25 @@ export function RowActionMenu<RecordType extends DataRecord>({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative inline-flex justify-end">
+    <div className="relative inline-flex items-center justify-end gap-1">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onView();
+        }}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-black transition hover:bg-[#e4e7ec] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        aria-label={`View ${record.title}`}
+      >
+        <Eye className="h-4 w-4" aria-hidden="true" />
+      </button>
       <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:border-primary/30 hover:text-navy focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-black transition hover:bg-[#e4e7ec] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
         aria-label={`Open actions for ${record.title}`}
       >
         <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
@@ -1031,33 +1038,14 @@ export function Pagination({
   onRowsPerPageChange: (value: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-card-border bg-surface px-4 py-3 text-sm text-muted shadow-sm sm:flex-row sm:items-center sm:justify-between">
-      <span>
-        Page <strong className="text-navy">{page}</strong> of <strong className="text-navy">{totalPages}</strong> · {totalRows} records
-      </span>
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-xs font-semibold text-muted">
-          Rows
-          <select
-            value={rowsPerPage}
-            onChange={(event) => onRowsPerPageChange(Number(event.target.value))}
-            className="h-9 rounded-lg border border-card-border bg-surface px-2 text-xs text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-          >
-            {[5, 10, 20].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ActionButton variant="secondary" className="h-9 px-3" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-          Previous
-        </ActionButton>
-        <ActionButton variant="secondary" className="h-9 px-3" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-          Next
-        </ActionButton>
-      </div>
-    </div>
+    <UnifiedTablePagination
+      page={page}
+      totalPages={totalPages}
+      rowsPerPage={rowsPerPage}
+      totalRows={totalRows}
+      onPageChange={onPageChange}
+      onRowsPerPageChange={onRowsPerPageChange}
+    />
   );
 }
 

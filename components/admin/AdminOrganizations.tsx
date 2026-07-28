@@ -9,7 +9,6 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowLeft2,
-  ArrowRight,
   Building2,
   CalendarCheck,
   CalendarDays,
@@ -32,6 +31,12 @@ import {
   Trash,
   User,
 } from "@/components/icons/IconsaxIcons";
+import {
+  UnifiedTablePagination,
+  UnifiedTableSurface,
+  UnifiedTableViewport,
+} from "@/components/ui/UnifiedDataTable";
+import { UnifiedMetricCard } from "@/components/ui/UnifiedMetricCard";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -595,90 +600,71 @@ export function AdminOrganizations() {
       ) : null}
       {error ? <StateBanner tone="error" title="Unable to load organizations" detail={error} /> : null}
 
-      <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] gap-3 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          {["Organization", "Industry", "Primary Location", "Branches", "Employees", "Package", "Contract Period", "Wellness Risk", "Status", "Actions"].map((label) => (
-            <span key={label} className="min-w-0">{label}</span>
-          ))}
-        </div>
+      <UnifiedTableSurface>
+        <UnifiedTableViewport>
+          <div className="min-w-[1120px]">
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] gap-3 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+              {["Organization", "Industry", "Primary Location", "Branches", "Employees", "Package", "Contract Period", "Wellness Risk", "Status", "Actions"].map((label) => (
+                <span key={label} className="min-w-0">{label}</span>
+              ))}
+            </div>
 
-        {isLoading ? <LoadingState /> : null}
-        {!isLoading && filteredOrganizations.length === 0 ? <EmptyState /> : null}
-        {!isLoading && paginatedOrganizations.length > 0 ? (
-          <div className="divide-y divide-card-border">
-            {paginatedOrganizations.map((organization) => (
-              <Link
-                key={organization.id}
-                href={`/admin/organizations/${organization.id}`}
-                className="grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <LogoMark organization={organization} />
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold">{organization.name}</span>
-                    <span className="block truncate text-black/55">{organization.code}</span>
-                  </span>
-                </span>
-                <span className="min-w-0 truncate text-black/70">{organization.industry}</span>
-                <span className="min-w-0 truncate text-black/70">
-                  <span className="mr-2" aria-hidden="true">{countryFlag(organization.country)}</span>
-                  {organization.primaryLocation}
-                </span>
-                <span>{displayBranchCount(organization)}</span>
-                <span>{organization.employees.toLocaleString()}</span>
-                <span className="min-w-0 truncate text-black/70">{organization.package}</span>
-                <span className="text-black/70">{formatDateRange(organization.contractStart, organization.contractEnd)}</span>
-                <RiskBadge risk={organization.risk} />
-                <StatusBadge status={organization.status} />
-                <span className="flex justify-end gap-1">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
-                    <Eye className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
-                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                </span>
-              </Link>
-            ))}
+            {isLoading ? <LoadingState /> : null}
+            {!isLoading && filteredOrganizations.length === 0 ? <EmptyState /> : null}
+            {!isLoading && paginatedOrganizations.length > 0 ? (
+              <div className="divide-y divide-card-border">
+                {paginatedOrganizations.map((organization) => (
+                  <Link
+                    key={organization.id}
+                    href={`/admin/organizations/${organization.id}`}
+                    className="grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_0.55fr_0.7fr_1.15fr_1fr_0.75fr_0.85fr_64px] items-center gap-3 px-4 py-3 text-left text-[12px] text-black transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <LogoMark organization={organization} />
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold">{organization.name}</span>
+                        <span className="block truncate text-black/55">{organization.code}</span>
+                      </span>
+                    </span>
+                    <span className="min-w-0 truncate text-black/70">{organization.industry}</span>
+                    <span className="min-w-0 truncate text-black/70">
+                      <span className="mr-2" aria-hidden="true">{countryFlag(organization.country)}</span>
+                      {organization.primaryLocation}
+                    </span>
+                    <span>{displayBranchCount(organization)}</span>
+                    <span>{organization.employees.toLocaleString()}</span>
+                    <span className="min-w-0 truncate text-black/70">{organization.package}</span>
+                    <span className="text-black/70">{formatDateRange(organization.contractStart, organization.contractEnd)}</span>
+                    <RiskBadge risk={organization.risk} />
+                    <StatusBadge status={organization.status} />
+                    <span className="flex justify-end gap-1">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
+                        <Eye className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#e4e7ec]">
+                        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </UnifiedTableViewport>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-card-border px-4 py-3">
-          <p className="text-[12px] text-black/60">
-            Page {page} of {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={(event) => {
-                setPageSize(Number(event.target.value));
-                setPage(1);
-              }}
-              className="h-8 rounded-2xl border border-card-border bg-white px-2 text-[12px] text-black outline-none"
-            >
-              {[4, 6, 8].map((size) => <option key={size} value={size}>{size} rows</option>)}
-            </select>
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-              disabled={page === 1}
-              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-              disabled={page === totalPages}
-              className="inline-flex h-8 items-center gap-1 rounded-2xl border border-card-border px-3 text-[12px] font-semibold text-black transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      </section>
+        <UnifiedTablePagination
+          page={page}
+          totalPages={totalPages}
+          rowsPerPage={pageSize}
+          rowOptions={[4, 6, 8]}
+          totalRows={filteredOrganizations.length}
+          onPageChange={setPage}
+          onRowsPerPageChange={(value) => {
+            setPageSize(value);
+            setPage(1);
+          }}
+        />
+      </UnifiedTableSurface>
 
       {addOpen ? (
         <AddOrganizationModal
@@ -903,8 +889,7 @@ function SummaryCard({
   title,
   value,
   detail,
-  icon: Icon,
-  tone = "primary",
+  icon,
 }: {
   title: string;
   value: string;
@@ -912,28 +897,7 @@ function SummaryCard({
   icon: typeof Building2;
   tone?: "primary" | "success" | "warning" | "danger";
 }) {
-  const toneClass =
-    tone === "success"
-      ? "text-success border-success/35 bg-success/10"
-      : tone === "warning"
-        ? "text-warning border-warning/40 bg-warning/10"
-        : tone === "danger"
-          ? "text-pulse-red border-pulse-red/35 bg-pulse-red/10"
-          : "text-primary border-primary/35 bg-primary/10";
-  return (
-    <div className="rounded-2xl border border-card-border bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.055)]">
-      <div className="flex items-center gap-4">
-        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border", toneClass)}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div>
-          <p className="text-[12px] font-medium leading-4 text-black">{title}</p>
-          <p className="mt-1 text-[24px] font-semibold leading-7 text-black">{value}</p>
-        </div>
-      </div>
-      <p className="mt-5 text-[12px] leading-4 text-black/60">{detail}</p>
-    </div>
-  );
+  return <UnifiedMetricCard label={title} value={value} detail={detail} icon={icon} />;
 }
 
 function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
