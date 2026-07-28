@@ -123,6 +123,12 @@ export default function LoginPage() {
                 Contact administrator
               </a>
             </p>
+            <a
+              href="mailto:support@pulse80insights.com?subject=Pulse80%20password%20assistance"
+              className="block text-center text-[10px] font-normal text-muted underline-offset-2 transition hover:text-navy hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            >
+              Forgot password? Contact Pulse80 administrator.
+            </a>
           </form>
 
           <div className="mt-4 flex items-center justify-center gap-2 border-t border-[#e3e6eb] pt-3 text-[10px] text-navy/45 sm:mt-5 sm:pt-4">

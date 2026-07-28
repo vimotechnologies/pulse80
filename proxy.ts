@@ -11,6 +11,9 @@ export default async function proxy(request: NextRequest) {
   const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
   const route = protectedRoutes.find(({ prefix }) => request.nextUrl.pathname.startsWith(prefix));
 
+  if (request.nextUrl.pathname === "/login" && session) {
+    return NextResponse.redirect(new URL(destinationForRole(session.role), request.url));
+  }
   if (!route) return NextResponse.next();
   if (!session) return NextResponse.redirect(new URL("/login", request.url));
   if (session.role !== route.role) {
