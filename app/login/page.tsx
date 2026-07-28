@@ -108,7 +108,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="pulse-login-submit group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy px-4 font-semibold !text-white transition hover:-translate-y-0.5 hover:bg-pulse-red active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="pulse-login-submit group flex w-full items-center justify-center gap-2 rounded-xl bg-navy px-4 font-semibold !text-white transition hover:-translate-y-0.5 hover:bg-pulse-red active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Signing in…" : "Sign in securely"}
               <ArrowRight className="h-[18px] w-[18px] transition group-hover:translate-x-0.5" aria-hidden="true" />

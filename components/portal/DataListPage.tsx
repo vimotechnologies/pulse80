@@ -322,7 +322,7 @@ export function DataListPage<RecordType extends DataRecord>({
         <DashboardWidget interactive className="overflow-hidden">
           <div className="grid gap-4 p-5 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">
+              <p className="text-xs font-semibold text-primary">
                 {config.featured.highlight ?? featuredTitle}
               </p>
               <h2 className="mt-2 text-xl font-semibold text-navy">{config.featured.title}</h2>
@@ -439,7 +439,7 @@ export function DataListPage<RecordType extends DataRecord>({
       ) : null}
 
       {selected ? (
-        <DetailDrawer
+        <DetailModal
           eyebrow={detailEyebrow}
           record={selected}
           title={selected.title}
@@ -907,7 +907,7 @@ function ActionItem({
   );
 }
 
-export function DetailDrawer<RecordType extends DataRecord>({
+export function DetailModal<RecordType extends DataRecord>({
   eyebrow,
   title,
   subtitle,
@@ -929,8 +929,19 @@ export function DetailDrawer<RecordType extends DataRecord>({
   onAction: () => void;
 }) {
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 w-full max-w-xl border-l border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]">
-      <div className="flex h-full flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Close details"
+        onClick={onClose}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${title} details`}
+        className="relative z-10 flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.16)]"
+      >
         <div className="border-b border-card-border p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -949,7 +960,7 @@ export function DetailDrawer<RecordType extends DataRecord>({
           </div>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
           {record.warning ? <WarningState message={record.warning} /> : null}
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1017,8 +1028,8 @@ export function DetailDrawer<RecordType extends DataRecord>({
             Archive
           </ActionButton>
         </div>
-      </div>
-    </aside>
+      </section>
+    </div>
   );
 }
 

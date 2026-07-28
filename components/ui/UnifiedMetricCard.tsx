@@ -23,10 +23,41 @@ export function UnifiedMetricCard({
   trend?: MetricTrend;
   footer?: ReactNode;
 }) {
+  const signedDetail = detail.match(/^\s*([+-])\s*\d/);
+  const signedValue = value.match(/^\s*([+-])\s*\d/);
+  const inferredTrend: MetricTrend | undefined = signedDetail
+    ? { direction: signedDetail[1] === "+" ? "up" : "down", value: detail }
+    : signedValue
+      ? { direction: signedValue[1] === "+" ? "up" : "down", value }
+      : undefined;
+  const displayedTrend = trend ?? inferredTrend;
+  const valueDirection = signedValue ? inferredTrend?.direction : undefined;
+  const normalizedValue = value.trim().toLowerCase();
+  const participation = label.toLowerCase().includes("participation")
+    ? Number.parseFloat(value.replace("%", ""))
+    : Number.NaN;
+  const semanticValueClass =
+    normalizedValue === "high"
+      ? "text-pulse-red"
+      : normalizedValue === "medium"
+        ? "text-warning"
+        : normalizedValue === "low"
+          ? "text-success"
+          : Number.isFinite(participation)
+            ? participation > 65
+              ? "text-success"
+              : participation < 50
+                ? "text-pulse-red"
+                : "text-warning"
+            : valueDirection === "up"
+              ? "text-success"
+              : valueDirection === "down"
+                ? "text-pulse-red"
+                : "text-navy";
   const TrendIcon =
-    trend?.direction === "up"
+    displayedTrend?.direction === "up"
       ? ArrowUpRight
-      : trend?.direction === "down"
+      : displayedTrend?.direction === "down"
         ? ArrowDownRight
         : ArrowRight;
 
@@ -35,25 +66,31 @@ export function UnifiedMetricCard({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-medium leading-4 text-muted">{label}</p>
-          <p className="mt-2 text-[24px] font-semibold leading-8 tracking-[var(--pulse-tracking-heading)] text-navy">
-            {value}
+          <p
+            className={cn(
+              "mt-2 flex items-center gap-1.5 text-[24px] font-semibold leading-8 tracking-[var(--pulse-tracking-heading)]",
+              semanticValueClass,
+            )}
+          >
+            {valueDirection ? <TrendIcon className="h-5 w-5" aria-hidden="true" /> : null}
+            <span>{value}</span>
           </p>
-          {detail ? <p className="mt-2 text-[12px] leading-5 text-subtle">{detail}</p> : null}
+          {detail && !signedDetail ? <p className="mt-2 text-[12px] leading-5 text-subtle">{detail}</p> : null}
         </div>
         <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
       </div>
 
-      {trend ? (
+      {displayedTrend && !valueDirection ? (
         <p
           className={cn(
             "mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold leading-4",
-            trend.direction === "up" && "text-success",
-            trend.direction === "down" && "text-pulse-red",
-            trend.direction === "neutral" && "text-muted",
+            displayedTrend.direction === "up" && "text-success",
+            displayedTrend.direction === "down" && "text-pulse-red",
+            displayedTrend.direction === "neutral" && "text-muted",
           )}
         >
           <TrendIcon className="h-4 w-4" aria-hidden="true" />
-          <span>{trend.value}</span>
+          <span>{displayedTrend.value}</span>
         </p>
       ) : null}
 
