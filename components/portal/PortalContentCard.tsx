@@ -21,12 +21,12 @@ export function PortalContentCard({
   return (
     <section
       className={cn(
-        "rounded-lg border border-[#d0d5dd] bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
+        "rounded-lg border border-card-border bg-surface shadow-[0_16px_40px_var(--card-shadow)]",
         className,
       )}
     >
       {title || description || action ? (
-        <div className="flex items-start justify-between gap-4 border-b border-[#d0d5dd] px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
           <div>
             {title ? (
               <h2 className="text-[14px] font-semibold leading-5 text-black">{title}</h2>

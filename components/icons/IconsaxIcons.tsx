@@ -5,7 +5,6 @@ import {
   ArrowDown as IconsaxArrowDown,
   ArrowDown2 as IconsaxArrowDown2,
   ArrowLeft2 as IconsaxArrowLeft2,
-  ArrowRotateLeft as IconsaxArrowRotateLeft,
   ArrowRight as IconsaxArrowRight,
   ArrowUp as IconsaxArrowUp,
   CloseCircle as IconsaxCloseCircle,
@@ -20,7 +19,6 @@ import {
   DocumentText as IconsaxDocumentText,
   Edit2 as IconsaxEdit,
   Eye as IconsaxEye,
-  EyeSlash as IconsaxEyeSlash,
   Filter as IconsaxFilter,
   Health as IconsaxHealth,
   Heart as IconsaxHeart,
@@ -37,7 +35,6 @@ import {
   Profile2User as IconsaxProfile2User,
   ProfileCircle as IconsaxProfileCircle,
   Refresh as IconsaxRefresh,
-  RotateLeft as IconsaxRotateLeft,
   SearchNormal1 as IconsaxSearch,
   Setting2 as IconsaxSettings,
   ShieldTick as IconsaxShieldTick,
@@ -61,7 +58,7 @@ function withDefaultVariant(Icon: IconsaxIcon): IconsaxIcon {
     return (
       <Icon
         color={color ?? "currentColor"}
-        size={size ?? 18}
+        size={size ?? 24}
         variant="Linear"
         {...props}
       />
@@ -77,7 +74,6 @@ export const AlertCircle = withDefaultVariant(IconsaxWarning2);
 export const ArrowDown = withDefaultVariant(IconsaxArrowDown2);
 export const ArrowDownRight = withDefaultVariant(IconsaxArrowDown);
 export const ArrowLeft2 = withDefaultVariant(IconsaxArrowLeft2);
-export const ArrowRotateLeft = withDefaultVariant(IconsaxArrowRotateLeft);
 export const ArrowRight = withDefaultVariant(IconsaxArrowRight);
 export const ArrowUpRight = withDefaultVariant(IconsaxArrowUp);
 export const BarChart3 = withDefaultVariant(IconsaxChart2);
@@ -94,7 +90,6 @@ export const CreditCard = withDefaultVariant(IconsaxCard);
 export const Download = withDefaultVariant(IconsaxDocumentDownload);
 export const Edit = withDefaultVariant(IconsaxEdit);
 export const Eye = withDefaultVariant(IconsaxEye);
-export const EyeSlash = withDefaultVariant(IconsaxEyeSlash);
 export const FileBarChart = withDefaultVariant(IconsaxDocumentText);
 export const FileText = withDefaultVariant(IconsaxDocumentText);
 export const Filter = withDefaultVariant(IconsaxFilter);
@@ -113,7 +108,6 @@ export const Microscope = withDefaultVariant(IconsaxMicroscope);
 export const MoreHorizontal = withDefaultVariant(IconsaxMore);
 export const ProfileCircle = withDefaultVariant(IconsaxProfileCircle);
 export const Refresh = withDefaultVariant(IconsaxRefresh);
-export const RotateLeft = withDefaultVariant(IconsaxRotateLeft);
 export const Search = withDefaultVariant(IconsaxSearch);
 export const Settings = withDefaultVariant(IconsaxSettings);
 export const ShieldCheck = withDefaultVariant(IconsaxShieldTick);

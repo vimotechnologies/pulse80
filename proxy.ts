@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  destinationForRole,
-  SESSION_COOKIE,
-  verifySessionToken,
-  type DemoRole,
-} from "@/lib/auth/session";
+import { destinationForRole, SESSION_COOKIE, verifySessionToken, type DemoRole } from "@/lib/auth/session";
 
-const protectedPrefixes: Array<{ prefix: string; role: DemoRole }> = [
+const protectedRoutes: Array<{ prefix: string; role: DemoRole }> = [
   { prefix: "/admin", role: "admin" },
   { prefix: "/client", role: "client" },
   { prefix: "/practitioner", role: "practitioner" },
@@ -14,23 +9,13 @@ const protectedPrefixes: Array<{ prefix: string; role: DemoRole }> = [
 
 export default async function proxy(request: NextRequest) {
   const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
-  const pathname = request.nextUrl.pathname;
+  const route = protectedRoutes.find(({ prefix }) => request.nextUrl.pathname.startsWith(prefix));
 
-  if (pathname === "/login" && session) {
+  if (!route) return NextResponse.next();
+  if (!session) return NextResponse.redirect(new URL("/login", request.url));
+  if (session.role !== route.role) {
     return NextResponse.redirect(new URL(destinationForRole(session.role), request.url));
   }
-
-  const protectedRoute = protectedPrefixes.find(({ prefix }) => pathname.startsWith(prefix));
-  if (!protectedRoute) return NextResponse.next();
-
-  if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (session.role !== protectedRoute.role) {
-    return NextResponse.redirect(new URL(destinationForRole(session.role), request.url));
-  }
-
   return NextResponse.next();
 }
 

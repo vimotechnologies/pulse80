@@ -26,10 +26,10 @@ const toneStyles: Record<PipelineStage["tone"], string> = {
 
 export function RequestsPipelineCard() {
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+    <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <Activity className="h-[18px] w-[18px] shrink-0 text-black" aria-hidden="true" />
+          <Activity className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
           <h2 className="truncate text-[14px] font-semibold leading-5 text-black">
             Requests & Proposals Pipeline
           </h2>
@@ -66,7 +66,7 @@ export function RequestsPipelineCard() {
         })}
       </div>
 
-      <div className="border-t border-[#d0d5dd] px-5 py-4">
+      <div className="border-t border-card-border px-5 py-4">
         <div className="grid grid-cols-2 gap-4">
           <SummaryStat label="Total Active" value="54" />
           <SummaryStat label="Conversion Rate" value="13%" />

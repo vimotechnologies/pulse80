@@ -40,13 +40,13 @@ export function AppSidebar({ collapsed = false }: AppSidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 hidden border-r border-[#d0d5dd] bg-surface lg:flex lg:flex-col",
+        "fixed inset-y-0 left-0 z-30 hidden border-r border-card-border bg-surface lg:flex lg:flex-col",
         collapsed ? "w-20" : "w-72",
       )}
     >
       <div
         className={cn(
-          "flex h-20 items-center border-b border-[#d0d5dd]",
+          "flex h-20 items-center border-b border-card-border",
           collapsed ? "justify-center px-3" : "px-6",
         )}
       >
@@ -70,18 +70,18 @@ export function AppSidebar({ collapsed = false }: AppSidebarProps) {
             title={collapsed ? item.label : undefined}
           >
             <item.icon
-              className={cn("h-[18px] w-[18px]", item.active ? "text-primary" : "text-muted")}
+              className={cn("h-5 w-5", item.active ? "text-primary" : "text-muted")}
               aria-hidden="true"
             />
             <span className={cn(collapsed && "sr-only")}>{item.label}</span>
           </Link>
         ))}
       </nav>
-      <div className={cn("border-t border-[#d0d5dd] p-4", collapsed && "hidden")}>
+      <div className={cn("border-t border-card-border p-4", collapsed && "hidden")}>
         <div className="rounded-lg bg-soft-bg p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface">
-              <ShieldCheck className="h-[18px] w-[18px] text-primary" aria-hidden="true" />
+              <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
             </span>
             <div>
               <p className="text-sm font-semibold text-navy">Operations Portal</p>

@@ -35,7 +35,7 @@ export function WellnessOverviewChart({ data }: WellnessOverviewChartProps) {
               />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke={brand.colors.divider} vertical={false} />
+          <CartesianGrid stroke={brand.colors.cardBorder} vertical={false} />
           <XAxis
             dataKey="month"
             axisLine={false}
@@ -49,7 +49,7 @@ export function WellnessOverviewChart({ data }: WellnessOverviewChartProps) {
           />
           <Tooltip
             contentStyle={{
-              border: `1px solid ${brand.colors.divider}`,
+              border: `1px solid ${brand.colors.cardBorder}`,
               borderRadius: 8,
               boxShadow: `0 16px 40px ${brand.colors.elevatedShadow}`,
             }}

@@ -32,10 +32,10 @@ const insights: ClientInsight[] = [
 
 export function HighRiskClientInsightsCard() {
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+    <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <AlertCircle className="h-[18px] w-[18px] shrink-0 text-black" aria-hidden="true" />
+          <AlertCircle className="h-5 w-5 shrink-0 text-black" aria-hidden="true" />
           <h2 className="truncate text-[14px] font-semibold leading-5 text-black">
             High-Risk Client Insights
           </h2>
@@ -60,7 +60,7 @@ export function HighRiskClientInsightsCard() {
           </div>
         </div>
 
-        <div className="mt-3 divide-y divide-[#d0d5dd]">
+        <div className="mt-3 divide-y divide-card-border">
           {insights.map((insight) => (
             <button
               key={insight.organization}
@@ -69,7 +69,7 @@ export function HighRiskClientInsightsCard() {
               className="grid w-full cursor-pointer grid-cols-1 items-center gap-2 py-3 text-left transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 sm:grid-cols-[minmax(0,1.35fr)_145px_120px_20px] sm:gap-4"
             >
               <span className="flex min-w-0 items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#d0d5dd] bg-[#f2f4f7] text-[12px] font-semibold leading-4 text-black">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-card-border bg-[#f2f4f7] text-[12px] font-semibold leading-4 text-black">
                   {insight.logo}
                 </span>
                 <span className="min-w-0 truncate text-[12px] font-semibold leading-4 text-black">
@@ -82,7 +82,7 @@ export function HighRiskClientInsightsCard() {
               <span className="text-[12px] leading-4 text-black/65 sm:text-right">
                 {insight.detail}
               </span>
-              <ArrowLeft2 className="hidden h-[18px] w-[18px] rotate-180 justify-self-end text-black/45 sm:block" aria-hidden="true" />
+              <ArrowLeft2 className="hidden h-4 w-4 rotate-180 justify-self-end text-black/45 sm:block" aria-hidden="true" />
             </button>
           ))}
         </div>

@@ -8,7 +8,7 @@ type SectionHeaderProps = {
 
 export function SectionHeader({ title, description, action }: SectionHeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[#d0d5dd] px-5 py-4">
+    <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
       <div>
         <h2 className="text-base font-semibold text-navy">{title}</h2>
         {description ? (

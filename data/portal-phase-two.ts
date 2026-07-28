@@ -91,14 +91,14 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
     items: [
       { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       {
-        label: "Proposals Pipeline",
+        label: "Requests & Proposals",
         href: "/admin/requests",
         icon: FileText,
       },
       { label: "Organizations", href: "/admin/organizations", icon: Building2 },
       {
         type: "group",
-        label: "Operations",
+        label: "Wellness Operations",
         icon: CalendarCheck,
         children: [
           { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
@@ -109,7 +109,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
       },
       {
         type: "group",
-        label: "Practitioners",
+        label: "Practitioner Network",
         icon: Stethoscope,
         children: [
           { label: "Practitioners", href: "/admin/practitioners", icon: Stethoscope },

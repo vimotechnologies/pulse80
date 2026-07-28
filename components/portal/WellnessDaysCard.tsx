@@ -299,10 +299,10 @@ export function ThisWeeksWellnessDaysCard() {
 
   return (
     <>
-      <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-col gap-4 border-b border-[#d0d5dd] px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+        <div className="flex flex-col gap-4 border-b border-card-border px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <CalendarCheck className="mt-1 h-[18px] w-[18px] shrink-0 text-black" aria-hidden="true" />
+            <CalendarCheck className="mt-1 h-5 w-5 shrink-0 text-black" aria-hidden="true" />
             <div>
               <h2 className="text-[14px] font-semibold leading-5 text-black">This Week&apos;s Wellness Days</h2>
               <p className="mt-1 text-[12px] leading-4 text-black/55">
@@ -318,7 +318,7 @@ export function ThisWeeksWellnessDaysCard() {
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Previous week"
             >
-              <ArrowRight className="h-[18px] w-[18px] rotate-180" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
             </button>
             <span className="min-w-24 text-center text-[12px] leading-4 text-black">{currentWeek.label}</span>
             <button
@@ -328,14 +328,14 @@ export function ThisWeeksWellnessDaysCard() {
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Next week"
             >
-              <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
 
         <div>
           <div className="w-full">
-            <div className="grid grid-cols-[0.58fr_1fr_1.35fr_1fr_1.08fr] gap-2 border-b border-[#d0d5dd] bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+            <div className="grid grid-cols-[0.58fr_1fr_1.35fr_1fr_1.08fr] gap-2 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Date</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Organization</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Activation Type</span>
@@ -343,7 +343,7 @@ export function ThisWeeksWellnessDaysCard() {
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Status</span>
             </div>
 
-            <div className="divide-y divide-[#d0d5dd]">
+            <div className="divide-y divide-card-border">
               {currentWeek.days.map((day) => (
                 <button
                   key={day.id}
@@ -402,10 +402,10 @@ function WellnessCalendarView({
   const monthLabel = visibleMonth.toLocaleString("en", { month: "long", year: "numeric" });
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
-      <div className="flex items-start justify-between gap-4 border-b border-[#d0d5dd] px-5 py-4">
+    <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+      <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
         <div className="flex gap-3">
-          <CalendarDays className="mt-1 h-[18px] w-[18px] text-black" aria-hidden="true" />
+          <CalendarDays className="mt-1 h-5 w-5 text-black" aria-hidden="true" />
           <div>
             <h2 className="text-[14px] font-semibold leading-5 text-black">Calendar</h2>
             <p className="mt-1 text-[12px] leading-4 text-black/55">Wellness days by month.</p>
@@ -418,7 +418,7 @@ function WellnessCalendarView({
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white"
             aria-label="Previous month"
           >
-            <ArrowRight className="h-[18px] w-[18px] rotate-180" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4 rotate-180" aria-hidden="true" />
           </button>
           <span className="min-w-28 text-center text-[12px] leading-4 text-black">{monthLabel}</span>
           <button
@@ -427,7 +427,7 @@ function WellnessCalendarView({
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white"
             aria-label="Next month"
           >
-            <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -446,7 +446,7 @@ function WellnessCalendarView({
             return (
               <div
                 key={cell.date.toISOString()}
-                className="min-h-16 rounded-2xl border border-[#d0d5dd] bg-white p-2"
+                className="min-h-16 rounded-2xl border border-card-border bg-white p-2"
               >
                 <span className="text-[12px] leading-4 text-black">{cell.date.getDate()}</span>
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -455,7 +455,7 @@ function WellnessCalendarView({
                       key={event.id}
                       type="button"
                       onClick={() => onSelect(event)}
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[#d0d5dd] bg-[#e4e7ec] text-[10px] font-semibold leading-none text-black transition hover:-translate-y-0.5 hover:bg-black hover:text-white active:translate-y-0"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-card-border bg-[#e4e7ec] text-[10px] font-semibold leading-none text-black transition hover:-translate-y-0.5 hover:bg-black hover:text-white active:translate-y-0"
                       aria-label={`Open ${event.organization}`}
                     >
                       {event.logo}
@@ -479,8 +479,8 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
       aria-modal="true"
       aria-labelledby="wellness-day-modal-title"
     >
-      <div className="w-full max-w-xl rounded-2xl border border-[#d0d5dd] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
-        <div className="border-b border-[#d0d5dd] px-5 py-4">
+      <div className="w-full max-w-xl rounded-2xl border border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.2)]">
+        <div className="border-b border-card-border px-5 py-4">
           <p className="text-[12px] leading-4 text-black">{day.date}</p>
           <h3 id="wellness-day-modal-title" className="mt-1 text-[14px] font-semibold leading-5 text-black">
             {day.organization}
@@ -491,7 +491,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
         <div className="grid gap-3 px-5 py-4 text-[12px] text-black">
           <DetailRow label="Location / Branch" value={day.location} />
           <DetailRow label="Expected Employees" value={String(day.expectedEmployees)} />
-          <div className="rounded-2xl border border-[#d0d5dd] bg-[#f8fafc] p-4">
+          <div className="rounded-2xl border border-card-border bg-[#f8fafc] p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] leading-4 text-black">Readiness</span>
               <span className="text-[12px] leading-4 text-black">{day.readiness}%</span>
@@ -510,12 +510,12 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
           <DetailRow label="Contact Number" value={day.contact.phone} />
         </div>
 
-        <div className="flex flex-wrap justify-end gap-3 border-t border-[#d0d5dd] px-5 py-4">
+        <div className="flex flex-wrap justify-end gap-3 border-t border-card-border px-5 py-4">
           <Link
             href="/admin/activations"
             className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
           >
-            <Edit className="h-[18px] w-[18px]" aria-hidden="true" />
+            <Edit className="h-4 w-4" aria-hidden="true" />
             Edit
           </Link>
           <button
@@ -523,7 +523,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
             onClick={onClose}
             className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold leading-4 text-black transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-black hover:text-white active:translate-y-0"
           >
-            <CloseSquare className="h-[18px] w-[18px]" aria-hidden="true" />
+            <CloseSquare className="h-4 w-4" aria-hidden="true" />
             Close
           </button>
         </div>
@@ -534,7 +534,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d0d5dd] bg-white px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-card-border bg-white px-4 py-3">
       <span className="text-[12px] leading-4 text-black">{label}</span>
       <span className="text-right text-[12px] leading-4 text-black">{value}</span>
     </div>

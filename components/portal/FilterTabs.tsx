@@ -5,7 +5,7 @@ type FilterTabsProps = {
 
 export function FilterTabs({ tabs, selected = tabs[0] }: FilterTabsProps) {
   return (
-    <div className="inline-flex rounded-lg border border-[#d0d5dd] bg-surface p-1 shadow-sm">
+    <div className="inline-flex rounded-lg border border-card-border bg-surface p-1 shadow-sm">
       {tabs.map((tab) => {
         const active = tab === selected;
 

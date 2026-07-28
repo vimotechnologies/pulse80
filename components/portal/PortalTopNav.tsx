@@ -16,44 +16,44 @@ export function PortalTopNav({
   sidebarCollapsed = false,
 }: PortalTopNavProps) {
   return (
-    <header className="sticky top-0 z-20 min-w-0 border-b border-[#d0d5dd] bg-surface/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-card-border bg-surface/95 backdrop-blur">
       <div
         className={cn(
-          "flex h-16 min-w-0 items-center gap-2 px-3 transition-[margin] duration-300 sm:h-20 sm:gap-4 sm:px-6 lg:px-8",
+          "flex h-20 items-center gap-4 px-4 transition-[margin] duration-300 sm:px-6 lg:px-8",
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64",
         )}
       >
         <Image
-          src="/brand/pulse80-mark.svg"
+          src="/brand/pulse80-logo-no-tagline.svg"
           alt="Pulse80"
-          width={42}
-          height={42}
+          width={150}
+          height={46}
           priority
-          className="h-8 w-8 shrink-0 sm:h-9 sm:w-9 lg:hidden"
+          className="h-auto w-28 shrink-0 sm:w-32 lg:hidden"
         />
 
-        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-3">
           <div className="relative hidden sm:block">
             <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
               aria-hidden="true"
             />
             <input
               type="search"
               placeholder={`Search ${portalName.toLowerCase()}`}
-              className="h-10 w-64 rounded-lg border border-[#d0d5dd] bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-10 w-64 rounded-lg border border-card-border bg-white pl-10 pr-3 text-[12px] outline-none transition placeholder:text-[12px] placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <button
             type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#d0d5dd] bg-surface text-muted transition hover:text-navy"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-card-border bg-surface text-muted transition hover:text-navy"
             aria-label="Notifications"
           >
-            <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+            <Bell className="h-5 w-5" aria-hidden="true" />
             <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-pulse-red" />
           </button>
-          <div className="flex min-w-0 items-center gap-2 rounded-lg border border-[#d0d5dd] bg-surface p-1.5 sm:gap-3 sm:pl-2 sm:pr-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary sm:h-9 sm:w-9 sm:text-sm">
+          <div className="flex items-center gap-3 rounded-lg border border-card-border bg-surface py-1.5 pl-2 pr-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
               {userLabel
                 .split(" ")
                 .map((part) => part[0])

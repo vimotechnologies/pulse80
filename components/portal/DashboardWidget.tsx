@@ -15,9 +15,9 @@ export function DashboardWidget({
   return (
     <section
       className={cn(
-        "rounded-lg border border-[#d0d5dd]/90 bg-white/88 shadow-[0_18px_44px_rgba(20,43,83,0.055)] backdrop-blur-xl",
+        "rounded-lg border border-card-border/90 bg-white/88 shadow-[0_18px_44px_rgba(7,22,51,0.055)] backdrop-blur-xl",
         interactive &&
-          "transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_54px_rgba(20,43,83,0.085)]",
+          "transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_54px_rgba(7,22,51,0.085)]",
         className,
       )}
     >

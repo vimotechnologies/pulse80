@@ -30,7 +30,7 @@ export function ProgressWidget({
           <span className="font-semibold text-navy">{boundedValue}%</span>
         </div>
       ) : null}
-      <div className="h-2 overflow-hidden rounded-full bg-soft-bg ring-1 ring-[#d0d5dd]/70">
+      <div className="h-2 overflow-hidden rounded-full bg-soft-bg ring-1 ring-card-border/70">
         <div
           className={cn("h-full rounded-full", barStyles[tone])}
           style={{ width: `${boundedValue}%` }}

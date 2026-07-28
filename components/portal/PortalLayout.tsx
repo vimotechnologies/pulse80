@@ -28,7 +28,7 @@ export function PortalLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className={cn("min-h-[100dvh] min-w-0 overflow-x-hidden", portalKey === "admin" ? "bg-[#f7f7f7]" : "bg-soft-bg")}>
+    <div className={cn("min-h-screen", portalKey === "admin" ? "bg-[#f7f7f7]" : "bg-soft-bg")}>
       <PortalSidebar
         portalKey={portalKey}
         portalName={portalName}
@@ -44,7 +44,7 @@ export function PortalLayout({
       />
       <main
         className={cn(
-          "pulse-portal-content min-w-0 px-3 pb-32 pt-4 transition-[margin] duration-300 sm:px-6 sm:pt-6 lg:px-8 lg:py-8",
+          "px-4 pb-28 pt-6 transition-[margin] duration-300 sm:px-6 lg:px-8 lg:py-8",
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64",
         )}
       >

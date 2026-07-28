@@ -46,7 +46,7 @@ export function PortalSidebar({
   return (
     <aside
       className={cn(
-        "pulse-portal-sidebar fixed inset-y-0 left-0 z-30 hidden border-r border-[#d0d5dd] bg-surface transition-[width] duration-300 lg:flex lg:flex-col",
+        "fixed inset-y-0 left-0 z-30 hidden border-r border-card-border bg-surface transition-[width] duration-300 lg:flex lg:flex-col",
         collapsed ? "w-20" : "w-64",
       )}
     >
@@ -93,7 +93,7 @@ export function PortalSidebar({
               aria-label="Collapse sidebar"
               aria-expanded
             >
-              <ArrowLeft2 className="h-[18px] w-[18px]" aria-hidden="true" />
+              <ArrowLeft2 className="h-4 w-4" aria-hidden="true" />
             </button>
           </>
         )}
@@ -122,19 +122,14 @@ export function PortalSidebar({
           <button
             type="submit"
             className={cn(
-              "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-normal text-subtle transition hover:bg-slate-100 hover:text-subtle",
+              "flex h-11 w-full items-center rounded-lg bg-surface text-[14px] font-medium leading-5 text-black transition hover:bg-slate-100 hover:text-black",
               collapsed ? "justify-center px-0" : "gap-3 px-3",
             )}
-            style={{ fontSize: "14px", lineHeight: "20px" }}
             aria-label="Sign out"
             title={collapsed ? "Sign out" : undefined}
           >
-            <Logout className="h-[18px] w-[18px] text-subtle" aria-hidden="true" />
-            {!collapsed ? (
-              <span className="leading-5" style={{ fontSize: "14px", lineHeight: "20px" }}>
-                Sign out
-              </span>
-            ) : null}
+            <Logout className="h-5 w-5 text-black" aria-hidden="true" />
+            {!collapsed ? <span>Sign out</span> : null}
           </button>
         </form>
       </div>

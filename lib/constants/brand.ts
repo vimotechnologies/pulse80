@@ -12,7 +12,7 @@ export const brand = {
     pulseRed: "#BA1325",
     darkNavy: "#142B53",
     softBackground: "#F7F8FA",
-    divider: "#D0D5DD",
+    cardBorder: "#DFE3E8",
     successGreen: "#10B981",
     warningAmber: "#F59E0B",
     surface: "#FFFFFF",

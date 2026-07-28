@@ -46,14 +46,14 @@ export function PortalSidebarItem({ item, collapsed = false }: PortalSidebarItem
       title={collapsed ? item.label : undefined}
       aria-label={collapsed ? item.label : undefined}
       className={cn(
-        "flex h-11 items-center rounded-lg text-[14px] font-normal text-subtle transition hover:bg-slate-100 hover:text-subtle",
+        "flex h-11 items-center rounded-lg text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
         collapsed ? "justify-center px-0" : "gap-3 px-3",
         active && "bg-primary/12 text-primary hover:text-primary",
       )}
       style={{ fontSize: "14px", lineHeight: "20px" }}
     >
       <Icon
-        className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-subtle")}
+        className={cn("h-5 w-5", active ? "text-primary" : "text-black")}
         aria-hidden="true"
       />
       {!collapsed ? (
@@ -92,12 +92,12 @@ export function PortalSidebarGroup({
           aria-label={group.label}
           onClick={onToggle}
           className={cn(
-            "flex h-11 w-full items-center justify-center rounded-lg text-subtle transition hover:bg-slate-100 hover:text-subtle",
+            "flex h-11 w-full items-center justify-center rounded-lg text-black transition hover:bg-slate-100 hover:text-black",
             active && "bg-primary/12 text-primary hover:text-primary",
           )}
           style={{ fontSize: "14px", lineHeight: "20px" }}
         >
-          <Icon className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-subtle")} aria-hidden="true" />
+          <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-black")} aria-hidden="true" />
         </button>
       </div>
     );
@@ -110,12 +110,12 @@ export function PortalSidebarGroup({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-[14px] font-normal text-subtle transition hover:bg-slate-100 hover:text-subtle",
+          "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
           active && "bg-primary/8 text-primary hover:text-primary",
         )}
         style={{ fontSize: "14px", lineHeight: "20px" }}
       >
-        <Icon className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-subtle")} aria-hidden="true" />
+        <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-black")} aria-hidden="true" />
         <span
           className="min-w-0 flex-1 truncate text-left"
           style={{ fontSize: "14px", lineHeight: "20px" }}
@@ -125,7 +125,7 @@ export function PortalSidebarGroup({
         {group.badge ? <NavBadge badge={group.badge} /> : null}
         <ArrowLeft2
           className={cn(
-            "h-[18px] w-[18px] -rotate-90 text-subtle transition-transform duration-200",
+            "h-4 w-4 -rotate-90 text-black transition-transform duration-200",
             open && "rotate-90 text-primary",
           )}
           aria-hidden="true"
@@ -138,7 +138,7 @@ export function PortalSidebarGroup({
         )}
       >
         <div className="min-h-0">
-          <div className="ml-5 mt-1 space-y-1 border-l border-[#d0d5dd] pl-2">
+          <div className="ml-5 mt-1 space-y-1 border-l border-card-border pl-2">
             {group.children.map((child) => {
               const ChildIcon = child.icon;
               const childActive = pathname === child.href;
@@ -148,12 +148,12 @@ export function PortalSidebarGroup({
                   key={child.href}
                   href={child.href}
                   className={cn(
-                    "flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-normal text-subtle transition hover:bg-slate-100 hover:text-subtle",
+                    "flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-black transition hover:bg-slate-100 hover:text-black",
                     childActive && "bg-primary/12 text-primary hover:text-primary",
                   )}
                   style={{ fontSize: "14px", lineHeight: "20px" }}
                 >
-                  <ChildIcon className={cn("h-[18px] w-[18px]", childActive ? "text-primary" : "text-subtle")} aria-hidden="true" />
+                  <ChildIcon className={cn("h-4 w-4", childActive ? "text-primary" : "text-black")} aria-hidden="true" />
                   <span
                     className="min-w-0 flex-1 truncate"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
