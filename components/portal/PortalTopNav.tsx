@@ -24,12 +24,20 @@ export function PortalTopNav({
         )}
       >
         <Image
+<<<<<<< Updated upstream
           src="/brand/pulse80-mark.png"
+=======
+          src="/brand/pulse80-logo-no-tagline.svg"
+>>>>>>> Stashed changes
           alt="Pulse80"
-          width={42}
-          height={42}
+          width={150}
+          height={46}
           priority
+<<<<<<< Updated upstream
           className="h-9 w-9 lg:hidden"
+=======
+          className="h-auto w-28 shrink-0 sm:w-32 lg:hidden"
+>>>>>>> Stashed changes
         />
 
         <div className="relative hidden flex-1 sm:block">
