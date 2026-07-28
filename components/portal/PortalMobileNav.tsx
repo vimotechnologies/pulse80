@@ -103,11 +103,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
       >
         <div className="flex items-center gap-3 border-b border-card-border px-4 py-4">
           <Image
-<<<<<<< Updated upstream
-            src="/brand/pulse80-mark.png"
-=======
             src="/brand/pulse80-logo-no-tagline.svg"
->>>>>>> Stashed changes
             alt="Pulse80"
             width={150}
             height={46}

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   title: "Pulse80",
   description: "Enterprise wellness intelligence platform",
   icons: {
-    icon: "/brand/pulse80-mark.png",
+    icon: "/brand/pulse80-mark.svg",
   },
 };
 
