@@ -1,21 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createSession, deleteSession, destinationForRole, type DemoRole } from "@/lib/auth/session";
+import { authenticateDemoAccount } from "@/lib/auth/demo-accounts";
+import { createSession, deleteSession, destinationForRole } from "@/lib/auth/session";
 
-const demoAccounts: Record<string, { password: string; role: DemoRole }> = {
-  "admin@pulse80.com": { password: "admin123", role: "admin" },
-  "client@pulse80.com": { password: "client123", role: "client" },
-  "health@pulse80.com": { password: "health123", role: "practitioner" },
-};
-
-export async function loginAction(input: { email: string; password: string; remember: boolean }) {
-  const email = input.email.trim().toLowerCase();
-  const account = demoAccounts[email];
-  if (!account || account.password !== input.password) {
+export async function loginAction(input: {
+  email: unknown;
+  password: unknown;
+  remember: unknown;
+}) {
+  const account = authenticateDemoAccount(input);
+  if (!account) {
     return { ok: false as const, error: "Enter a valid Pulse80 demo email and password." };
   }
-  await createSession(email, account.role, input.remember);
+
+  await createSession(account.email, account.role, input.remember === true);
   return { ok: true as const, destination: destinationForRole(account.role) };
 }
 
