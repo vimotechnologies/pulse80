@@ -25,9 +25,7 @@ import {
   Mail,
   MoreHorizontal,
   Refresh,
-  Search,
   ShieldCheck,
-  Sort,
   Trash,
   User,
 } from "@/components/icons/IconsaxIcons";
@@ -37,6 +35,13 @@ import {
   UnifiedTableViewport,
 } from "@/components/ui/UnifiedDataTable";
 import { UnifiedMetricCard } from "@/components/ui/UnifiedMetricCard";
+import {
+  UnifiedFilterCard,
+  UnifiedFilterClear,
+  UnifiedFilterSearch,
+  UnifiedFilterSelect,
+  UnifiedFilterSort,
+} from "@/components/ui/UnifiedFilterCard";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -530,48 +535,20 @@ export function AdminOrganizations() {
           <SummaryCard title="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} tone="danger" />
         </section>
 
-      <section className="rounded-2xl border border-card-border bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
+      <UnifiedFilterCard>
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
-          <label className="relative">
-            <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Search organizations..."
-              className="h-10 w-full rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition placeholder:text-[#667085] focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
-            />
-          </label>
-          <FilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
-          <FilterSelect label="Industry" value={industryFilter} options={["All", ...industries]} onChange={setIndustryFilter} />
-          <FilterSelect label="Package" value={packageFilter} options={["All", ...packageOptions]} onChange={setPackageFilter} />
-          <FilterSelect label="Wellness Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
-          <FilterSelect label="Country" value={countryFilter} options={["All", ...countries]} onChange={setCountryFilter} />
+          <UnifiedFilterSearch value={query} onChange={(value) => { setQuery(value); setPage(1); }} placeholder="Search organizations..." />
+          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", ...statusOptions]} onChange={setStatusFilter} />
+          <UnifiedFilterSelect label="Industry" value={industryFilter} options={["All", ...industries]} onChange={setIndustryFilter} />
+          <UnifiedFilterSelect label="Package" value={packageFilter} options={["All", ...packageOptions]} onChange={setPackageFilter} />
+          <UnifiedFilterSelect label="Wellness Risk" value={riskFilter} options={["All", ...riskOptions]} onChange={setRiskFilter} />
+          <UnifiedFilterSelect label="Country" value={countryFilter} options={["All", ...countries]} onChange={setCountryFilter} />
         </div>
         <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(160px,0.9fr)_minmax(180px,1.1fr)_minmax(280px,1.7fr)_auto_1fr]">
-          <FilterSelect label="Town / Province" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
-          <FilterSelect label="Contract Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
-          <label className="relative">
-            <span className="sr-only">Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-20 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-3 text-[#43536b]">
-              <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
-              <Sort className="h-3.5 w-3.5" aria-hidden="true" />
-              <Refresh className="h-3.5 w-3.5" aria-hidden="true" />
-            </span>
-          </label>
-          <button
-            type="button"
+          <UnifiedFilterSelect label="Town / Province" value={townFilter} options={["All", ...towns]} onChange={setTownFilter} />
+          <UnifiedFilterSelect label="Contract Expiry" value={expiryFilter} options={["All", "Within 60 days", "Expired", "Healthy"]} onChange={setExpiryFilter} />
+          <UnifiedFilterSort value={sortBy} options={sortOptions} onChange={setSortBy} />
+          <UnifiedFilterClear
             onClick={() => {
               setQuery("");
               setStatusFilter("All");
@@ -584,12 +561,9 @@ export function AdminOrganizations() {
               setSortBy("Organization name");
               setPage(1);
             }}
-            className="inline-flex h-10 items-center justify-center px-2 text-[12px] font-semibold text-primary transition hover:text-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-          >
-            Clear Filters
-          </button>
+          />
         </div>
-      </section>
+      </UnifiedFilterCard>
 
       {contractsExpiringSoon(organizations) > 0 ? (
         <StateBanner
@@ -898,26 +872,6 @@ function SummaryCard({
   tone?: "primary" | "success" | "warning" | "danger";
 }) {
   return <UnifiedMetricCard label={title} value={value} detail={detail} icon={icon} />;
-}
-
-function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return (
-    <label className="relative">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full appearance-none rounded-lg border border-card-border bg-white pl-4 pr-10 text-[12px] font-medium text-black outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option === "All" ? label : option}
-          </option>
-        ))}
-      </select>
-      <ArrowDown className="pointer-events-none absolute right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#43536b]" aria-hidden="true" />
-    </label>
-  );
 }
 
 function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) {

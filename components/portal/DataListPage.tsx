@@ -9,10 +9,8 @@ import {
   Download,
   Edit,
   Eye,
-  Filter,
   MoreHorizontal,
   Refresh,
-  Search,
   Sort,
   Trash,
 } from "@/components/icons/IconsaxIcons";
@@ -29,6 +27,14 @@ import {
   unifiedTableHeaderClass,
 } from "@/components/ui/UnifiedDataTable";
 import { UnifiedMetricCard } from "@/components/ui/UnifiedMetricCard";
+import {
+  UnifiedFilterAction,
+  UnifiedFilterCard,
+  UnifiedFilterClear,
+  UnifiedFilterSearch,
+  UnifiedFilterSelect,
+  UnifiedFilterSort,
+} from "@/components/ui/UnifiedFilterCard";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
@@ -368,6 +374,7 @@ export function DataListPage<RecordType extends DataRecord>({
           setSortKey(value);
           setPage(1);
         }}
+        onClear={resetFilters}
         onExport={() => showToast("Export prepared as a placeholder.")}
       />
 
@@ -496,6 +503,7 @@ export function DataToolbar<RecordType extends DataRecord>({
   sortKey,
   sortDirection,
   onSortChange,
+  onClear,
   onExport,
 }: {
   query: string;
@@ -511,36 +519,18 @@ export function DataToolbar<RecordType extends DataRecord>({
   sortKey: string;
   sortDirection: "asc" | "desc";
   onSortChange: (value: string) => void;
+  onClear: () => void;
   onExport: () => void;
 }) {
   return (
-    <DashboardWidget className="p-4">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <SearchInput value={query} onChange={onQueryChange} placeholder={placeholder} />
-        <div className="flex flex-wrap items-center gap-2">
-          {tabs ? <FilterTabs tabs={tabs} activeTab={activeTab} onChange={onTabChange} /> : null}
-          <label className="flex h-10 items-center gap-2 rounded-lg border border-card-border bg-surface px-3 text-xs font-semibold text-muted">
-            <Sort className="h-4 w-4" aria-hidden="true" />
-            <select
-              value={sortKey}
-              onChange={(event) => onSortChange(event.target.value)}
-              className="bg-transparent text-navy outline-none"
-              aria-label="Sort records"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label} {sortKey === option.key ? `(${sortDirection})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <ActionButton variant="secondary" className="h-10 px-3" onClick={onExport}>
-            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-            Export
-          </ActionButton>
+    <UnifiedFilterCard>
+      {tabs ? (
+        <div className="mb-3">
+          <FilterTabs tabs={tabs} activeTab={activeTab} onChange={onTabChange} />
         </div>
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      ) : null}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <SearchInput value={query} onChange={onQueryChange} placeholder={placeholder} />
         {filters.map((filterItem) => (
           <FilterSelect
             key={filterItem.key}
@@ -550,7 +540,19 @@ export function DataToolbar<RecordType extends DataRecord>({
           />
         ))}
       </div>
-    </DashboardWidget>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(280px,1.7fr)_auto_auto_1fr]">
+        <UnifiedFilterSort
+          value={sortKey}
+          options={sortOptions.map((option) => ({
+            value: option.key,
+            label: `Sort by: ${option.label}${sortKey === option.key ? ` (${sortDirection})` : ""}`,
+          }))}
+          onChange={onSortChange}
+        />
+        <UnifiedFilterAction onClick={onExport}>Export</UnifiedFilterAction>
+        <UnifiedFilterClear onClick={onClear} />
+      </div>
+    </UnifiedFilterCard>
   );
 }
 
@@ -564,16 +566,7 @@ export function SearchInput({
   placeholder: string;
 }) {
   return (
-    <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" aria-hidden="true" />
-      <input
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="h-11 w-full rounded-lg border border-card-border bg-soft-bg pl-11 pr-3 text-sm text-navy outline-none transition placeholder:text-muted hover:border-primary/30 focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/10"
-      />
-    </div>
+    <UnifiedFilterSearch value={value} onChange={onChange} placeholder={placeholder} />
   );
 }
 
@@ -587,21 +580,12 @@ export function FilterSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block">
-      <span className="flex items-center gap-2 text-xs font-semibold text-muted">
-        <Filter className="h-4 w-4" aria-hidden="true" />
-        {filter.label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-lg border border-card-border bg-surface px-3 text-sm text-navy outline-none transition hover:border-primary/30 focus:border-primary focus:ring-4 focus:ring-primary/10"
-      >
-        {filter.options.map((option) => (
-          <option key={option}>{option}</option>
-        ))}
-      </select>
-    </label>
+    <UnifiedFilterSelect
+      label={filter.label}
+      value={value}
+      options={filter.options}
+      onChange={onChange}
+    />
   );
 }
 
