@@ -12,7 +12,19 @@ npm run dev
 ```
 
 The backend listens on `http://localhost:4000` by default. Its health endpoint
-is available at `GET /health`.
+is available at `GET /health`, and GraphQL is available at `/graphql`.
+
+The initial GraphQL schema exposes:
+
+```graphql
+query {
+  health {
+    status
+    service
+    environment
+  }
+}
+```
 
 ## Commands
 

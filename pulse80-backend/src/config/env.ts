@@ -8,17 +8,13 @@ const envSchema = z.object({
 
   PORT: z.coerce.number().int().positive().default(4000),
 
-  FRONTEND_URL: z.string().url().default("http://localhost:3000"),
+  FRONTEND_URL: z.string().url(),
 
   SUPABASE_URL: z.string().url(),
 
-  SUPABASE_PUBLISHABLE_KEY: z
-    .string()
-    .startsWith("sb_publishable_", "Must start with sb_publishable_"),
+  SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 
-  SUPABASE_SECRET_KEY: z
-    .string()
-    .startsWith("sb_secret_", "Must start with sb_secret_"),
+  SUPABASE_SECRET_KEY: z.string().min(1),
 });
 
 const parsedEnvironment = envSchema.safeParse(process.env);

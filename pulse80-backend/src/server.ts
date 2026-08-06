@@ -1,45 +1,28 @@
-import { createServer } from "node:http";
-
+import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
 
-const server = createServer((request, response) => {
-  response.setHeader("Access-Control-Allow-Origin", env.FRONTEND_URL);
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
+const app = await buildApp();
 
-  if (request.method === "GET" && request.url === "/health") {
-    response.writeHead(200);
-    response.end(
-      JSON.stringify({
-        status: "ok",
-        service: "pulse80-backend",
-        environment: env.NODE_ENV,
-      }),
-    );
-    return;
+async function start(): Promise<void> {
+  try {
+    await app.listen({ port: env.PORT, host: "0.0.0.0" });
+  } catch (error) {
+    app.log.error(error, "Backend startup failed");
+    process.exitCode = 1;
   }
-
-  response.writeHead(404);
-  response.end(JSON.stringify({ error: "Not found" }));
-});
-
-server.listen(env.PORT, "0.0.0.0", () => {
-  console.log(`Pulse80 backend listening on http://localhost:${env.PORT}`);
-});
+}
 
 let isShuttingDown = false;
 
-function shutDown(signal: NodeJS.Signals): void {
+async function shutDown(signal: NodeJS.Signals): Promise<void> {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  console.log(`Received ${signal}; shutting down the backend.`);
-  server.close((error) => {
-    if (error) {
-      console.error("Backend shutdown failed:", error);
-      process.exitCode = 1;
-    }
-  });
+  app.log.info({ signal }, "Shutting down the backend");
+  await app.close();
 }
 
-process.on("SIGINT", shutDown);
-process.on("SIGTERM", shutDown);
+process.on("SIGINT", () => void shutDown("SIGINT"));
+process.on("SIGTERM", () => void shutDown("SIGTERM"));
+
+await start();
