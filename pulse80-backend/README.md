@@ -1,10 +1,24 @@
 # Pulse80 Backend
 
-This package is reserved for the independently deployable Pulse80 backend.
+This package contains the independently deployable Pulse80 backend.
 
-The backend framework, runtime, database, and API design have intentionally not
-been selected or implemented yet.
+It currently uses the Node.js HTTP runtime, TypeScript, and Supabase clients.
 
-It has its own package manifest, lockfile, dependency directory, ignore rules,
-and documentation boundary. A `dev` command will be added when the backend
-runtime is selected.
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+The backend listens on `http://localhost:4000` by default. Its health endpoint
+is available at `GET /health`.
+
+## Commands
+
+- `npm run dev` starts the backend in watch mode.
+- `npm run typecheck` checks the TypeScript source.
+- `npm run build` compiles the backend into `dist/`.
+- `npm run start` runs the compiled backend.
+- `npm run test:supabase` builds the backend and checks access to the configured
+  Supabase project.

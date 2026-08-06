@@ -1,8 +1,10 @@
 node_modules/
 dist/
-build/
 coverage/
-.env*
-!.env.example
-npm-debug.log*
-.DS_Store
+
+.env
+.env.local
+.env.development
+.env.production
+
+supabase/.temp/

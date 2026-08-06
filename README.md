@@ -8,7 +8,7 @@ dependencies.
 
 ```text
 pulse80-frontend/  Independent Next.js package
-pulse80-backend/   Independent backend package (runtime not selected yet)
+pulse80-backend/   Independent Node.js and TypeScript backend package
 scripts/           Repository-level orchestration
 ```
 
@@ -26,9 +26,9 @@ repository root with `npm run dev:frontend`.
 
 ## Backend
 
-`pulse80-backend` establishes the backend's ownership and deployment boundary
-only. No backend framework or implementation has been chosen yet, so its local
-`dev` command is intentionally not present.
+`pulse80-backend` runs independently on `http://localhost:4000`. Start it from
+its directory with `npm run dev`, or from the repository root with
+`npm run dev:backend`.
 
 ## Run applications together
 
@@ -38,6 +38,4 @@ From the repository root:
 npm run dev
 ```
 
-The root launcher starts every application that defines its own `dev` command.
-It starts the frontend now and will automatically start the backend after the
-backend package adds its `dev` command.
+The root launcher starts both the frontend and backend development servers.
