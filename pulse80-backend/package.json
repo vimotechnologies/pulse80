@@ -8,7 +8,6 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test:supabase": "tsx src/test-supabase.ts",
     "supabase:types": "supabase gen types typescript --linked > src/generated/database.types.ts"
   },
   "dependencies": {

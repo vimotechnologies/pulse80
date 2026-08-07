@@ -32,5 +32,5 @@ query {
 - `npm run typecheck` checks the TypeScript source.
 - `npm run build` compiles the backend into `dist/`.
 - `npm run start` runs the compiled backend.
-- `npm run test:supabase` builds the backend and checks access to the configured
-  Supabase project.
+- `npm run supabase:types` regenerates TypeScript types from the linked Supabase
+  project.

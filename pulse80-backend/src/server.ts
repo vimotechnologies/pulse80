@@ -1,28 +1,62 @@
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
 
-const app = await buildApp();
+async function startServer(): Promise<void> {
+  const app = await buildApp();
 
-async function start(): Promise<void> {
+  const shutdown = async (
+    signal: NodeJS.Signals,
+  ): Promise<void> => {
+    app.log.info(
+      { signal },
+      "Shutdown signal received.",
+    );
+
+    try {
+      await app.close();
+
+      app.log.info("Pulse80 backend stopped.");
+      process.exit(0);
+    } catch (error) {
+      app.log.error(
+        error,
+        "Failed to stop Pulse80 backend cleanly.",
+      );
+
+      process.exit(1);
+    }
+  };
+
+  process.on("SIGINT", () => {
+    void shutdown("SIGINT");
+  });
+
+  process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
+  });
+
   try {
-    await app.listen({ port: env.PORT, host: "0.0.0.0" });
+    const address = await app.listen({
+      port: env.PORT,
+      host: "0.0.0.0",
+    });
+
+    app.log.info(
+      {
+        address,
+        graphql: `${address}/graphql`,
+        health: `${address}/health`,
+      },
+      "Pulse80 backend started.",
+    );
   } catch (error) {
-    app.log.error(error, "Backend startup failed");
-    process.exitCode = 1;
+    app.log.error(
+      error,
+      "Pulse80 backend failed to start.",
+    );
+
+    process.exit(1);
   }
 }
 
-let isShuttingDown = false;
-
-async function shutDown(signal: NodeJS.Signals): Promise<void> {
-  if (isShuttingDown) return;
-  isShuttingDown = true;
-
-  app.log.info({ signal }, "Shutting down the backend");
-  await app.close();
-}
-
-process.on("SIGINT", () => void shutDown("SIGINT"));
-process.on("SIGTERM", () => void shutDown("SIGTERM"));
-
-await start();
+void startServer();
