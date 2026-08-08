@@ -1,6 +1,8 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import { env } from "../config/env.js";
+import { requireAuthentication } from "../modules/auth/auth.guard.js";
+import type { GraphQLContext } from "./context.js";
 
 const baseTypeDefs = /* GraphQL */ `
   """
@@ -13,11 +15,21 @@ const baseTypeDefs = /* GraphQL */ `
     timestamp: String!
   }
 
+  type User {
+    id: ID!
+    email: String
+  }
+
   type Query {
     """
     Confirms that the GraphQL API is operational.
     """
     health: SystemHealth!
+
+    """
+    Returns the currently authenticated user.
+    """
+    me: User
   }
 
   type Mutation {
@@ -38,6 +50,19 @@ const baseResolvers = {
       environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
     }),
+
+    me: (
+      _parent: unknown,
+      _args: Record<string, never>,
+      context: GraphQLContext,
+    ) => {
+      requireAuthentication(context);
+
+      return {
+        id: context.user.id,
+        email: context.user.email ?? null,
+      };
+    },
   },
 
   Mutation: {
