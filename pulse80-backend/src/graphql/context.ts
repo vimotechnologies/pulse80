@@ -1,82 +1,125 @@
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLError } from "graphql";
+import { z } from "zod";
 
-import { env } from "../config/env.js";
 import type { Database } from "../generated/database.types.js";
-import { publicSupabase } from "../lib/supabase.js";
+import {
+  adminSupabase,
+  authSupabase,
+  createUserSupabase,
+} from "../lib/supabase.js";
+import { AuthorizationService } from "../modules/auth/authorization.service.js";
+import type {
+  OrganisationRole,
+  PlatformRole,
+} from "../modules/auth/roles.js";
+
+type TypedSupabase = SupabaseClient<Database>;
+
+export interface RequestIdentity {
+  platformRole: PlatformRole | null;
+  organisationId: string | null;
+  organisationRole: OrganisationRole | null;
+}
 
 export interface GraphQLContext {
   request: FastifyRequest;
   reply: FastifyReply;
   accessToken: string | null;
   user: User | null;
-  supabase: SupabaseClient<Database> | null;
+  supabase: TypedSupabase | null;
+  adminSupabase: TypedSupabase;
+  identity: RequestIdentity;
 }
 
-function extractBearerToken(request: FastifyRequest): string {
-  const authorization = request.headers.authorization;
-
-  if (!authorization) {
-    throw unauthenticatedError();
+function extractBearerToken(authorization?: string): string | null {
+  if (!authorization?.startsWith("Bearer ")) {
+    return null;
   }
 
-  const [scheme, token, ...extraParts] = authorization.trim().split(/\s+/);
-
-  if (scheme?.toLowerCase() !== "bearer" || !token || extraParts.length > 0) {
-    throw unauthenticatedError();
-  }
-
-  return token;
+  return authorization.slice("Bearer ".length).trim() || null;
 }
 
-function unauthenticatedError() {
-  return new GraphQLError("Authentication Error", {
-    extensions: {
-      code: "UNAUTHENTICATED",
-      http: { status: 401 },
+const organisationIdSchema = z.string().uuid();
+
+function extractOrganisationId(request: FastifyRequest): string | null {
+  const header = request.headers["x-organisation-id"];
+
+  if (!header) {
+    return null;
+  }
+
+  const value = Array.isArray(header) ? header[0] : header;
+  const parsed = organisationIdSchema.safeParse(value);
+
+  if (!parsed.success) {
+    throw new GraphQLError("Invalid organisation context.", {
+      extensions: {
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  return parsed.data;
+}
+
+export async function createGraphQLContext({
+  req,
+  reply,
+}: {
+  req: FastifyRequest;
+  reply: FastifyReply;
+}): Promise<GraphQLContext> {
+  const organisationId = extractOrganisationId(req);
+  const accessToken = extractBearerToken(req.headers.authorization);
+
+  const anonymousContext = (): GraphQLContext => ({
+    request: req,
+    reply,
+    accessToken: null,
+    user: null,
+    supabase: null,
+    adminSupabase,
+    identity: {
+      platformRole: null,
+      organisationId,
+      organisationRole: null,
     },
   });
-}
 
-export async function createGraphQLContext(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<GraphQLContext> {
-  const accessToken = extractBearerToken(request);
+  if (!accessToken) {
+    return anonymousContext();
+  }
 
   const {
     data: { user },
     error,
-  } = await publicSupabase.auth.getUser(accessToken);
+  } = await authSupabase.auth.getUser(accessToken);
 
   if (error || !user) {
-    request.log.warn({ authError: error?.message }, "GraphQL authentication failed");
-    throw unauthenticatedError();
+    req.log.warn({ authError: error?.message }, "GraphQL authentication failed");
+    return anonymousContext();
   }
 
-  const supabase = createClient<Database>(
-    env.SUPABASE_URL,
-    env.SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    },
-  );
+  const userSupabase = createUserSupabase(accessToken);
+  const authorizationService = new AuthorizationService(userSupabase);
+  const platformRole = await authorizationService.getPlatformRole(user.id);
+  const organisationAccess = organisationId
+    ? await authorizationService.getOrganisationAccess(user.id, organisationId)
+    : null;
 
   return {
-    request,
+    request: req,
     reply,
     accessToken,
     user,
-    supabase,
+    supabase: userSupabase,
+    adminSupabase,
+    identity: {
+      platformRole,
+      organisationId,
+      organisationRole: organisationAccess?.role ?? null,
+    },
   };
 }

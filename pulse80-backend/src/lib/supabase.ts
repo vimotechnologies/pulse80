@@ -1,6 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { env } from "../config/env.js";
+import type { Database } from "../generated/database.types.js";
 
 type SupabaseClientOptions = NonNullable<Parameters<typeof createClient>[2]>;
 type RealtimeTransport = NonNullable<
@@ -17,7 +18,7 @@ const websocketTransport = WebSocket as unknown as RealtimeTransport;
  * Later, the user's access token will be added to a request-scoped client
  * so Supabase Row-Level Security can identify the current user.
  */
-export const publicSupabase = createClient(
+export const authSupabase: SupabaseClient<Database> = createClient<Database>(
   env.SUPABASE_URL,
   env.SUPABASE_PUBLISHABLE_KEY,
   {
@@ -37,7 +38,7 @@ export const publicSupabase = createClient(
  * This client may bypass Row-Level Security depending on the key being used.
  * It must never be imported into the frontend.
  */
-export const adminSupabase = createClient(
+export const adminSupabase: SupabaseClient<Database> = createClient<Database>(
   env.SUPABASE_URL,
   env.SUPABASE_SECRET_KEY,
   {
@@ -51,3 +52,27 @@ export const adminSupabase = createClient(
     },
   },
 );
+
+export function createUserSupabase(
+  accessToken: string,
+): SupabaseClient<Database> {
+  return createClient<Database>(
+    env.SUPABASE_URL,
+    env.SUPABASE_PUBLISHABLE_KEY,
+    {
+      realtime: {
+        transport: websocketTransport,
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    },
+  );
+}
