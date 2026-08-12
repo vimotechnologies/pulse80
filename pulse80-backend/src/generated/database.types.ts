@@ -53,7 +53,7 @@ export type Database = {
           id?: string
           organisation_id: string
           profile_id: string
-          role?: string
+          role: string
           updated_at?: string
         }
         Update: {
@@ -105,6 +105,27 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_staff_memberships: {
+        Row: {
+          created_at: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -137,7 +158,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_organisation_member: {
+        Args: { target_organisation_id: string }
+        Returns: boolean
+      }
+      is_platform_staff: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
