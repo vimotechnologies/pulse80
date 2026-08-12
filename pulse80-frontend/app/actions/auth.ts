@@ -1,21 +1,63 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { authenticateDemoAccount } from "@/lib/auth/demo-accounts";
-import { createSession, deleteSession, destinationForRole } from "@/lib/auth/session";
+import { z } from "zod";
+
+import {
+  deleteSession,
+  destinationForRole,
+  findInitialOrganisationId,
+  getViewer,
+  portalRoleForViewer,
+  setOrganisationContext,
+} from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+
+const loginSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+  password: z.string().min(1).max(128),
+});
 
 export async function loginAction(input: {
   email: unknown;
   password: unknown;
-  remember: unknown;
 }) {
-  const account = authenticateDemoAccount(input);
-  if (!account) {
-    return { ok: false as const, error: "Enter a valid Pulse80 demo email and password." };
+  const parsed = loginSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false as const, error: "Enter a valid email and password." };
   }
 
-  await createSession(account.email, account.role, input.remember === true);
-  return { ok: true as const, destination: destinationForRole(account.role) };
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+
+  if (error || !data.user) {
+    return { ok: false as const, error: "The email or password is incorrect." };
+  }
+
+  try {
+    const organisationId = await findInitialOrganisationId(data.user.id);
+    await setOrganisationContext(organisationId);
+
+    const viewer = await getViewer(organisationId);
+    const portalRole = portalRoleForViewer(viewer);
+
+    if (!portalRole) {
+      await deleteSession();
+      return {
+        ok: false as const,
+        error: "Your account does not have access to a Pulse80 workspace.",
+      };
+    }
+
+    return { ok: true as const, destination: destinationForRole(portalRole) };
+  } catch {
+    await deleteSession();
+    return {
+      ok: false as const,
+      error: "Unable to load your Pulse80 access. Please try again.",
+    };
+  }
 }
 
 export async function logoutAction() {

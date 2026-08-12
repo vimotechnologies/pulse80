@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +18,7 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    const result = await loginAction({ email, password, remember });
+    const result = await loginAction({ email, password });
     if (!result.ok) {
       setLoading(false);
       setError(result.error);
@@ -92,16 +91,6 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-
-            <label className="flex w-fit items-center gap-2.5 text-[11px] font-medium text-navy/65">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
-                className="h-4 w-4 rounded border-[#cbd2dc] text-primary focus:ring-primary"
-              />
-              Keep me signed in on this device
-            </label>
 
             {error ? <div role="alert" className="rounded-xl border border-pulse-red/15 bg-pulse-red/7 px-4 py-3 text-[11px] font-semibold text-pulse-red">{error}</div> : null}
 

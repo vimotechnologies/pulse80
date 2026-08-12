@@ -3,69 +3,105 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export type DemoRole = "admin" | "client" | "practitioner";
-type DemoSession = { email: string; role: DemoRole; expiresAt: number };
+import {
+  graphqlRequest,
+  type OrganisationRole,
+  type Viewer,
+} from "@/lib/graphql/client";
+import { createClient } from "@/lib/supabase/server";
 
-export const SESSION_COOKIE = "pulse80_demo_session";
-const sessionSecret = process.env.SESSION_SECRET ?? "pulse80-demo-only-change-before-production";
-const destinations: Record<DemoRole, string> = {
+export type PortalRole = "admin" | "client" | "practitioner";
+
+export const ORGANISATION_COOKIE = "pulse80_organisation_id";
+
+const destinations: Record<PortalRole, string> = {
   admin: "/admin/dashboard",
   client: "/client/dashboard",
   practitioner: "/practitioner/dashboard",
 };
 
-function encode(value: string | Uint8Array) {
-  return Buffer.from(value).toString("base64url");
+const ME_QUERY = /* GraphQL */ `
+  query Viewer {
+    me {
+      id
+      email
+      platformRole
+      organisationId
+      organisationRole
+      permissions
+    }
+  }
+`;
+
+export function portalRoleForViewer(viewer: Viewer): PortalRole | null {
+  if (viewer.platformRole) return "admin";
+  if (viewer.organisationRole === "practitioner") return "practitioner";
+  if (viewer.organisationRole) return "client";
+  return null;
 }
 
-async function sign(value: string) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(sessionSecret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  return encode(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value))));
+export async function getViewer(organisationId?: string | null) {
+  const result = await graphqlRequest<{ me: Viewer }>(ME_QUERY, { organisationId });
+  return result.me;
 }
 
-export async function createSession(email: string, role: DemoRole, remember: boolean) {
-  const expiresAt = Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
-  const payload = encode(JSON.stringify({ email, role, expiresAt } satisfies DemoSession));
+export async function findInitialOrganisationId(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("organisation_memberships")
+    .select("organisation_id")
+    .eq("profile_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data?.organisation_id ?? null;
+}
+
+export async function setOrganisationContext(organisationId: string | null) {
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, `${payload}.${await sign(payload)}`, {
+
+  if (!organisationId) {
+    cookieStore.delete(ORGANISATION_COOKIE);
+    return;
+  }
+
+  cookieStore.set(ORGANISATION_COOKIE, organisationId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    expires: new Date(expiresAt),
   });
 }
 
-export async function verifySessionToken(token?: string | null): Promise<DemoSession | null> {
-  if (!token) return null;
-  const [payload, signature, extra] = token.split(".");
-  if (!payload || !signature || extra || (await sign(payload)) !== signature) return null;
+export async function requireRole(requiredRole: PortalRole) {
+  const organisationId = (await cookies()).get(ORGANISATION_COOKIE)?.value ?? null;
+
   try {
-    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as DemoSession;
-    if (!session.email || !destinations[session.role] || session.expiresAt <= Date.now()) return null;
-    return session;
+    const viewer = await getViewer(organisationId);
+    const actualRole = portalRoleForViewer(viewer);
+
+    if (!actualRole) redirect("/login?error=no-access");
+    if (actualRole !== requiredRole) redirect(destinations[actualRole]);
+    return viewer;
   } catch {
-    return null;
+    redirect("/login");
   }
 }
 
-export async function requireRole(role: DemoRole) {
-  const session = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
-  if (!session) redirect("/login");
-  if (session.role !== role) redirect(destinations[session.role]);
-  return session;
-}
-
 export async function deleteSession() {
-  (await cookies()).delete(SESSION_COOKIE);
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  (await cookies()).delete(ORGANISATION_COOKIE);
 }
 
-export function destinationForRole(role: DemoRole) {
+export function destinationForRole(role: PortalRole) {
   return destinations[role];
+}
+
+export function isClientOrganisationRole(
+  role: OrganisationRole | null,
+): role is Exclude<OrganisationRole, "practitioner"> {
+  return Boolean(role && role !== "practitioner");
 }

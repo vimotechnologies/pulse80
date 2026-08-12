@@ -1,24 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { destinationForRole, SESSION_COOKIE, verifySessionToken, type DemoRole } from "@/lib/auth/session";
+import { type NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes: Array<{ prefix: string; role: DemoRole }> = [
-  { prefix: "/admin", role: "admin" },
-  { prefix: "/client", role: "client" },
-  { prefix: "/practitioner", role: "practitioner" },
-];
+import { refreshSupabaseSession } from "@/lib/supabase/proxy";
+
+const protectedPrefixes = ["/admin", "/client", "/practitioner"];
 
 export default async function proxy(request: NextRequest) {
-  const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
-  const route = protectedRoutes.find(({ prefix }) => request.nextUrl.pathname.startsWith(prefix));
+  const { response, isAuthenticated } = await refreshSupabaseSession(request);
+  const isProtected = protectedPrefixes.some((prefix) =>
+    request.nextUrl.pathname.startsWith(prefix),
+  );
 
-  if (!route) return NextResponse.next();
-  if (!session) return NextResponse.redirect(new URL("/login", request.url));
-  if (session.role !== route.role) {
-    return NextResponse.redirect(new URL(destinationForRole(session.role), request.url));
+  if (isProtected && !isAuthenticated) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
-  return NextResponse.next();
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/login", "/admin/:path*", "/client/:path*", "/practitioner/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
