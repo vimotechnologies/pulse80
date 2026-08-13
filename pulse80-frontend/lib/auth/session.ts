@@ -40,13 +40,21 @@ export function portalRoleForViewer(viewer: Viewer): PortalRole | null {
   return null;
 }
 
-export async function getViewer(organisationId?: string | null) {
-  const result = await graphqlRequest<{ me: Viewer }>(ME_QUERY, { organisationId });
+export async function getViewer(
+  organisationId?: string | null,
+  accessToken?: string,
+) {
+  const result = await graphqlRequest<{ me: Viewer }>(ME_QUERY, {
+    accessToken,
+    organisationId,
+  });
   return result.me;
 }
 
-export async function findInitialOrganisationId(userId: string) {
-  const supabase = await createClient();
+export async function findInitialOrganisationId(
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createClient>>,
+) {
   const { data, error } = await supabase
     .from("organisation_memberships")
     .select("organisation_id")

@@ -33,15 +33,23 @@ type GraphQLResponse<T> = {
 
 export async function graphqlRequest<T>(
   query: string,
-  options: { organisationId?: string | null; variables?: Record<string, unknown> } = {},
+  options: {
+    accessToken?: string;
+    organisationId?: string | null;
+    variables?: Record<string, unknown>;
+  } = {},
 ): Promise<T> {
-  const supabase = await createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData.session?.access_token;
+  let accessToken = options.accessToken;
 
-  if (userError || !userData.user || !accessToken) {
-    throw new Error("UNAUTHENTICATED");
+  if (!accessToken) {
+    const supabase = await createClient();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data: sessionData } = await supabase.auth.getSession();
+    accessToken = sessionData.session?.access_token;
+
+    if (userError || !userData.user || !accessToken) {
+      throw new Error("UNAUTHENTICATED");
+    }
   }
 
   const graphqlUrl = process.env.BACKEND_GRAPHQL_URL ?? "http://localhost:4000/graphql";

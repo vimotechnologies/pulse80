@@ -18,7 +18,10 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    const result = await loginAction({ email, password });
+    const formData = new FormData();
+    formData.set("email", email);
+    formData.set("password", password);
+    const result = await loginAction(formData);
     if (!result.ok) {
       setLoading(false);
       setError(result.error);

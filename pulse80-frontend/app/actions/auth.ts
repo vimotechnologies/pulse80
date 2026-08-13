@@ -18,11 +18,11 @@ const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-export async function loginAction(input: {
-  email: unknown;
-  password: unknown;
-}) {
-  const parsed = loginSchema.safeParse(input);
+export async function loginAction(formData: FormData) {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
 
   if (!parsed.success) {
     return { ok: false as const, error: "Enter a valid email and password." };
@@ -31,15 +31,15 @@ export async function loginAction(input: {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
-  if (error || !data.user) {
+  if (error || !data.user || !data.session) {
     return { ok: false as const, error: "The email or password is incorrect." };
   }
 
   try {
-    const organisationId = await findInitialOrganisationId(data.user.id);
+    const organisationId = await findInitialOrganisationId(data.user.id, supabase);
     await setOrganisationContext(organisationId);
 
-    const viewer = await getViewer(organisationId);
+    const viewer = await getViewer(organisationId, data.session.access_token);
     const portalRole = portalRoleForViewer(viewer);
 
     if (!portalRole) {
