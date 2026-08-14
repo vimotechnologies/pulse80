@@ -1,5 +1,7 @@
-import { ClientExecutivePage } from "@/components/client/ClientExecutivePage";
+import { loadOrganisation } from "@/app/actions/organisation";
+import { OrganisationSettingsForm } from "@/components/client/OrganisationSettingsForm";
 
-export default function ClientSettingsPage() {
-  return <ClientExecutivePage configId="settings" />;
+export default async function ClientSettingsPage() {
+  const organisation = await loadOrganisation();
+  return <OrganisationSettingsForm initialOrganisation={organisation} />;
 }
