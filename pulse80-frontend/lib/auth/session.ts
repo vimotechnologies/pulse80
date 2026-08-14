@@ -85,17 +85,19 @@ export async function setOrganisationContext(organisationId: string | null) {
 
 export async function requireRole(requiredRole: PortalRole) {
   const organisationId = (await cookies()).get(ORGANISATION_COOKIE)?.value ?? null;
+  let viewer: Viewer;
 
   try {
-    const viewer = await getViewer(organisationId);
-    const actualRole = portalRoleForViewer(viewer);
-
-    if (!actualRole) redirect("/login?error=no-access");
-    if (actualRole !== requiredRole) redirect(destinations[actualRole]);
-    return viewer;
+    viewer = await getViewer(organisationId);
   } catch {
     redirect("/login");
   }
+
+  const actualRole = portalRoleForViewer(viewer);
+
+  if (!actualRole) redirect("/login?error=no-access");
+  if (actualRole !== requiredRole) redirect(destinations[actualRole]);
+  return viewer;
 }
 
 export async function deleteSession() {
