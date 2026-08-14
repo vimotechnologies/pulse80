@@ -7,6 +7,12 @@ import {
   type Organisation,
 } from "@/app/actions/organisation";
 
+const updatedAtFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Africa/Gaborone",
+});
+
 export function OrganisationSettingsForm({
   initialOrganisation,
 }: {
@@ -91,7 +97,10 @@ export function OrganisationSettingsForm({
 
         <div className="flex items-center justify-between gap-4 border-t border-card-border pt-5 sm:col-span-2">
           <p className="text-xs text-navy/45">
-            Last updated {new Date(organisation.updatedAt).toLocaleString()}
+            Last updated{" "}
+            <time dateTime={organisation.updatedAt}>
+              {updatedAtFormatter.format(new Date(organisation.updatedAt))}
+            </time>
           </p>
           <button
             type="submit"
