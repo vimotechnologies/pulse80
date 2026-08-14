@@ -2,6 +2,8 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import { authResolvers } from "../modules/auth/auth.resolver.js";
 import { authTypeDefs } from "../modules/auth/auth.schema.js";
+import { organisationResolvers } from "../modules/organisations/organisation.resolver.js";
+import { organisationTypeDefs } from "../modules/organisations/organisation.schema.js";
 
 const rootTypeDefs = /* GraphQL */ `
   type SystemHealth {
@@ -34,6 +36,6 @@ const rootResolvers = {
 };
 
 export const schema = makeExecutableSchema({
-  typeDefs: [rootTypeDefs, authTypeDefs],
-  resolvers: [rootResolvers, authResolvers],
+  typeDefs: [rootTypeDefs, authTypeDefs, organisationTypeDefs],
+  resolvers: [rootResolvers, authResolvers, organisationResolvers],
 });
