@@ -44,7 +44,7 @@ The root launcher starts both the frontend and backend development servers.
 
 Use this format:
 
-<emoji> <type>: <commit message>
+    <emoji> <type>: <commit message>
 
 ## Commit Types
 
