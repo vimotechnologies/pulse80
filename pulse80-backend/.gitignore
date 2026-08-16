@@ -8,3 +8,4 @@ coverage/
 .env.production
 
 supabase/.temp/
+.vercel
