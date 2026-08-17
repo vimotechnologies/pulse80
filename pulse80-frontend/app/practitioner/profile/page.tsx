@@ -1,5 +1,7 @@
-import { PractitionerWorkspacePage } from "@/components/practitioner/PractitionerWorkspacePage";
+import { loadPractitionerProfile } from "@/app/actions/practitioner-profile";
+import { PractitionerProfilePage } from "@/components/practitioner/PractitionerProfilePage";
 
-export default function PractitionerProfilePage() {
-  return <PractitionerWorkspacePage configId="profile" />;
+export default async function PractitionerProfileRoute() {
+  const profile = await loadPractitionerProfile();
+  return <PractitionerProfilePage initialProfile={profile} />;
 }
