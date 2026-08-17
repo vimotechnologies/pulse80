@@ -4,9 +4,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
+  createAdminOrganisation,
+  updateAdminOrganisation,
+} from "@/app/actions/admin-organisations";
+import {
   Activity,
   AddCircle,
-  AlertCircle,
   ArrowDown,
   ArrowLeft2,
   Building2,
@@ -22,11 +25,8 @@ import {
   Globe2,
   HeartPulse,
   Location,
-  Mail,
   MoreHorizontal,
-  Refresh,
   ShieldCheck,
-  Trash,
   User,
 } from "@/components/icons/IconsaxIcons";
 import {
@@ -66,7 +66,7 @@ type InvitationStatus =
   | "Invitation Expired"
   | "Access Suspended";
 
-type OrganizationContact = {
+export type OrganizationContact = {
   id: string;
   name: string;
   roleLabel: string;
@@ -137,11 +137,12 @@ type ClientUser = {
   lastActive: string;
 };
 
-type Organization = {
+export type Organization = {
   id: string;
   name: string;
   code: string;
   logo?: string;
+  logoUrl?: string | null;
   industry: string;
   country: string;
   primaryLocation: string;
@@ -151,12 +152,14 @@ type Organization = {
   contractStart: string;
   contractEnd: string;
   risk: WellnessRisk;
+  wellnessRisk: WellnessRisk;
+  wellnessRiskScore: number;
   status: OrganizationStatus;
   branches: Branch[];
   lastActivation: string;
   nextActivation: string;
   reportsPublished: number;
-  contacts: [OrganizationContact, OrganizationContact];
+  contacts: OrganizationContact[];
   clientUsers: ClientUser[];
   activations: Activation[];
   reports: Report[];
@@ -164,9 +167,11 @@ type Organization = {
   recommendations: Recommendation[];
   customPackageNotes?: string;
   quickSummary?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
-type OrganizationForm = {
+export type OrganizationForm = {
   logo?: string;
   name: string;
   industry: string;
@@ -179,6 +184,7 @@ type OrganizationForm = {
   contractEnd: string;
   status: OrganizationStatus;
   risk: WellnessRisk;
+  customPackageNotes: string;
   contact1Name: string;
   contact1Role: string;
   contact1CustomRole: string;
@@ -240,6 +246,7 @@ const initialForm: OrganizationForm = {
   contractEnd: "2026-12-31",
   status: "Prospect",
   risk: "Low",
+  customPackageNotes: "",
   contact1Name: "",
   contact1Role: "HR Manager",
   contact1CustomRole: "",
@@ -254,145 +261,8 @@ const initialForm: OrganizationForm = {
   contact2Method: "Email",
 };
 
-const mockOrganizations: Organization[] = [
-  createOrganization({
-    id: "org-abc",
-    name: "ABC Holdings",
-    code: "ABC001",
-    logo: "ABC",
-    industry: "Conglomerate",
-    country: "South Africa",
-    primaryLocation: "Johannesburg, Gauteng",
-    region: "Gauteng",
-    employees: 2450,
-    package: "Enterprise Wellness Intelligence Package",
-    contractStart: "2024-01-01",
-    contractEnd: "2025-12-31",
-    risk: "High",
-    status: "Active",
-    lastActivation: "10 May 2024",
-    nextActivation: "20 Jun 2024",
-    reportsPublished: 8,
-  }),
-  createOrganization({
-    id: "org-delta",
-    name: "Delta Mining Group",
-    code: "DMG002",
-    logo: "DMG",
-    industry: "Mining",
-    country: "Botswana",
-    primaryLocation: "Rustenburg, North West",
-    region: "North West",
-    employees: 1120,
-    package: "Corporate Wellness Package",
-    contractStart: "2024-03-01",
-    contractEnd: "2025-02-28",
-    risk: "Medium",
-    status: "Active",
-    lastActivation: "May 22, 2026",
-    nextActivation: "Sep 04, 2026",
-    reportsPublished: 12,
-  }),
-  createOrganization({
-    id: "org-nova",
-    name: "Nova Finance",
-    code: "NF003",
-    logo: "NF",
-    industry: "Financial Services",
-    country: "South Africa",
-    primaryLocation: "Cape Town, Western Cape",
-    region: "Western Cape",
-    employees: 860,
-    package: "Corporate Wellness Package",
-    contractStart: "2024-02-15",
-    contractEnd: "2025-02-14",
-    risk: "Low",
-    status: "Onboarding",
-    lastActivation: "Not started",
-    nextActivation: "Jul 28, 2026",
-    reportsPublished: 1,
-  }),
-  createOrganization({
-    id: "org-legae",
-    name: "Legae Academy",
-    code: "LA004",
-    logo: "LA",
-    industry: "Education",
-    country: "South Africa",
-    primaryLocation: "Pretoria, Gauteng",
-    region: "Gauteng",
-    employees: 320,
-    package: "Starter Wellness Package",
-    contractStart: "2024-08-01",
-    contractEnd: "2025-07-31",
-    risk: "Low",
-    status: "Onboarding",
-    lastActivation: "Apr 19, 2026",
-    nextActivation: "Oct 02, 2026",
-    reportsPublished: 4,
-  }),
-  createOrganization({
-    id: "org-btcl",
-    name: "BTCL",
-    code: "BTCL005",
-    logo: "BTCL",
-    industry: "Telecommunications",
-    country: "Botswana",
-    primaryLocation: "Gaborone, Botswana",
-    region: "South East District",
-    employees: 780,
-    package: "Enterprise Wellness Intelligence Package",
-    contractStart: "2023-01-01",
-    contractEnd: "2024-12-31",
-    risk: "High",
-    status: "Paused",
-    lastActivation: "May 29, 2026",
-    nextActivation: "Pending confirmation",
-    reportsPublished: 6,
-  }),
-  createOrganization({
-    id: "org-fsg",
-    name: "FSG",
-    code: "FSG006",
-    logo: "FSG",
-    industry: "Manufacturing",
-    country: "South Africa",
-    primaryLocation: "Durban, KwaZulu-Natal",
-    region: "KwaZulu-Natal",
-    employees: 540,
-    package: "Custom Package",
-    contractStart: "2023-07-01",
-    contractEnd: "2024-06-30",
-    risk: "Critical",
-    status: "Contract Expired",
-    lastActivation: "Mar 18, 2026",
-    nextActivation: "Renewal required",
-    reportsPublished: 9,
-    customPackageNotes: "Includes night-shift screening and depot wellness rotations.",
-  }),
-  createOrganization({
-    id: "org-devre",
-    name: "De Vre Group",
-    code: "DVG007",
-    logo: "DV",
-    industry: "Retail",
-    country: "South Africa",
-    primaryLocation: "Bloemfontein, Free State",
-    region: "Free State",
-    employees: 210,
-    package: "Starter Wellness Package",
-    contractStart: "2024-11-01",
-    contractEnd: "2025-10-31",
-    risk: "Medium",
-    status: "Active",
-    lastActivation: "Proposal stage",
-    nextActivation: "Discovery call",
-    reportsPublished: 0,
-  }),
-];
-
-export function AdminOrganizations() {
-  const [organizations, setOrganizations] = useState(mockOrganizations);
+export function AdminOrganizations({ initialOrganizations }: { initialOrganizations: Organization[] }) {
+  const [organizations, setOrganizations] = useState(initialOrganizations);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [industryFilter, setIndustryFilter] = useState("All");
@@ -465,11 +335,16 @@ export function AdminOrganizations() {
     window.setTimeout(() => setToast(null), 3200);
   }
 
-  function addOrganization(form: OrganizationForm) {
-    const organization = organizationFromForm(form);
-    setOrganizations((current) => [organization, ...current]);
+  async function addOrganization(form: OrganizationForm) {
+    const result = await createAdminOrganisation(form);
+    if (!result.ok) {
+      showToast("The organization could not be saved. Please check the fields and try again.");
+      return false;
+    }
+    setOrganizations((current) => [result.organisation, ...current]);
     setAddOpen(false);
-    showToast(`${organization.name} was added locally.`);
+    showToast(`${result.organisation.name} was saved.`);
+    return true;
   }
 
   function inviteClientUser(payload: InvitePayload) {
@@ -529,10 +404,10 @@ export function AdminOrganizations() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard title="Total Organizations" value="24" detail="All client organizations" icon={Building2} />
-          <SummaryCard title="Active Contracts" value="18" detail="With active contracts" icon={ClipboardCheck} tone="success" />
-          <SummaryCard title="Contracts Expiring Soon" value="4" detail="Within 60 days" icon={Clock} tone="warning" />
-          <SummaryCard title="High-Risk Organizations" value="3" detail="High or critical risk" icon={ShieldCheck} tone="danger" />
+          <SummaryCard title="Total Organizations" value={String(organizations.length)} detail="All client organizations" icon={Building2} />
+          <SummaryCard title="Active Contracts" value={String(organizations.filter((item) => item.status === "Active").length)} detail="With active contracts" icon={ClipboardCheck} tone="success" />
+          <SummaryCard title="Contracts Expiring Soon" value={String(contractsExpiringSoon(organizations))} detail="Within 60 days" icon={Clock} tone="warning" />
+          <SummaryCard title="High-Risk Organizations" value={String(organizations.filter((item) => item.risk === "High" || item.risk === "Critical").length)} detail="High or critical risk" icon={ShieldCheck} tone="danger" />
         </section>
 
       <UnifiedFilterCard>
@@ -665,13 +540,14 @@ export function AdminOrganizations() {
   );
 }
 
-export function AdminOrganizationDetails({ organizationId }: { organizationId: string }) {
-  const initialOrganization = mockOrganizations.find((organization) => organization.id === organizationId) ?? null;
+export function AdminOrganizationDetails({ organizationId, initialOrganization }: { organizationId: string; initialOrganization: Organization | null }) {
   const [organization, setOrganization] = useState<Organization | null>(initialOrganization);
+  const [draft, setDraft] = useState<Organization | null>(initialOrganization);
   const [activeTab, setActiveTab] = useState("Overview");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   function showToast(message: string) {
     setToast(message);
@@ -743,20 +619,11 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setInviteOpen(true)}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
-              style={{ fontSize: 12, lineHeight: "12px" }}
-            >
-              <Mail className="h-3 w-3" aria-hidden="true" />
-              Invite Client User
-            </button>
             {isEditing ? (
               <>
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => { setDraft(organization); setIsEditing(false); }}
                   className="inline-flex h-7 items-center rounded-md border border-card-border bg-white px-2.5 text-[12px] font-medium leading-3 text-black shadow-[0_4px_14px_rgba(15,23,42,0.03)] transition hover:bg-black hover:text-white"
                   style={{ fontSize: 12, lineHeight: "12px" }}
                 >
@@ -764,20 +631,33 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  disabled={isSaving}
+                  onClick={async () => {
+                    if (!draft) return;
+                    setIsSaving(true);
+                    const result = await updateAdminOrganisation(
+                      organizationId,
+                      draft,
+                      draft.logo?.startsWith("data:") ? draft.logo : undefined,
+                      Boolean(organization.logo && !draft.logo),
+                    );
+                    setIsSaving(false);
+                    if (!result.ok) { showToast("Changes could not be saved."); return; }
+                    setOrganization(result.organisation);
+                    setDraft(result.organisation);
                     setIsEditing(false);
-                    showToast("Changes saved locally.");
+                    showToast("Organization changes were saved.");
                   }}
                   className="inline-flex h-7 items-center rounded-md bg-primary px-3 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                   style={{ fontSize: 12, lineHeight: "12px" }}
                 >
-                  Save Changes
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </button>
               </>
             ) : (
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
+                onClick={() => { setDraft(organization); setIsEditing(true); }}
                 className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                 style={{ fontSize: 12, lineHeight: "12px" }}
               >
@@ -817,17 +697,12 @@ export function AdminOrganizationDetails({ organizationId }: { organizationId: s
       <section className="-mt-4">
         <section className="rounded-b-2xl rounded-t-none border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)]">
           {activeTab === "Overview" ? (
-            <div className="grid xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="p-5">
-                <OrganizationOverviewForm organization={organization} />
-              </div>
-              <div className="border-t border-card-border p-5 xl:border-l xl:border-t-0">
-                <WellnessRiskGauge risk={organization.risk} />
-              </div>
+            <div className="p-5">
+              <OrganizationOverviewForm organization={draft ?? organization} editable={isEditing} onChange={setDraft} />
             </div>
           ) : (
             <div className="p-5">
-            {activeTab === "Contacts" ? <ContactsTab organization={organization} /> : null}
+            {activeTab === "Contacts" ? <ContactsTab organization={draft ?? organization} editable={isEditing} onChange={setDraft} /> : null}
             {activeTab === "Branches & Departments" ? (
               <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
             ) : null}
@@ -924,75 +799,6 @@ function RiskBadge({ risk }: { risk: WellnessRisk }) {
   return <span className={cn("inline-flex w-fit rounded-full border px-2.5 py-1 text-[12px] font-medium leading-4", styles[risk])}>{risk}</span>;
 }
 
-function WellnessRiskGauge({ risk }: { risk: WellnessRisk }) {
-  const riskMeta: Record<WellnessRisk, { score: number; label: string; tone: string; rotation: number }> = {
-    Low: { score: 22, label: "LOW", tone: "text-success", rotation: -54 },
-    Medium: { score: 45, label: "MEDIUM", tone: "text-black", rotation: -12 },
-    High: { score: 78, label: "HIGH", tone: "text-pulse-red", rotation: 42 },
-    Critical: { score: 92, label: "CRITICAL", tone: "text-pulse-red", rotation: 64 },
-  };
-  const meta = riskMeta[risk];
-
-  return (
-    <section>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-[14px] font-semibold text-black">Wellness Risk Score</h2>
-          <AlertCircle className="h-3.5 w-3.5 text-[#475467]" aria-hidden="true" />
-        </div>
-        <ArrowDown className="h-3.5 w-3.5 rotate-180 text-black" aria-hidden="true" />
-      </div>
-
-      <div className="mt-8 flex flex-col items-center">
-        <div className="relative h-36 w-64 overflow-hidden">
-          <div
-            className="absolute left-0 top-0 h-64 w-64 rounded-full"
-            style={{
-              background:
-                "conic-gradient(from 270deg at 50% 50%, #48bb78 0deg 45deg, #9bd330 45deg 90deg, #fbbf24 90deg 135deg, #fb923c 135deg 162deg, #ef4444 162deg 180deg, #e5e7eb 180deg 360deg)",
-            }}
-          />
-          <div className="absolute left-1/2 top-8 h-48 w-48 -translate-x-1/2 rounded-full bg-white" />
-          <div className="absolute left-0 top-[118px] text-[12px] font-medium text-black/55">0</div>
-          <div className="absolute right-0 top-[118px] text-[12px] font-medium text-black/55">100</div>
-          <div className="absolute bottom-0 left-1/2 h-20 w-1 origin-bottom rounded-full bg-[#fb923c] transition-transform" style={{ transform: `translateX(-50%) rotate(${meta.rotation}deg)` }} />
-          <div className="absolute bottom-[-5px] left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-white bg-[#fb923c] shadow" />
-          <div className="absolute inset-x-0 bottom-0 text-center">
-            <p className="text-[28px] font-semibold leading-7 text-black">
-              {meta.score}<span className="text-[14px] font-medium">/100</span>
-            </p>
-            <p className={cn("mt-2 text-[12px] font-semibold", meta.tone)}>{meta.label}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-4 gap-2 text-[12px] text-black/65">
-        <LegendDot color="bg-[#48bb78]" label="0-25" />
-        <LegendDot color="bg-[#9bd330]" label="26-50" />
-        <LegendDot color="bg-[#fb923c]" label="51-75" />
-        <LegendDot color="bg-[#ef4444]" label="76-100" />
-      </div>
-
-      <div className="mt-8 flex gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-        <Refresh className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-        <div>
-          <p className="text-[12px] font-semibold text-black">Auto-calculated on page load</p>
-          <p className="mt-1 text-[12px] text-black/60">Calculating from 0 to {meta.score} over 3 seconds</p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span className={cn("h-2.5 w-2.5 rounded-full", color)} />
-      {label}
-    </span>
-  );
-}
-
 const detailTabs = [
   { label: "Overview", icon: Building2 },
   { label: "Contacts", icon: User },
@@ -1002,7 +808,17 @@ const detailTabs = [
   { label: "Client Portal Access", icon: Globe2 },
 ];
 
-function OrganizationOverviewForm({ organization }: { organization: Organization }) {
+function OrganizationOverviewForm({
+  organization,
+  editable,
+  onChange,
+}: {
+  organization: Organization;
+  editable: boolean;
+  onChange: (organization: Organization) => void;
+}) {
+  const update = <K extends keyof Organization>(key: K, value: Organization[K]) =>
+    onChange({ ...organization, [key]: value });
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
@@ -1011,20 +827,20 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
       </div>
 
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
-        <ReadonlyField label="Organization Name" required value={organization.name} />
+        <OverviewField label="Organization Name" required value={organization.name} editable={editable} onChange={(value) => update("name", value)} />
         <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
-        <ReadonlyField label="Industry" required value={organization.industry} select />
-        <ReadonlyField label="Country" required value={organization.country} select />
-        <ReadonlyField label="Primary Location" required value={organization.primaryLocation} select />
-        <ReadonlyField label="Region" value={organization.region} select />
-        <ReadonlyField label="Employee Count" required value={organization.employees.toLocaleString()} />
+        <OverviewField label="Industry" required value={organization.industry} editable={editable} onChange={(value) => update("industry", value)} />
+        <OverviewField label="Country" required value={organization.country} editable={editable} onChange={(value) => update("country", value)} />
+        <OverviewField label="Primary Location" required value={organization.primaryLocation} editable={editable} onChange={(value) => update("primaryLocation", value)} />
+        <OverviewField label="Region" value={organization.region} editable={editable} onChange={(value) => update("region", value)} />
+        <OverviewField label="Employee Count" required type="number" value={String(organization.employees)} editable={editable} onChange={(value) => update("employees", Number(value) || 0)} />
         <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
         <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
-        <ReadonlyField label="Package" required value={organization.package} select />
-        <ReadonlyField label="Status" required value={organization.status} select />
+        <OverviewField label="Package" required value={organization.package} editable={editable} options={packageOptions} onChange={(value) => update("package", value as PackageName)} />
+        <OverviewField label="Status" required value={organization.status} editable={editable} options={statusOptions} onChange={(value) => update("status", value as OrganizationStatus)} />
         <ReadonlyField label="Wellness Risk" value={organization.risk} muted />
-        <ReadonlyField label="Contract Start Date" value={formatShortDate(organization.contractStart)} icon={CalendarDays} />
-        <ReadonlyField label="Contract End Date" value={formatShortDate(organization.contractEnd)} icon={CalendarDays} />
+        <OverviewField label="Contract Start Date" type="date" value={organization.contractStart} editable={editable} onChange={(value) => update("contractStart", value)} />
+        <OverviewField label="Contract End Date" type="date" value={organization.contractEnd} editable={editable} onChange={(value) => update("contractEnd", value)} />
         <ReadonlyField label="Last Activation" value={organization.lastActivation} icon={CalendarDays} />
         <ReadonlyField label="Next Activation" value={organization.nextActivation} icon={CalendarDays} />
         <ReadonlyField label="Reports Published" value={String(organization.reportsPublished)} />
@@ -1033,24 +849,33 @@ function OrganizationOverviewForm({ organization }: { organization: Organization
 
       <div className="space-y-2">
         <p className="text-[12px] font-medium text-black">Organization Logo</p>
-        <div className="flex flex-wrap items-center gap-3">
-          <LogoMark organization={organization} />
-          <div className="flex h-11 min-w-[240px] items-center justify-center gap-2 rounded-lg border border-dashed border-card-border bg-white px-4 text-[12px] text-black/65">
-            <Download className="h-4 w-4 rotate-180 text-black/55" aria-hidden="true" />
-            Click to upload or drag and drop
-          </div>
-          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-black hover:text-white">
-            <Edit className="h-4 w-4" aria-hidden="true" />
-            Replace
-          </button>
-          <button type="button" className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-pulse-red transition hover:bg-black hover:text-white">
-            <Trash className="h-4 w-4" aria-hidden="true" />
-            Remove
-          </button>
-        </div>
+        {editable ? (
+          <LogoUpload value={organization.logo} onChange={(logo) => update("logo", logo)} />
+        ) : (
+          <div className="flex items-center gap-3"><LogoMark organization={organization} /><span className="text-[12px] text-black/55">Use Edit Organization to replace this logo.</span></div>
+        )}
         <p className="text-[12px] text-black/55">Recommended size: 512 x 512px. Square images work best.</p>
       </div>
     </div>
+  );
+}
+
+function OverviewField({ label, value, editable, onChange, required, options, type = "text" }: {
+  label: string; value: string; editable: boolean; onChange: (value: string) => void;
+  required?: boolean; options?: readonly string[]; type?: string;
+}) {
+  if (!editable) return <ReadonlyField label={label} value={type === "date" ? formatShortDate(value) : value} required={required} />;
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label} {required ? <span className="text-pulse-red">*</span> : null}</span>
+      {options ? (
+        <select value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10">
+          {options.map((option) => <option key={option}>{option}</option>)}
+        </select>
+      ) : (
+        <input type={type} min={type === "number" ? 0 : undefined} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10" />
+      )}
+    </label>
   );
 }
 
@@ -1083,22 +908,46 @@ function ReadonlyField({
   );
 }
 
-function ContactsTab({ organization }: { organization: Organization }) {
+function ContactsTab({ organization, editable, onChange }: { organization: Organization; editable: boolean; onChange: (organization: Organization) => void }) {
+  function updateContact(index: number, values: Partial<OrganizationContact>) {
+    onChange({
+      ...organization,
+      contacts: organization.contacts.map((contact, contactIndex) => contactIndex === index ? { ...contact, ...values } : contact),
+    });
+  }
   return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
+    <div className="space-y-3">
+      {editable ? (
+        <button type="button" onClick={() => onChange({
+          ...organization,
+          contacts: [...organization.contacts, {
+            id: `new-${Date.now()}`,
+            name: "",
+            roleLabel: "HR Manager",
+            email: "",
+            phone: "",
+            method: "Email",
+            primary: organization.contacts.length === 0,
+            notes: "",
+          }],
+        })} className="rounded-lg border border-primary/25 px-3 py-2 text-[12px] font-semibold text-primary">Add contact</button>
+      ) : null}
+      <div className="overflow-hidden rounded-2xl border border-card-border">
       <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
         <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span>
       </div>
-      {organization.contacts.map((contact) => (
+      {organization.contacts.map((contact, index) => (
         <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-          <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>
-          <span>{contact.roleLabel}</span>
-          <span className="truncate">{contact.email}</span>
-          <span>{contact.method}</span>
+          {editable ? <input value={contact.name} onChange={(event) => updateContact(index, { name: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>}
+          {editable ? <input value={contact.roleLabel} onChange={(event) => updateContact(index, { roleLabel: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span>{contact.roleLabel}</span>}
+          {editable ? <input type="email" value={contact.email} onChange={(event) => updateContact(index, { email: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="truncate">{contact.email}</span>}
+          {editable ? <select value={contact.method} onChange={(event) => updateContact(index, { method: event.target.value as ContactMethod })} className="h-9 rounded-lg border border-primary/30 px-2">{["Email", "Phone", "WhatsApp", "Portal"].map((method) => <option key={method}>{method}</option>)}</select> : <span>{contact.method}</span>}
           <span>{contact.primary ? "Yes" : "No"}</span>
-          <span className="col-span-5 text-black/60">{contact.notes}</span>
+          {editable ? <><input value={contact.phone} onChange={(event) => updateContact(index, { phone: event.target.value })} placeholder="Phone" className="col-span-2 h-9 rounded-lg border border-primary/30 px-2" /><input value={contact.notes} onChange={(event) => updateContact(index, { notes: event.target.value })} placeholder="Notes" className="col-span-3 h-9 rounded-lg border border-primary/30 px-2" /></> : <span className="col-span-5 text-black/60">{contact.notes}</span>}
         </div>
       ))}
+      {!organization.contacts.length ? <p className="border-t border-card-border px-4 py-6 text-[12px] text-black/55">No contacts have been added yet.</p> : null}
+      </div>
     </div>
   );
 }
@@ -1209,6 +1058,12 @@ function ContractTab({ organization }: { organization: Organization }) {
   const remaining = daysUntil(organization.contractEnd);
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <a href={`/api/admin/organizations/${organization.id}/contract`} className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
+          <Download className="h-4 w-4" aria-hidden="true" />
+          Download PDF contract
+        </a>
+      </div>
       {remaining <= 60 ? (
         <StateBanner tone="warning" title="Contract renewal warning" detail="This contract is expiring within 60 days. Confirm renewal owner and reminder cadence." />
       ) : null}
@@ -1347,17 +1202,21 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => void }) {
+function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => Promise<boolean> }) {
   const [form, setForm] = useState(initialForm);
-  const canSubmit = form.name.trim() && form.town.trim() && form.employees.trim() && form.contact1Email.trim() && form.contact2Email.trim();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const canSubmit = form.name.trim() && form.town.trim() && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
 
   return (
     <Modal title="Add Organization" onClose={onClose}>
       <form
         className="grid gap-4"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (canSubmit) onSubmit(form);
+          if (!canSubmit || isSubmitting) return;
+          setIsSubmitting(true);
+          const saved = await onSubmit(form);
+          if (!saved) setIsSubmitting(false);
         }}
       >
         <LogoUpload value={form.logo} onChange={(logo) => setForm((current) => ({ ...current, logo }))} />
@@ -1370,15 +1229,15 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
           <TextInput label="Employee count" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} required />
           <SelectInput label="Package" value={form.package} options={packageOptions} onChange={(value) => setForm((current) => ({ ...current, package: value as PackageName }))} />
           <SelectInput label="Status" value={form.status} options={statusOptions} onChange={(value) => setForm((current) => ({ ...current, status: value as OrganizationStatus }))} />
-          <SelectInput label="Wellness risk" value={form.risk} options={riskOptions} onChange={(value) => setForm((current) => ({ ...current, risk: value as WellnessRisk }))} />
           <TextInput label="Contract start date" value={form.contractStart} onChange={(contractStart) => setForm((current) => ({ ...current, contractStart }))} />
           <TextInput label="Contract end date" value={form.contractEnd} onChange={(contractEnd) => setForm((current) => ({ ...current, contractEnd }))} />
+          <TextInput label="Custom package notes" value={form.customPackageNotes} onChange={(customPackageNotes) => setForm((current) => ({ ...current, customPackageNotes }))} />
         </div>
         <ContactFields title="Contact 1" prefix="contact1" form={form} setForm={setForm} />
         <ContactFields title="Contact 2" prefix="contact2" form={form} setForm={setForm} />
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
-          <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Create organization</button>
+          <button type="submit" disabled={!canSubmit || isSubmitting} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">{isSubmitting ? "Saving..." : "Create organization"}</button>
         </div>
       </form>
     </Modal>
@@ -1562,192 +1421,6 @@ function LoadingState() {
   );
 }
 
-function createOrganization(base: Omit<Organization, "branches" | "contacts" | "clientUsers" | "activations" | "reports" | "insights" | "recommendations">): Organization {
-  const branchOne: Branch = {
-    id: `${base.id}-branch-1`,
-    name: `${base.primaryLocation} Main Branch`,
-    country: base.country,
-    region: base.region,
-    town: base.primaryLocation,
-    address: `${base.primaryLocation} business district`,
-    employees: Math.round(base.employees * 0.62),
-    primary: true,
-    status: "Active",
-    departments: [],
-  };
-  const branchTwo: Branch = {
-    id: `${base.id}-branch-2`,
-    name: `${base.primaryLocation} Operations Site`,
-    country: base.country,
-    region: base.region,
-    town: base.primaryLocation,
-    address: `${base.primaryLocation} operations campus`,
-    employees: base.employees - branchOne.employees,
-    primary: false,
-    status: base.status === "Paused" ? "Paused" : "Active",
-    departments: [],
-  };
-  branchOne.departments = [
-    createDepartment(`${base.id}-dept-1`, "People & Culture", branchOne.id, Math.round(branchOne.employees * 0.2), base.risk),
-    createDepartment(`${base.id}-dept-2`, "Operations", branchOne.id, Math.round(branchOne.employees * 0.5), base.risk),
-  ];
-  branchTwo.departments = [
-    createDepartment(`${base.id}-dept-3`, "Finance", branchTwo.id, Math.round(branchTwo.employees * 0.25), "Low"),
-    createDepartment(`${base.id}-dept-4`, "Field Teams", branchTwo.id, Math.round(branchTwo.employees * 0.55), base.risk),
-  ];
-
-  return {
-    ...base,
-    branches: [branchOne, branchTwo],
-    contacts: [
-      {
-        id: `${base.id}-contact-1`,
-        name: "Naledi Motsumi",
-        roleLabel: "HR Manager",
-        email: `hr@${slug(base.name)}.co.bw`,
-        phone: "+267 390 1122",
-        method: "Email",
-        primary: true,
-        notes: "Owns workforce wellness coordination and activation attendance.",
-      },
-      {
-        id: `${base.id}-contact-2`,
-        name: "Kabelo Dube",
-        roleLabel: "Executive Sponsor",
-        email: `sponsor@${slug(base.name)}.co.bw`,
-        phone: "+267 391 4455",
-        method: "Portal",
-        primary: false,
-        notes: "Reviews executive reports and commercial renewals.",
-      },
-    ],
-    clientUsers: [
-      {
-        id: `${base.id}-user-1`,
-        name: "Naledi Motsumi",
-        email: `hr@${slug(base.name)}.co.bw`,
-        role: "Client Admin",
-        invitationStatus: base.status === "Prospect" ? "Not Invited" : "Account Activated",
-        lastActive: base.status === "Prospect" ? "Never" : "2 days ago",
-      },
-    ],
-    activations: [
-      {
-        title: `${base.name} preventive screening`,
-        type: "BP, BMI & Glucose",
-        date: base.lastActivation,
-        branch: branchOne.name,
-        status: "Completed",
-        participation: "72%",
-        reportStatus: "Published",
-      },
-      {
-        title: `${base.name} wellness activation`,
-        type: "Mental wellness",
-        date: base.nextActivation,
-        branch: branchTwo.name,
-        status: "Scheduled",
-        participation: "Planned",
-        reportStatus: "Pending",
-      },
-    ],
-    reports: [
-      {
-        title: `${base.name} Executive Wellness Report`,
-        type: "Executive",
-        period: "Q2 2026",
-        status: base.reportsPublished > 0 ? "Published" : "Draft",
-        publishedDate: base.reportsPublished > 0 ? "Jun 18, 2026" : "Not published",
-      },
-    ],
-    insights: [
-      "Participation trends improved in departments with manager-led reminders.",
-      "High-risk departments need focused screening follow-up and education.",
-      "Absenteeism and presenteeism indicators should be reviewed before renewal.",
-    ],
-    recommendations: [
-      {
-        title: "Run manager-led engagement reminder",
-        priority: base.risk === "Low" ? "Medium" : "High",
-        activation: "Engagement campaign",
-        impact: "Higher participation",
-        status: "Proposed",
-        owner: "Pulse80 Ops",
-      },
-      {
-        title: "Schedule targeted education follow-up",
-        priority: base.risk === "Critical" ? "High" : "Medium",
-        activation: "Risk education",
-        impact: "Reduced screening risk",
-        status: "Pending client approval",
-        owner: "Clinical Lead",
-      },
-    ],
-  };
-}
-
-function createDepartment(id: string, name: string, branchId: string, employees: number, risk: WellnessRisk): Department {
-  return {
-    id,
-    name,
-    branchId,
-    employees,
-    wellnessScore: risk === "Low" ? 84 : risk === "Medium" ? 68 : risk === "High" ? 52 : 41,
-    risk,
-    latestActivation: "May 2026",
-    status: "Active",
-  };
-}
-
-function organizationFromForm(form: OrganizationForm): Organization {
-  const name = form.name.trim();
-  const contact1Role = form.contact1Role === "Other" ? form.contact1CustomRole || "Other" : form.contact1Role;
-  const contact2Role = form.contact2Role === "Other" ? form.contact2CustomRole || "Other" : form.contact2Role;
-  const organization = createOrganization({
-    id: `org-${Date.now()}`,
-    name,
-    code: `${initials(name)}-${Math.floor(Math.random() * 900 + 100)}`,
-    logo: form.logo,
-    industry: form.industry,
-    country: form.country,
-    primaryLocation: form.town,
-    region: form.region,
-    employees: Number(form.employees) || 0,
-    package: form.package,
-    contractStart: form.contractStart,
-    contractEnd: form.contractEnd,
-    risk: form.risk,
-    status: form.status,
-    lastActivation: "Not started",
-    nextActivation: "To be scheduled",
-    reportsPublished: 0,
-  });
-  organization.contacts = [
-    {
-      id: `${organization.id}-contact-1`,
-      name: form.contact1Name,
-      roleLabel: contact1Role,
-      email: form.contact1Email,
-      phone: form.contact1Phone,
-      method: form.contact1Method,
-      primary: true,
-      notes: "Added during organization creation.",
-    },
-    {
-      id: `${organization.id}-contact-2`,
-      name: form.contact2Name,
-      roleLabel: contact2Role,
-      email: form.contact2Email,
-      phone: form.contact2Phone,
-      method: form.contact2Method,
-      primary: false,
-      notes: "Added during organization creation.",
-    },
-  ];
-  organization.clientUsers = [];
-  return organization;
-}
-
 function compareOrganizations(a: Organization, b: Organization, sortBy: string) {
   if (sortBy === "Employee count") return b.employees - a.employees;
   if (sortBy === "Contract end date") return new Date(a.contractEnd).getTime() - new Date(b.contractEnd).getTime();
@@ -1765,29 +1438,11 @@ function countDepartments(organization: Organization) {
 }
 
 function displayBranchCount(organization: Organization) {
-  const counts: Record<string, number> = {
-    "org-abc": 3,
-    "org-delta": 2,
-    "org-nova": 4,
-    "org-legae": 1,
-    "org-btcl": 2,
-    "org-fsg": 3,
-    "org-devre": 1,
-  };
-  return counts[organization.id] ?? organization.branches.length;
+  return organization.branches.length;
 }
 
 function displayDepartmentCount(organization: Organization) {
-  const counts: Record<string, number> = {
-    "org-abc": 12,
-    "org-delta": 8,
-    "org-nova": 9,
-    "org-legae": 4,
-    "org-btcl": 7,
-    "org-fsg": 6,
-    "org-devre": 3,
-  };
-  return counts[organization.id] ?? countDepartments(organization);
+  return countDepartments(organization);
 }
 
 function countryFlag(country: string) {
@@ -1819,7 +1474,8 @@ function contractsExpiringSoon(organizations: Organization[]) {
 }
 
 function daysUntil(date: string) {
-  const today = new Date("2026-07-13T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const target = new Date(`${date}T00:00:00`);
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000);
 }
@@ -1839,10 +1495,6 @@ function shortDate(date: string) {
 
 function initials(name: string) {
   return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function slug(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/^$/, "organization");
 }
 
 function riskRank(risk: WellnessRisk) {
