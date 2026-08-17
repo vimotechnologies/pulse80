@@ -13,7 +13,7 @@ import { schema } from "./graphql/schema.js";
 import { healthRoute } from "./routes/health.route.js";
 
 export async function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, bodyLimit: 8 * 1024 * 1024 });
 
   await app.register(cors, {
     origin: env.FRONTEND_URL,
