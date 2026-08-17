@@ -71,3 +71,20 @@ export function requirePermission(
     organisationId: context.identity.organisationId!,
   };
 }
+
+export function requirePlatformPermission(
+  context: GraphQLContext,
+  permission: Permission,
+) {
+  requireAuthenticatedUser(context);
+
+  const role = context.identity.platformRole;
+  if (!role || !calculatePermissions(null, role).includes(permission)) {
+    throw new GraphQLError(
+      "You do not have permission to perform this platform action.",
+      { extensions: { code: "FORBIDDEN", permission } },
+    );
+  }
+
+  return { user: context.user!, platformRole: role };
+}
