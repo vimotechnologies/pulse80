@@ -39,6 +39,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      employees: {
+        Row: {
+          created_at: string
+          email: string | null
+          employee_number: string
+          first_name: string
+          id: string
+          last_name: string
+          organisation_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          employee_number: string
+          first_name: string
+          id?: string
+          last_name: string
+          organisation_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          employee_number?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          organisation_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisation_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_primary: boolean
+          notes: string | null
+          organisation_id: string
+          phone: string | null
+          preferred_method: string
+          role_label: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          organisation_id: string
+          phone?: string | null
+          preferred_method?: string
+          role_label: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          organisation_id?: string
+          phone?: string | null
+          preferred_method?: string
+          role_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_contacts_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organisation_memberships: {
         Row: {
           created_at: string
@@ -83,25 +177,64 @@ export type Database = {
       }
       organisations: {
         Row: {
+          code: string | null
+          contract_end: string | null
+          contract_start: string | null
+          country: string | null
           created_at: string
+          custom_package_notes: string | null
           id: string
+          industry: string | null
+          logo_path: string | null
           name: string
+          package_name: string | null
+          primary_location: string | null
+          region: string | null
           slug: string
+          status: string
           updated_at: string
+          wellness_risk_score: number
+          workforce_size: number | null
         }
         Insert: {
+          code?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
           created_at?: string
+          custom_package_notes?: string | null
           id?: string
+          industry?: string | null
+          logo_path?: string | null
           name: string
+          package_name?: string | null
+          primary_location?: string | null
+          region?: string | null
           slug: string
+          status?: string
           updated_at?: string
+          wellness_risk_score?: number
+          workforce_size?: number | null
         }
         Update: {
+          code?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
           created_at?: string
+          custom_package_notes?: string | null
           id?: string
+          industry?: string | null
+          logo_path?: string | null
           name?: string
+          package_name?: string | null
+          primary_location?: string | null
+          region?: string | null
           slug?: string
+          status?: string
           updated_at?: string
+          wellness_risk_score?: number
+          workforce_size?: number | null
         }
         Relationships: []
       }
@@ -125,6 +258,234 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      practitioner_assignments: {
+        Row: {
+          activity_name: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          location: string
+          organisation_id: string | null
+          practitioner_user_id: string
+          programme_name: string
+          service_name: string
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activity_name: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          location: string
+          organisation_id?: string | null
+          practitioner_user_id: string
+          programme_name: string
+          service_name: string
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activity_name?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          location?: string
+          organisation_id?: string | null
+          practitioner_user_id?: string
+          programme_name?: string
+          service_name?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignments_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_assignments_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_capabilities: {
+        Row: {
+          approval_status: string
+          created_at: string
+          id: string
+          practitioner_user_id: string
+          service_code: string
+          service_name: string
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string
+          created_at?: string
+          id?: string
+          practitioner_user_id: string
+          service_code: string
+          service_name: string
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string
+          created_at?: string
+          id?: string
+          practitioner_user_id?: string
+          service_code?: string
+          service_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_capabilities_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_documents: {
+        Row: {
+          document_type: string
+          expiry_date: string | null
+          file_name: string
+          id: string
+          practitioner_user_id: string
+          reviewed_at: string | null
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          verification_status: string
+        }
+        Insert: {
+          document_type: string
+          expiry_date?: string | null
+          file_name: string
+          id?: string
+          practitioner_user_id: string
+          reviewed_at?: string | null
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          verification_status?: string
+        }
+        Update: {
+          document_type?: string
+          expiry_date?: string | null
+          file_name?: string
+          id?: string
+          practitioner_user_id?: string
+          reviewed_at?: string | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_documents_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_profiles: {
+        Row: {
+          assignment_notifications: boolean
+          city: string | null
+          country: string
+          created_at: string
+          document_notifications: boolean
+          payment_notifications: boolean
+          phone: string | null
+          practitioner_status: string
+          preferred_contact_method: string
+          profession: string
+          professional_email: string
+          profile_photo_path: string | null
+          qualifications: string[]
+          registration_authority: string | null
+          registration_country: string | null
+          registration_expiry_date: string | null
+          registration_number: string | null
+          specialisation: string | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+          years_experience: number
+        }
+        Insert: {
+          assignment_notifications?: boolean
+          city?: string | null
+          country?: string
+          created_at?: string
+          document_notifications?: boolean
+          payment_notifications?: boolean
+          phone?: string | null
+          practitioner_status?: string
+          preferred_contact_method?: string
+          profession: string
+          professional_email: string
+          profile_photo_path?: string | null
+          qualifications?: string[]
+          registration_authority?: string | null
+          registration_country?: string | null
+          registration_expiry_date?: string | null
+          registration_number?: string | null
+          specialisation?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          years_experience?: number
+        }
+        Update: {
+          assignment_notifications?: boolean
+          city?: string | null
+          country?: string
+          created_at?: string
+          document_notifications?: boolean
+          payment_notifications?: boolean
+          phone?: string | null
+          practitioner_status?: string
+          preferred_contact_method?: string
+          profession?: string
+          professional_email?: string
+          profile_photo_path?: string | null
+          qualifications?: string[]
+          registration_authority?: string | null
+          registration_country?: string | null
+          registration_expiry_date?: string | null
+          registration_number?: string | null
+          specialisation?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          years_experience?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
