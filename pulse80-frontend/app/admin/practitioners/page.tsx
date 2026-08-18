@@ -1,5 +1,7 @@
-import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
+import { loadAdminPractitioners } from "@/app/actions/admin-practitioners";
+import { AdminPractitionerDirectory } from "@/components/admin/AdminPractitionerDirectory";
 
-export default function AdminPractitionersPage() {
-  return <AdminOperationsPage configId="practitioners" />;
+export default async function AdminPractitionersPage() {
+  const practitioners = await loadAdminPractitioners();
+  return <AdminPractitionerDirectory practitioners={practitioners} />;
 }

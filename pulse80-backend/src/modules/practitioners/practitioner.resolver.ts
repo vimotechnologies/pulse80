@@ -2,8 +2,12 @@ import { GraphQLError } from "graphql";
 import { z } from "zod";
 
 import type { GraphQLContext } from "../../graphql/context.js";
-import { requireAuthenticatedUser } from "../auth/auth.guard.js";
-import { PractitionerService } from "./practitioner.service.js";
+import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
+import {
+  PractitionerService,
+  type PractitionerDocumentVerificationStatus,
+  type PractitionerVerificationUpdate,
+} from "./practitioner.service.js";
 
 const contactMethods = ["Email", "Phone", "WhatsApp"] as const;
 const updateSchema = z.object({
@@ -26,6 +30,14 @@ const uploadDocumentSchema = z.object({
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   file: fileSchema,
 });
+const verificationStatuses = ["Verified", "Under Review", "Action Required", "Expired"] as const;
+const practitionerStatuses = ["Active", "Pending Verification", "Suspended"] as const;
+const verificationSchema = z.object({
+  verificationStatus: z.enum(verificationStatuses),
+  practitionerStatus: z.enum(practitionerStatuses),
+});
+const documentStatusSchema = z.enum(["Verified", "Under Review", "Expired", "Action Required"]);
+const idSchema = z.uuid();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -54,6 +66,24 @@ function profileShape(service: PractitionerService, row: Awaited<ReturnType<Prac
   };
 }
 
+type AdminPractitionerRow = Awaited<ReturnType<PractitionerService["listForAdmin"]>>[number];
+
+function adminProfileShape(service: PractitionerService, row: AdminPractitionerRow) {
+  const capabilities = row.practitioner_capabilities ?? [];
+  const assignments = row.practitioner_assignments ?? [];
+  const documents = row.practitioner_documents ?? [];
+  const identity = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+  const profile = { ...row, full_name: identity?.full_name ?? null };
+
+  return {
+    ...profileShape(service, profile, capabilities.length),
+    capabilities,
+    assignmentCount: assignments.length,
+    completedAssignmentCount: assignments.filter((assignment) => assignment.status === "Completed").length,
+    documents,
+  };
+}
+
 async function loadProfile(context: GraphQLContext) {
   const { user } = requireAuthenticatedUser(context);
   if (context.identity.organisationRole !== "practitioner") throw new GraphQLError("Practitioner access required.", { extensions: { code: "FORBIDDEN" } });
@@ -67,6 +97,12 @@ export const practitionerResolvers = {
     practitionerProfile: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       const { service, profile, capabilities } = await loadProfile(context);
       return { ...profileShape(service, profile, capabilities.length), capabilities };
+    },
+    adminPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const service = new PractitionerService(context.adminSupabase);
+      const practitioners = await service.listForAdmin();
+      return practitioners.map((practitioner) => adminProfileShape(service, practitioner));
     },
   },
   PractitionerProfile: {
@@ -101,6 +137,21 @@ export const practitionerResolvers = {
     uploadedAt: (row: { uploaded_at: string }) => row.uploaded_at,
     downloadUrl: (row: { download_url: string | null }) => row.download_url,
   },
+  AdminPractitionerDocument: {
+    documentType: (row: { document_type: string }) => row.document_type,
+    fileName: (row: { file_name: string }) => row.file_name,
+    expiryDate: (row: { expiry_date: string | null }) => row.expiry_date,
+    verificationStatus: (row: { verification_status: string }) => row.verification_status,
+    uploadedAt: (row: { uploaded_at: string }) => row.uploaded_at,
+    reviewedAt: (row: { reviewed_at: string | null }) => row.reviewed_at,
+    downloadUrl: async (row: { storage_path: string }, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const { data } = await context.adminSupabase.storage
+        .from("practitioner-verification-documents")
+        .createSignedUrl(row.storage_path, 900);
+      return data?.signedUrl ?? null;
+    },
+  },
   Mutation: {
     updatePractitionerProfile: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       const { service, userId, capabilities } = await loadProfile(context);
@@ -116,6 +167,28 @@ export const practitionerResolvers = {
       const { service, userId } = await loadProfile(context);
       const input = parse(uploadDocumentSchema, arguments_);
       return service.uploadDocument(userId, input.documentType, input.expiryDate ?? null, input.file);
+    },
+    updatePractitionerVerification: async (
+      _parent: unknown,
+      arguments_: { userId: string; input: unknown },
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "provider:manage");
+      const input = parse(verificationSchema, arguments_.input) as PractitionerVerificationUpdate;
+      const userId = parse(idSchema, arguments_.userId);
+      const service = new PractitionerService(context.adminSupabase);
+      return adminProfileShape(service, await service.updateVerification(userId, input));
+    },
+    reviewPractitionerDocument: async (
+      _parent: unknown,
+      arguments_: { documentId: string; status: unknown },
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "provider:manage");
+      const status = parse(documentStatusSchema, arguments_.status) as PractitionerDocumentVerificationStatus;
+      const documentId = parse(idSchema, arguments_.documentId);
+      const service = new PractitionerService(context.adminSupabase);
+      return adminProfileShape(service, await service.reviewDocument(documentId, status));
     },
   },
 };

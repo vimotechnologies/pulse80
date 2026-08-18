@@ -1,6 +1,7 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { loadAdminPractitioners } from "@/app/actions/admin-practitioners";
+import { AdminPractitionerVerification } from "@/components/admin/AdminPractitionerVerification";
 
-export default function AdminPractitionerVerificationPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/practitioner-verification"]} />;
+export default async function AdminPractitionerVerificationPage() {
+  const practitioners = await loadAdminPractitioners();
+  return <AdminPractitionerVerification practitioners={practitioners} />;
 }
