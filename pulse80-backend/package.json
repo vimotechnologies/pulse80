@@ -1,0 +1,30 @@
+{
+  "name": "pulse80-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "supabase:types": "supabase gen types typescript --linked > src/generated/database.types.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@graphql-tools/schema": "^10.0.38",
+    "@supabase/supabase-js": "^2.109.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.11.2",
+    "graphql": "^16.14.2",
+    "graphql-yoga": "^5.21.2",
+    "ws": "^8.18.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.9",
+    "typescript": "5.9.3"
+  }
+}
