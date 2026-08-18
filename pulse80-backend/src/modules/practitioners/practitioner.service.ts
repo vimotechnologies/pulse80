@@ -25,6 +25,17 @@ export interface EncodedFile {
   dataUrl: string;
 }
 
+export interface PractitionerVerificationUpdate {
+  verificationStatus: "Verified" | "Under Review" | "Action Required" | "Expired";
+  practitionerStatus: "Active" | "Pending Verification" | "Suspended";
+}
+
+export type PractitionerDocumentVerificationStatus =
+  | "Verified"
+  | "Under Review"
+  | "Expired"
+  | "Action Required";
+
 const profileSelect = `
   user_id, professional_email, phone, country, city, preferred_contact_method,
   profession, specialisation, years_experience, qualifications,
@@ -58,6 +69,86 @@ export class PractitionerService {
     if (profileError) throw new Error(profileError.message);
     if (identityError) throw new Error(identityError.message);
     return { ...profile, full_name: identity.full_name };
+  }
+
+  async listForAdmin() {
+    const { data, error } = await this.supabase
+      .from("practitioner_profiles")
+      .select(`
+        ${profileSelect},
+        profiles (full_name),
+        practitioner_capabilities (id, service_code, service_name, approval_status),
+        practitioner_assignments (id, status),
+        practitioner_documents (
+          id, document_type, file_name, storage_path, expiry_date,
+          verification_status, uploaded_at, reviewed_at
+        )
+      `)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateVerification(userId: string, input: PractitionerVerificationUpdate) {
+    if (input.verificationStatus === "Verified") {
+      const practitioner = await this.getAdminProfile(userId);
+      const documents = practitioner.practitioner_documents ?? [];
+      const registrationIsCurrent = practitioner.registration_expiry_date
+        ? practitioner.registration_expiry_date >= new Date().toISOString().slice(0, 10)
+        : false;
+
+      if (
+        !practitioner.registration_number ||
+        !practitioner.registration_authority ||
+        !registrationIsCurrent ||
+        !documents.length ||
+        documents.some((document) => document.verification_status !== "Verified")
+      ) {
+        throw new Error(
+          "Current registration details and verified supporting documents are required.",
+        );
+      }
+    }
+
+    const { error } = await this.supabase
+      .from("practitioner_profiles")
+      .update({
+        verification_status: input.verificationStatus,
+        practitioner_status: input.practitionerStatus,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return this.getAdminProfile(userId);
+  }
+
+  async reviewDocument(documentId: string, status: PractitionerDocumentVerificationStatus) {
+    const { data, error } = await this.supabase
+      .from("practitioner_documents")
+      .update({ verification_status: status, reviewed_at: new Date().toISOString() })
+      .eq("id", documentId)
+      .select("practitioner_user_id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    if (status === "Action Required" || status === "Expired") {
+      const { error: profileError } = await this.supabase
+        .from("practitioner_profiles")
+        .update({
+          verification_status: "Action Required",
+          practitioner_status: "Pending Verification",
+        })
+        .eq("user_id", data.practitioner_user_id);
+      if (profileError) throw new Error(profileError.message);
+    }
+
+    return this.getAdminProfile(data.practitioner_user_id);
+  }
+
+  private async getAdminProfile(userId: string) {
+    const practitioners = await this.listForAdmin();
+    const practitioner = practitioners.find((item) => item.user_id === userId);
+    if (!practitioner) throw new Error("Practitioner not found.");
+    return practitioner;
   }
 
   async getCapabilities(userId: string) {
