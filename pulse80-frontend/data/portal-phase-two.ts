@@ -175,56 +175,8 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
 
 export const portalDashboards: Record<PortalKey, PortalDashboardData> = {
   admin: {
-    metrics: [
-      {
-        label: "Upcoming Wellness Days",
-        value: "24",
-        detail: "Next: ACME Corp on May 24",
-        tone: "primary",
-        icon: CalendarCheck,
-        trend: {
-          value: "18% vs last week",
-          direction: "up",
-          tone: "success",
-        },
-      },
-      {
-        label: "Pending Client Approvals",
-        value: "12",
-        detail: "4 proposals awaiting review",
-        tone: "danger",
-        icon: ClipboardCheck,
-        trend: {
-          value: "8% vs last week",
-          direction: "down",
-          tone: "danger",
-        },
-      },
-      {
-        label: "Practitioners to Mobilise",
-        value: "36",
-        detail: "Across 9 upcoming events",
-        tone: "success",
-        icon: Stethoscope,
-        trend: {
-          value: "5% vs last week",
-          direction: "down",
-          tone: "success",
-        },
-      },
-      {
-        label: "Reports Awaiting Review",
-        value: "7",
-        detail: "Across 5 organisations",
-        tone: "danger",
-        icon: FileBarChart,
-        trend: {
-          value: "17% vs last week",
-          direction: "up",
-          tone: "danger",
-        },
-      },
-    ],
+    // Admin headline metrics are loaded from the backend on each request.
+    metrics: [],
     sections: [
       {
         title: "Today's Activations",

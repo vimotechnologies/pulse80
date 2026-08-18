@@ -2,6 +2,8 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import { authResolvers } from "../modules/auth/auth.resolver.js";
 import { authTypeDefs } from "../modules/auth/auth.schema.js";
+import { dashboardResolvers } from "../modules/dashboard/dashboard.resolver.js";
+import { dashboardTypeDefs } from "../modules/dashboard/dashboard.schema.js";
 import { organisationResolvers } from "../modules/organisations/organisation.resolver.js";
 import { organisationTypeDefs } from "../modules/organisations/organisation.schema.js";
 import { practitionerResolvers } from "../modules/practitioners/practitioner.resolver.js";
