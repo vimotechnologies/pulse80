@@ -101,6 +101,7 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
         label: "Wellness Operations",
         icon: CalendarCheck,
         children: [
+          { label: "Programmes", href: "/admin/programmes", icon: ClipboardCheck },
           { label: "Activations", href: "/admin/activations", icon: CalendarCheck },
           { label: "Mobilisation", href: "/admin/mobilisation", icon: Activity },
           { label: "Screenings", href: "/admin/screenings", icon: Microscope },

@@ -39,6 +39,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_readiness_items: {
+        Row: {
+          activation_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          activation_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          activation_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_readiness_items_activation_id_fkey"
+            columns: ["activation_id"]
+            isOneToOne: false
+            referencedRelation: "activations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activations: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_at: string
+          expected_participants: number
+          id: string
+          location: string
+          organisation_id: string
+          programme_id: string
+          service_names: string[]
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          expected_participants?: number
+          id?: string
+          location: string
+          organisation_id: string
+          programme_id: string
+          service_names?: string[]
+          starts_at: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          expected_participants?: number
+          id?: string
+          location?: string
+          organisation_id?: string
+          programme_id?: string
+          service_names?: string[]
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activations_programme_organisation_fkey"
+            columns: ["programme_id", "organisation_id"]
+            isOneToOne: false
+            referencedRelation: "programmes"
+            referencedColumns: ["id", "organisation_id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string
@@ -261,6 +355,7 @@ export type Database = {
       }
       practitioner_assignments: {
         Row: {
+          activation_id: string | null
           activity_name: string
           created_at: string
           ends_at: string | null
@@ -275,6 +370,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activation_id?: string | null
           activity_name: string
           created_at?: string
           ends_at?: string | null
@@ -289,6 +385,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activation_id?: string | null
           activity_name?: string
           created_at?: string
           ends_at?: string | null
@@ -303,6 +400,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "practitioner_assignments_activation_id_fkey"
+            columns: ["activation_id"]
+            isOneToOne: false
+            referencedRelation: "activations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "practitioner_assignments_organisation_id_fkey"
             columns: ["organisation_id"]
@@ -513,6 +617,201 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      programmes: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_on: string
+          id: string
+          name: string
+          organisation_id: string
+          service_names: string[]
+          starts_on: string
+          status: string
+          target_participants: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_on: string
+          id?: string
+          name: string
+          organisation_id: string
+          service_names?: string[]
+          starts_on: string
+          status?: string
+          target_participants?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_on?: string
+          id?: string
+          name?: string
+          organisation_id?: string
+          service_names?: string[]
+          starts_on?: string
+          status?: string
+          target_participants?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programmes_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screening_results: {
+        Row: {
+          bmi: number | null
+          cholesterol_mmol_l: number | null
+          created_at: string
+          diastolic_mmhg: number | null
+          escalation_required: boolean
+          glucose_mmol_l: number | null
+          height_cm: number | null
+          id: string
+          risk_level: string
+          screening_id: string
+          systolic_mmhg: number | null
+          updated_at: string
+          weight_kg: number | null
+        }
+        Insert: {
+          bmi?: number | null
+          cholesterol_mmol_l?: number | null
+          created_at?: string
+          diastolic_mmhg?: number | null
+          escalation_required?: boolean
+          glucose_mmol_l?: number | null
+          height_cm?: number | null
+          id?: string
+          risk_level: string
+          screening_id: string
+          systolic_mmhg?: number | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          bmi?: number | null
+          cholesterol_mmol_l?: number | null
+          created_at?: string
+          diastolic_mmhg?: number | null
+          escalation_required?: boolean
+          glucose_mmol_l?: number | null
+          height_cm?: number | null
+          id?: string
+          risk_level?: string
+          screening_id?: string
+          systolic_mmhg?: number | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_results_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: true
+            referencedRelation: "screenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screenings: {
+        Row: {
+          activation_id: string | null
+          assignment_id: string
+          captured_at: string
+          consent_confirmed: boolean
+          created_at: string
+          department: string | null
+          id: string
+          organisation_id: string
+          participant_reference: string
+          practitioner_note: string | null
+          practitioner_user_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          activation_id?: string | null
+          assignment_id: string
+          captured_at?: string
+          consent_confirmed?: boolean
+          created_at?: string
+          department?: string | null
+          id?: string
+          organisation_id: string
+          participant_reference: string
+          practitioner_note?: string | null
+          practitioner_user_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activation_id?: string | null
+          assignment_id?: string
+          captured_at?: string
+          consent_confirmed?: boolean
+          created_at?: string
+          department?: string | null
+          id?: string
+          organisation_id?: string
+          participant_reference?: string
+          practitioner_note?: string | null
+          practitioner_user_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screenings_activation_id_fkey"
+            columns: ["activation_id"]
+            isOneToOne: false
+            referencedRelation: "activations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screenings_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screenings_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screenings_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Views: {

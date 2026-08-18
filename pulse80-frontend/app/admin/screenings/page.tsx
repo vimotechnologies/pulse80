@@ -1,5 +1,7 @@
-import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
+import { loadAdminScreenings } from "@/app/actions/screening-operations";
+import { AdminScreeningOperations } from "@/components/screenings/ScreeningOperations";
 
-export default function AdminScreeningsPage() {
-  return <AdminOperationsPage configId="screenings" />;
+export default async function AdminScreeningsPage() {
+  const { adminScreenings } = await loadAdminScreenings();
+  return <AdminScreeningOperations screenings={adminScreenings} mode="screenings" />;
 }

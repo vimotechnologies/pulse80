@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "supabase:types": "supabase gen types typescript --linked > src/generated/database.types.ts"
+    "supabase:types": "npx supabase@2.115.0 gen types typescript --linked > src/generated/database.types.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",

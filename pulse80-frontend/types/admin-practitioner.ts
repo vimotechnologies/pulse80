@@ -32,3 +32,33 @@ export type AdminPractitioner = {
   completedAssignmentCount: number;
   documents: AdminPractitionerDocument[];
 };
+
+export type AdminPractitionerAssignment = {
+  id: string;
+  practitionerUserId: string;
+  practitionerName: string;
+  practitionerProfession: string;
+  organisationId: string;
+  organisationName: string;
+  programmeName: string;
+  activityName: string;
+  serviceName: string;
+  location: string;
+  startsAt: string;
+  endsAt: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PractitionerAssignmentForm = {
+  practitionerUserId: string;
+  organisationId: string;
+  programmeName: string;
+  activityName: string;
+  serviceName: string;
+  location: string;
+  startsAt: string;
+  endsAt: string;
+  status: "Scheduled" | "Confirmed" | "In Progress" | "Completed" | "Cancelled" | "Action Required";
+};

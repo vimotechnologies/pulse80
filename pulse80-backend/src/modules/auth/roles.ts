@@ -40,6 +40,7 @@ export const permissions = [
 
   "screening:capture",
   "screening:read_aggregate",
+  "screening:review",
 
   "referral:read",
   "referral:manage",
@@ -129,6 +130,8 @@ export const platformRolePermissions: Record<
     "programme:read",
     "programme:manage",
     "provider:manage",
+    "screening:read_aggregate",
+    "screening:review",
     "analytics:read",
     "reports:read",
   ],
@@ -148,6 +151,8 @@ export const platformRolePermissions: Record<
     "programme:read",
     "programme:manage",
     "provider:manage",
+    "screening:read_aggregate",
+    "screening:review",
     "analytics:read",
     "reports:read",
   ],
