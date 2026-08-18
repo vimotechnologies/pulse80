@@ -6,6 +6,8 @@ import { organisationResolvers } from "../modules/organisations/organisation.res
 import { organisationTypeDefs } from "../modules/organisations/organisation.schema.js";
 import { practitionerResolvers } from "../modules/practitioners/practitioner.resolver.js";
 import { practitionerTypeDefs } from "../modules/practitioners/practitioner.schema.js";
+import { programmeResolvers } from "../modules/programmes/programme.resolver.js";
+import { programmeTypeDefs } from "../modules/programmes/programme.schema.js";
 
 const rootTypeDefs = /* GraphQL */ `
   type SystemHealth {
@@ -38,6 +40,6 @@ const rootResolvers = {
 };
 
 export const schema = makeExecutableSchema({
-  typeDefs: [rootTypeDefs, authTypeDefs, organisationTypeDefs, practitionerTypeDefs],
-  resolvers: [rootResolvers, authResolvers, organisationResolvers, practitionerResolvers],
+  typeDefs: [rootTypeDefs, authTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs],
+  resolvers: [rootResolvers, authResolvers, organisationResolvers, practitionerResolvers, programmeResolvers],
 });

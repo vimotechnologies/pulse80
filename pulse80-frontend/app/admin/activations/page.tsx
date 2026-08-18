@@ -1,5 +1,7 @@
-import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
+import { loadProgrammeOperations } from "@/app/actions/programme-operations";
+import { AdminActivations } from "@/components/admin/ProgrammeOperations";
 
-export default function AdminActivationsPage() {
-  return <AdminOperationsPage configId="activations" />;
+export default async function AdminActivationsPage() {
+  const data = await loadProgrammeOperations();
+  return <AdminActivations activations={data.adminActivations} programmes={data.adminProgrammes} />;
 }
