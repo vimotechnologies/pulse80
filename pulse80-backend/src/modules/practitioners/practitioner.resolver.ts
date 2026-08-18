@@ -5,6 +5,7 @@ import type { GraphQLContext } from "../../graphql/context.js";
 import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
 import {
   PractitionerService,
+  type PractitionerAssignmentInput,
   type PractitionerDocumentVerificationStatus,
   type PractitionerVerificationUpdate,
 } from "./practitioner.service.js";
@@ -38,6 +39,20 @@ const verificationSchema = z.object({
 });
 const documentStatusSchema = z.enum(["Verified", "Under Review", "Expired", "Action Required"]);
 const idSchema = z.uuid();
+const assignmentStatuses = ["Scheduled", "Confirmed", "In Progress", "Completed", "Cancelled", "Action Required"] as const;
+const assignmentSchema = z.object({
+  practitionerUserId: z.uuid(),
+  organisationId: z.uuid(),
+  programmeName: z.string().trim().min(2).max(180),
+  activityName: z.string().trim().min(2).max(180),
+  serviceName: z.string().trim().min(2).max(180),
+  location: z.string().trim().min(2).max(180),
+  startsAt: z.iso.datetime({ offset: true }),
+  endsAt: z.iso.datetime({ offset: true }).nullish(),
+  status: z.enum(assignmentStatuses),
+}).refine((value) => !value.endsAt || value.endsAt > value.startsAt, {
+  message: "Assignment end time must be after its start time.",
+});
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -104,6 +119,10 @@ export const practitionerResolvers = {
       const practitioners = await service.listForAdmin();
       return practitioners.map((practitioner) => adminProfileShape(service, practitioner));
     },
+    adminPractitionerAssignments: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      return new PractitionerService(context.adminSupabase).listAssignmentsForAdmin();
+    },
   },
   PractitionerProfile: {
     capabilities: (parent: { capabilities?: unknown[] }) => parent.capabilities ?? [],
@@ -152,6 +171,20 @@ export const practitionerResolvers = {
       return data?.signedUrl ?? null;
     },
   },
+  AdminPractitionerAssignment: {
+    practitionerUserId: (row: { practitioner_user_id: string }) => row.practitioner_user_id,
+    practitionerName: (row: { practitioner_profiles: { profiles: { full_name: string | null } | null } | null }) => row.practitioner_profiles?.profiles?.full_name ?? "Practitioner",
+    practitionerProfession: (row: { practitioner_profiles: { profession: string } | null }) => row.practitioner_profiles?.profession ?? "Practitioner",
+    organisationId: (row: { organisation_id: string | null }) => row.organisation_id,
+    organisationName: (row: { organisations: { name: string } | null }) => row.organisations?.name ?? "Organisation unavailable",
+    programmeName: (row: { programme_name: string }) => row.programme_name,
+    activityName: (row: { activity_name: string }) => row.activity_name,
+    serviceName: (row: { service_name: string }) => row.service_name,
+    startsAt: (row: { starts_at: string }) => row.starts_at,
+    endsAt: (row: { ends_at: string | null }) => row.ends_at,
+    createdAt: (row: { created_at: string }) => row.created_at,
+    updatedAt: (row: { updated_at: string }) => row.updated_at,
+  },
   Mutation: {
     updatePractitionerProfile: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       const { service, userId, capabilities } = await loadProfile(context);
@@ -189,6 +222,27 @@ export const practitionerResolvers = {
       const documentId = parse(idSchema, arguments_.documentId);
       const service = new PractitionerService(context.adminSupabase);
       return adminProfileShape(service, await service.reviewDocument(documentId, status));
+    },
+    createPractitionerAssignment: async (
+      _parent: unknown,
+      arguments_: { input: unknown },
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "provider:manage");
+      requirePlatformPermission(context, "programme:manage");
+      const input = parse(assignmentSchema, arguments_.input) as PractitionerAssignmentInput;
+      return new PractitionerService(context.adminSupabase).createAssignment(input);
+    },
+    updatePractitionerAssignment: async (
+      _parent: unknown,
+      arguments_: { id: string; input: unknown },
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "provider:manage");
+      requirePlatformPermission(context, "programme:manage");
+      const id = parse(idSchema, arguments_.id);
+      const input = parse(assignmentSchema, arguments_.input) as PractitionerAssignmentInput;
+      return new PractitionerService(context.adminSupabase).updateAssignment(id, input);
     },
   },
 };

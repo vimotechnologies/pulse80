@@ -91,6 +91,24 @@ export const practitionerTypeDefs = /* GraphQL */ `
     documents: [AdminPractitionerDocument!]!
   }
 
+  type AdminPractitionerAssignment {
+    id: ID!
+    practitionerUserId: ID!
+    practitionerName: String!
+    practitionerProfession: String!
+    organisationId: ID!
+    organisationName: String!
+    programmeName: String!
+    activityName: String!
+    serviceName: String!
+    location: String!
+    startsAt: String!
+    endsAt: String
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
   input UpdatePractitionerProfileInput {
     fullName: String
     professionalEmail: String
@@ -116,9 +134,22 @@ export const practitionerTypeDefs = /* GraphQL */ `
     practitionerStatus: String!
   }
 
+  input PractitionerAssignmentInput {
+    practitionerUserId: ID!
+    organisationId: ID!
+    programmeName: String!
+    activityName: String!
+    serviceName: String!
+    location: String!
+    startsAt: String!
+    endsAt: String
+    status: String!
+  }
+
   extend type Query {
     practitionerProfile: PractitionerProfile!
     adminPractitioners: [AdminPractitioner!]!
+    adminPractitionerAssignments: [AdminPractitionerAssignment!]!
   }
 
   extend type Mutation {
@@ -127,5 +158,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     uploadPractitionerDocument(documentType: String!, expiryDate: String, file: PractitionerFileInput!): PractitionerDocument!
     updatePractitionerVerification(userId: ID!, input: PractitionerVerificationInput!): AdminPractitioner!
     reviewPractitionerDocument(documentId: ID!, status: String!): AdminPractitioner!
+    createPractitionerAssignment(input: PractitionerAssignmentInput!): AdminPractitionerAssignment!
+    updatePractitionerAssignment(id: ID!, input: PractitionerAssignmentInput!): AdminPractitionerAssignment!
   }
 `;

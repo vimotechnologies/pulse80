@@ -1,6 +1,7 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { loadPractitionerAssignmentPage } from "@/app/actions/admin-practitioner-assignments";
+import { AdminPractitionerAssignments } from "@/components/admin/AdminPractitionerAssignments";
 
-export default function AdminPractitionerAssignmentsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/practitioner-assignments"]} />;
+export default async function AdminPractitionerAssignmentsPage() {
+  const data = await loadPractitionerAssignmentPage();
+  return <AdminPractitionerAssignments assignments={data.adminPractitionerAssignments} practitioners={data.adminPractitioners} organisations={data.adminOrganisations} />;
 }

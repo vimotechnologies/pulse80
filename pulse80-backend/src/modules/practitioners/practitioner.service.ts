@@ -36,6 +36,18 @@ export type PractitionerDocumentVerificationStatus =
   | "Expired"
   | "Action Required";
 
+export interface PractitionerAssignmentInput {
+  practitionerUserId: string;
+  organisationId: string;
+  programmeName: string;
+  activityName: string;
+  serviceName: string;
+  location: string;
+  startsAt: string;
+  endsAt: string | null;
+  status: "Scheduled" | "Confirmed" | "In Progress" | "Completed" | "Cancelled" | "Action Required";
+}
+
 const profileSelect = `
   user_id, professional_email, phone, country, city, preferred_contact_method,
   profession, specialisation, years_experience, qualifications,
@@ -171,6 +183,105 @@ export class PractitionerService {
       .limit(limit);
     if (error) throw new Error(error.message);
     return data;
+  }
+
+  async listAssignmentsForAdmin() {
+    const { data, error } = await this.supabase
+      .from("practitioner_assignments")
+      .select(`
+        id, practitioner_user_id, organisation_id, programme_name,
+        activity_name, service_name, location, starts_at, ends_at,
+        status, created_at, updated_at,
+        organisations (name),
+        practitioner_profiles (profession, profiles (full_name))
+      `)
+      .order("starts_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async createAssignment(input: PractitionerAssignmentInput) {
+    await this.validateAssignment(input);
+    const { data, error } = await this.supabase
+      .from("practitioner_assignments")
+      .insert({
+        practitioner_user_id: input.practitionerUserId,
+        organisation_id: input.organisationId,
+        programme_name: input.programmeName,
+        activity_name: input.activityName,
+        service_name: input.serviceName,
+        location: input.location,
+        starts_at: input.startsAt,
+        ends_at: input.endsAt,
+        status: input.status,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return this.getAssignmentForAdmin(data.id);
+  }
+
+  async updateAssignment(assignmentId: string, input: PractitionerAssignmentInput) {
+    await this.validateAssignment(input, assignmentId);
+    const { error } = await this.supabase
+      .from("practitioner_assignments")
+      .update({
+        practitioner_user_id: input.practitionerUserId,
+        organisation_id: input.organisationId,
+        programme_name: input.programmeName,
+        activity_name: input.activityName,
+        service_name: input.serviceName,
+        location: input.location,
+        starts_at: input.startsAt,
+        ends_at: input.endsAt,
+        status: input.status,
+      })
+      .eq("id", assignmentId);
+    if (error) throw new Error(error.message);
+    return this.getAssignmentForAdmin(assignmentId);
+  }
+
+  private async validateAssignment(input: PractitionerAssignmentInput, assignmentId?: string) {
+    const [{ data: practitioner, error: practitionerError }, { data: capability, error: capabilityError }] =
+      await Promise.all([
+        this.supabase
+          .from("practitioner_profiles")
+          .select("user_id, verification_status, practitioner_status")
+          .eq("user_id", input.practitionerUserId)
+          .single(),
+        this.supabase
+          .from("practitioner_capabilities")
+          .select("id")
+          .eq("practitioner_user_id", input.practitionerUserId)
+          .eq("service_name", input.serviceName)
+          .eq("approval_status", "Approved")
+          .maybeSingle(),
+      ]);
+    if (practitionerError) throw new Error(practitionerError.message);
+    if (capabilityError) throw new Error(capabilityError.message);
+    if (practitioner.verification_status !== "Verified" || practitioner.practitioner_status !== "Active") {
+      throw new Error("Only active, verified practitioners can be assigned.");
+    }
+    if (!capability) throw new Error("The practitioner is not approved for this service.");
+
+    let conflictQuery = this.supabase
+      .from("practitioner_assignments")
+      .select("id")
+      .eq("practitioner_user_id", input.practitionerUserId)
+      .neq("status", "Cancelled")
+      .lt("starts_at", input.endsAt ?? input.startsAt)
+      .or(`ends_at.is.null,ends_at.gt.${input.startsAt}`);
+    if (assignmentId) conflictQuery = conflictQuery.neq("id", assignmentId);
+    const { data: conflicts, error: conflictError } = await conflictQuery.limit(1);
+    if (conflictError) throw new Error(conflictError.message);
+    if (conflicts.length) throw new Error("The practitioner already has an overlapping assignment.");
+  }
+
+  private async getAssignmentForAdmin(assignmentId: string) {
+    const assignments = await this.listAssignmentsForAdmin();
+    const assignment = assignments.find((item) => item.id === assignmentId);
+    if (!assignment) throw new Error("Assignment not found.");
+    return assignment;
   }
 
   async getDocuments(userId: string) {
