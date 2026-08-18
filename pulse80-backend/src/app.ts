@@ -43,3 +43,8 @@ export async function buildApp() {
 
   return app;
 }
+
+// Vercel's Fastify runtime imports this entrypoint and expects the configured
+// server as its default export. Local development continues to call buildApp
+// from server.ts so startup and shutdown remain centralized there.
+export default await buildApp();
