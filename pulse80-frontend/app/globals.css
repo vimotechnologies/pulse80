@@ -66,6 +66,13 @@ select {
   font: inherit;
 }
 
+.pulse-action-button {
+  border-radius: 8px;
+  font-size: 14px;
+  height: 40px;
+  padding-inline: 16px;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--primary-blue) 28%, white);
   color: var(--dark-navy);
