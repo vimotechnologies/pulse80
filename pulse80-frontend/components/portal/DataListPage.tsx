@@ -103,6 +103,7 @@ export type DataColumn<RecordType extends DataRecord> = {
 
 type DataListPageProps<RecordType extends DataRecord> = {
   config: DataPageConfig<RecordType>;
+  metrics?: DataMetric[];
   columns: DataColumn<RecordType>[];
   detailEyebrow?: string;
   featuredTitle?: string;
@@ -121,6 +122,7 @@ function detail(record: DataRecord, label: string) {
 
 export function DataListPage<RecordType extends DataRecord>({
   config,
+  metrics = config.metrics,
   columns,
   detailEyebrow = "Record details",
   featuredTitle = "Featured latest report",
@@ -319,7 +321,7 @@ export function DataListPage<RecordType extends DataRecord>({
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {config.metrics.slice(0, 5).map((metric) => (
+        {metrics.slice(0, 5).map((metric) => (
           <ListSummaryMetric key={metric.label} metric={metric} />
         ))}
       </section>

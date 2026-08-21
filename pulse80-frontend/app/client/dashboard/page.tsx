@@ -1,5 +1,8 @@
+import { loadClientDashboardStats } from "@/app/actions/client-dashboard";
 import { ClientExecutivePage } from "@/components/client/ClientExecutivePage";
 
-export default function ClientDashboardPage() {
-  return <ClientExecutivePage configId="dashboard" />;
+export default async function ClientDashboardPage() {
+  const stats = await loadClientDashboardStats();
+
+  return <ClientExecutivePage configId="dashboard" stats={stats} />;
 }

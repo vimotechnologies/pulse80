@@ -44,6 +44,6 @@ const rootResolvers = {
 };
 
 export const schema = makeExecutableSchema({
-  typeDefs: [rootTypeDefs, authTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
-  resolvers: [rootResolvers, authResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
+  typeDefs: [rootTypeDefs, authTypeDefs, dashboardTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
+  resolvers: [rootResolvers, authResolvers, dashboardResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
 });
