@@ -9,7 +9,7 @@ import {
   uploadPractitionerPhoto,
   type PractitionerProfile,
 } from "@/app/actions/practitioner-profile";
-import { Download, Edit, FileText, Location, ShieldCheck, Stethoscope, User } from "@/components/icons/IconsaxIcons";
+import { CloudUpload, Edit, FileText, Location, ShieldCheck, Stethoscope, User } from "@/components/icons/IconsaxIcons";
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
@@ -31,11 +31,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [documentFiles, setDocumentFiles] = useState<Record<string, File | null>>({});
-  const [documentExpiries, setDocumentExpiries] = useState<Record<string, string>>({});
-  const documentType = documentTypes[0];
-  const documentExpiry = "";
-  const setDocumentType = (value: string) => { void value; };
-  const setDocumentExpiry = (value: string) => { void value; };
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>(documentTypes[0]);
   const [uploadingDocument, setUploadingDocument] = useState(false);
 
   const showMessage = (value: string) => {
@@ -65,13 +61,13 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
     });
   }
 
-  async function uploadDocument(documentType: string) {
-    const file = documentFiles[documentType];
-    if (!file) return showMessage(`Choose a ${documentType.toLowerCase()} file to upload.`);
+  async function uploadDocument() {
+    const file = documentFiles[selectedDocumentType];
+    if (!file) return showMessage(`Choose a ${selectedDocumentType.toLowerCase()} file to upload.`);
     setUploadingDocument(true);
     const result = await uploadPractitionerDocument({
-      documentType,
-      expiryDate: documentExpiries[documentType] || null,
+      documentType: selectedDocumentType,
+      expiryDate: null,
       file: { fileName: file.name, dataUrl: await readFile(file) },
     });
     setUploadingDocument(false);
@@ -80,8 +76,8 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
       return;
     }
     setProfile((current) => ({ ...current, documents: [result.document, ...current.documents] }));
-    setDocumentFiles((current) => ({ ...current, [documentType]: null }));
-    showMessage(`${documentType} uploaded for review.`);
+    setDocumentFiles((current) => ({ ...current, [selectedDocumentType]: null }));
+    showMessage(`${selectedDocumentType} uploaded successfully.`);
   }
 
   return (
@@ -132,21 +128,14 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 
       <Section title="Documents & verification" icon={FileText}>
         <DocumentUploadList
+          documents={profile.documents}
           documentFiles={documentFiles}
-          documentExpiries={documentExpiries}
+          selectedDocumentType={selectedDocumentType}
           uploadingDocument={uploadingDocument}
-          onFileChange={(documentType, file) => setDocumentFiles((current) => ({ ...current, [documentType]: file }))}
-          onExpiryChange={(documentType, expiry) => setDocumentExpiries((current) => ({ ...current, [documentType]: expiry }))}
+          onDocumentTypeChange={setSelectedDocumentType}
+          onFileChange={(file) => setDocumentFiles((current) => ({ ...current, [selectedDocumentType]: file }))}
           onUpload={uploadDocument}
         />
-        <div className="hidden">
-        <div className="grid gap-3 lg:grid-cols-[1fr_180px_170px_auto]"><input type="file" id="practitioner-document" accept="application/pdf,image/png,image/jpeg" className="h-11 rounded-lg border border-card-border bg-surface px-3 py-2 text-sm" /><select value={documentType} onChange={(event) => setDocumentType(event.target.value)} className="h-11 rounded-lg border border-card-border bg-surface px-3 text-sm text-navy"><option>Professional licence</option><option>Qualification certificate</option><option>Identity document</option><option>Verification evidence</option></select><input type="date" value={documentExpiry} onChange={(event) => setDocumentExpiry(event.target.value)} className="h-11 rounded-lg border border-card-border bg-surface px-3 text-sm text-navy" /><ActionButton loading={uploadingDocument} onClick={async () => {
-          const input = document.getElementById("practitioner-document") as HTMLInputElement | null; const file = input?.files?.[0]; if (!file) return showMessage("Choose a document to upload."); setUploadingDocument(true);
-          const result = await uploadPractitionerDocument({ documentType, expiryDate: documentExpiry || null, file: { fileName: file.name, dataUrl: await readFile(file) } }); setUploadingDocument(false);
-          if (result.ok) { setProfile({ ...profile, documents: [result.document, ...profile.documents] }); if (input) input.value = ""; showMessage("Document uploaded for review."); } else showMessage(result.error);
-        }}>Upload document</ActionButton></div>
-        <div className="mt-4 overflow-x-auto"><div className="min-w-[760px] divide-y divide-card-border rounded-lg border border-card-border">{profile.documents.map((item) => { const documentStatus = documentStatusLabel(item); return <div key={item.id} className="grid grid-cols-[1.1fr_1fr_0.7fr_0.7fr_auto] items-center gap-3 px-4 py-3 text-sm"><span className="font-semibold text-navy">{item.documentType}</span><span className="truncate text-subtle">{item.fileName}</span><span className="text-subtle">{formatDate(item.expiryDate)}</span><StatusBadge status={documentStatus.label} tone={documentStatus.tone} />{item.downloadUrl ? <a href={item.downloadUrl} target="_blank" rel="noreferrer" className="text-primary"><Download className="h-4 w-4" /></a> : <span />}</div>; })}{!profile.documents.length ? <p className="px-4 py-5 text-sm text-subtle">No verification documents uploaded yet.</p> : null}</div></div>
-        </div>
       </Section>
       </div>
 
@@ -159,17 +148,21 @@ function Section({ title, icon: Icon, action, children }: { title: string; icon:
 function ReadField({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-semibold text-navy">{label}</p><p className="mt-2 flex min-h-11 items-center rounded-lg border border-card-border bg-soft-bg px-3 text-sm text-navy">{value || "Not provided"}</p></div>; }
 function Editable({ label, value, editable, onChange, type = "text", multiline = false }: { label: string; value: string; editable: boolean; onChange: (value: string) => void; type?: string; multiline?: boolean }) { if (!editable) return <ReadField label={label} value={multiline ? value.replace(/\n/g, ", ") : value} />; return <label className="block"><span className="text-xs font-semibold text-navy">{label}</span>{multiline ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-primary/40 bg-white px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-primary/10" /> : <input type={type} min={type === "number" ? 0 : undefined} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10" />}</label>; }
 function SelectField({ label, value, editable, options, onChange }: { label: string; value: string; editable: boolean; options: string[]; onChange: (value: string) => void }) { if (!editable) return <ReadField label={label} value={value} />; return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm">{options.map((item) => <option key={item}>{item}</option>)}</select></label>; }
-function DocumentUploadList({ documentFiles, documentExpiries, uploadingDocument, onFileChange, onExpiryChange, onUpload }: { documentFiles: Record<string, File | null>; documentExpiries: Record<string, string>; uploadingDocument: boolean; onFileChange: (documentType: string, file: File | null) => void; onExpiryChange: (documentType: string, expiry: string) => void; onUpload: (documentType: string) => void }) {
-  return <div className="space-y-3">{documentTypes.map((documentType) => <div key={documentType} className="grid gap-2 rounded-lg border border-card-border bg-soft-bg p-3 sm:grid-cols-[minmax(0,1fr)_150px_auto] sm:items-center"><div className="min-w-0"><p className="text-xs font-semibold text-navy">{documentType}</p><input type="file" accept="application/pdf,image/png,image/jpeg" onChange={(event) => onFileChange(documentType, event.target.files?.[0] ?? null)} className="mt-2 h-10 min-w-0 w-full rounded-lg border border-card-border bg-surface px-2 py-2 text-xs" /></div><input type="date" aria-label={`${documentType} expiry date`} value={documentExpiries[documentType] ?? ""} onChange={(event) => onExpiryChange(documentType, event.target.value)} className="h-10 min-w-0 rounded-lg border border-card-border bg-surface px-2 text-xs text-navy" /><ActionButton loading={uploadingDocument} onClick={() => onUpload(documentType)} className="w-full sm:w-auto">Upload</ActionButton><span className="sr-only">{documentFiles[documentType]?.name ?? "No file selected"}</span></div>)}</div>;
+function DocumentUploadList({ documents, documentFiles, selectedDocumentType, uploadingDocument, onDocumentTypeChange, onFileChange, onUpload }: { documents: PractitionerProfile["documents"]; documentFiles: Record<string, File | null>; selectedDocumentType: string; uploadingDocument: boolean; onDocumentTypeChange: (documentType: string) => void; onFileChange: (file: File | null) => void; onUpload: () => void }) {
+  const selectedFile = documentFiles[selectedDocumentType];
+  const hasDocument = (documentType: string) => documents.some((document) => document.documentType === documentType);
+
+  return <div className="space-y-4">
+    <div className="grid gap-2 sm:grid-cols-2">{documentTypes.map((documentType) => <div key={documentType} className="flex items-center justify-between rounded-lg border border-card-border bg-soft-bg px-3 py-3"><span className="text-sm font-medium text-navy">{documentType}</span><StatusBadge status={hasDocument(documentType) ? "Completed" : "Missing"} tone={hasDocument(documentType) ? "success" : "danger"} /></div>)}</div>
+    <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div>
+        <label className="text-xs font-semibold text-navy" htmlFor="practitioner-document-type">Document type</label>
+        <select id="practitioner-document-type" value={selectedDocumentType} onChange={(event) => onDocumentTypeChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-card-border bg-surface px-3 text-sm text-navy">{documentTypes.map((documentType) => <option key={documentType}>{documentType}</option>)}</select>
+        <label htmlFor="practitioner-document-file" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onFileChange(event.dataTransfer.files[0] ?? null); }} className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/40 bg-soft-bg px-4 py-4 text-center text-sm text-subtle hover:border-primary hover:bg-primary/5"><CloudUpload className="mb-2 h-7 w-7 text-primary" /><span className="font-semibold text-navy">{selectedFile?.name ?? "Drop a document here or choose a file"}</span><span className="mt-1 text-xs">PDF, PNG, or JPEG</span></label>
+        <input id="practitioner-document-file" type="file" accept="application/pdf,image/png,image/jpeg" className="sr-only" onChange={(event) => onFileChange(event.target.files?.[0] ?? null)} />
+      </div>
+      <ActionButton loading={uploadingDocument} onClick={onUpload} className="w-full sm:w-auto">Upload document</ActionButton>
+    </div>
+  </div>;
 }
 function formatDate(value: string | null) { if (!value) return "Not provided"; return new Intl.DateTimeFormat("en-BW", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T00:00:00`)); }
-function documentStatusLabel(document: PractitionerProfile["documents"][number]) {
-  if (document.verificationStatus === "Verified" && document.expiryDate) {
-    const daysRemaining = Math.ceil((new Date(`${document.expiryDate}T00:00:00`).getTime() - Date.now()) / 86_400_000);
-    if (daysRemaining < 0) return { label: "Expired", tone: "danger" as const };
-    if (daysRemaining <= 60) return { label: "Expiring Soon", tone: "warning" as const };
-  }
-  if (document.verificationStatus === "Verified") return { label: "Verified", tone: "success" as const };
-  if (document.verificationStatus === "Expired") return { label: "Expired", tone: "danger" as const };
-  return { label: document.verificationStatus, tone: "warning" as const };
-}

@@ -15,6 +15,7 @@ import {
   Chart2 as IconsaxChart2,
   ClipboardTick as IconsaxClipboardTick,
   Clock as IconsaxClock,
+  CloudAdd as IconsaxCloudAdd,
   DocumentDownload as IconsaxDocumentDownload,
   DocumentText as IconsaxDocumentText,
   Edit2 as IconsaxEdit,
@@ -86,6 +87,7 @@ export const CloseCircle = withDefaultVariant(IconsaxCloseCircle);
 export const CloseSquare = withDefaultVariant(IconsaxCloseSquare);
 export const ClipboardCheck = withDefaultVariant(IconsaxClipboardTick);
 export const Clock = withDefaultVariant(IconsaxClock);
+export const CloudUpload = withDefaultVariant(IconsaxCloudAdd);
 export const CreditCard = withDefaultVariant(IconsaxCard);
 export const Download = withDefaultVariant(IconsaxDocumentDownload);
 export const Edit = withDefaultVariant(IconsaxEdit);
