@@ -6,6 +6,12 @@ export const practitionerTypeDefs = /* GraphQL */ `
     approvalStatus: String!
   }
 
+  type PractitionerSpecialisation {
+    id: ID!
+    name: String!
+    sortOrder: Int!
+  }
+
   type PractitionerAssignment {
     id: ID!
     organisationName: String!
@@ -35,9 +41,12 @@ export const practitionerTypeDefs = /* GraphQL */ `
     phone: String
     country: String!
     city: String
+    districtProvince: String
+    clinicHospital: String
     preferredContactMethod: String!
     profession: String!
     specialisation: String
+    specialisations: [PractitionerSpecialisation!]!
     yearsExperience: Int!
     qualifications: [String!]!
     registrationNumber: String
@@ -52,6 +61,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     documentNotifications: Boolean!
     paymentNotifications: Boolean!
     capabilities: [PractitionerCapability!]!
+    selectedServices: [PractitionerCapability!]!
     assignments(limit: Int = 5): [PractitionerAssignment!]!
     documents: [PractitionerDocument!]!
   }
@@ -74,8 +84,12 @@ export const practitionerTypeDefs = /* GraphQL */ `
     phone: String
     country: String!
     city: String
+    districtProvince: String
+    clinicHospital: String
     profession: String!
     specialisation: String
+    specialisations: [String!]
+    selectedServiceCodes: [String!]
     yearsExperience: Int!
     registrationNumber: String
     registrationAuthority: String
@@ -114,9 +128,18 @@ export const practitionerTypeDefs = /* GraphQL */ `
     professionalEmail: String
     phone: String
     country: String
+    profession: String
+    registrationNumber: String
+    registrationAuthority: String
+    registrationCountry: String
+    registrationExpiryDate: String
     city: String
+    districtProvince: String
+    clinicHospital: String
     preferredContactMethod: String
     specialisation: String
+    specialisations: [String!]
+    selectedServiceCodes: [String!]
     yearsExperience: Int
     qualifications: [String!]
     assignmentNotifications: Boolean
@@ -155,6 +178,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
   extend type Mutation {
     updatePractitionerProfile(input: UpdatePractitionerProfileInput!): PractitionerProfile!
     uploadPractitionerPhoto(file: PractitionerFileInput!): PractitionerProfile!
+    deletePractitionerPhoto: PractitionerProfile!
     uploadPractitionerDocument(documentType: String!, expiryDate: String, file: PractitionerFileInput!): PractitionerDocument!
     updatePractitionerVerification(userId: ID!, input: PractitionerVerificationInput!): AdminPractitioner!
     reviewPractitionerDocument(documentId: ID!, status: String!): AdminPractitioner!

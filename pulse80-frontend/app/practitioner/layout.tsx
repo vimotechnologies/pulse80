@@ -20,6 +20,7 @@ export default async function PractitionerPortalLayout({
       portalDescription={config.description}
       userLabel={profile.fullName}
       userRole={config.userRole}
+      userPhotoUrl={profile.profilePhotoUrl}
     >
       {children}
     </PortalLayout>

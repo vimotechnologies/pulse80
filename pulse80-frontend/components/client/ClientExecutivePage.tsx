@@ -9,24 +9,57 @@ import {
   type DataColumn,
 } from "@/components/portal/DataListPage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { clientPageConfigs, type ClientPageConfig, type ClientRecord } from "@/data/client-portal-ui";
+import {
+  clientPageConfigs,
+  type ClientMetric,
+  type ClientPageConfig,
+  type ClientRecord,
+} from "@/data/client-portal-ui";
+import type { ClientDashboardStats } from "@/app/actions/client-dashboard";
 
 type ClientExecutivePageProps = {
   configId: ClientPageConfig["id"];
+  stats?: ClientDashboardStats;
 };
 
-export function ClientExecutivePage({ configId }: ClientExecutivePageProps) {
+export function ClientExecutivePage({ configId, stats }: ClientExecutivePageProps) {
   const config = clientPageConfigs[configId];
+  const metrics = stats ? applyDashboardStats(config.metrics, stats) : config.metrics;
 
   return (
     <DataListPage
       config={config}
+      metrics={metrics}
       columns={clientColumns(config.id)}
       detailEyebrow={`${config.eyebrow} details`}
       featuredTitle="Featured latest report"
       onCycleStatus={(record) => cycleClientStatus(config.id, record)}
     />
   );
+}
+
+function applyDashboardStats(metrics: ClientMetric[], stats: ClientDashboardStats) {
+  const wellnessScore = Math.max(0, 100 - stats.wellnessRiskScore);
+  const nextAction = stats.upcomingActivations > 0 ? "Upcoming activation" : "Review insights";
+
+  return metrics.map((metric) => {
+    if (metric.label === "Workforce Wellness Score") {
+      return { ...metric, value: String(wellnessScore) };
+    }
+    if (metric.label === "Absenteeism Risk") {
+      return { ...metric, value: stats.wellnessRisk };
+    }
+    if (metric.label === "Screening Participation") {
+      return { ...metric, value: `${stats.screeningParticipation}%` };
+    }
+    if (metric.label === "Employees Screened") {
+      return { ...metric, value: stats.approvedScreenings.toLocaleString("en-BW") };
+    }
+    if (metric.label === "Next Action") {
+      return { ...metric, value: nextAction };
+    }
+    return metric;
+  });
 }
 
 function clientColumns(configId: ClientPageConfig["id"]): DataColumn<ClientRecord>[] {

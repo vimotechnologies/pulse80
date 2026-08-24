@@ -25,6 +25,10 @@ for (const application of applications) {
     cwd: new URL(`../${application.directory}/`, import.meta.url),
     stdio: "inherit",
     shell: process.platform === "win32",
+    env: {
+      ...process.env,
+      TMPDIR: "/tmp",
+    },
   });
 
   children.push(child);

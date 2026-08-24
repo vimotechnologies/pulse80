@@ -10,9 +10,18 @@ export interface PractitionerProfileUpdate {
   professionalEmail?: string;
   phone?: string | null;
   country?: string;
+  profession?: string;
+  registrationNumber?: string | null;
+  registrationAuthority?: string | null;
+  registrationCountry?: string | null;
+  registrationExpiryDate?: string | null;
   city?: string | null;
+  districtProvince?: string | null;
+  clinicHospital?: string | null;
   preferredContactMethod?: string;
   specialisation?: string | null;
+  specialisations?: string[];
+  selectedServiceCodes?: string[];
   yearsExperience?: number;
   qualifications?: string[];
   assignmentNotifications?: boolean;
@@ -50,7 +59,7 @@ export interface PractitionerAssignmentInput {
 
 const profileSelect = `
   user_id, professional_email, phone, country, city, preferred_contact_method,
-  profession, specialisation, years_experience, qualifications,
+  profession, specialisation, years_experience, qualifications, district_province, clinic_hospital,
   registration_number, registration_authority, registration_country,
   registration_expiry_date, verification_status, practitioner_status,
   profile_photo_path, assignment_notifications, document_notifications,
@@ -169,6 +178,13 @@ export class PractitionerService {
       .select("id, service_code, service_name, approval_status")
       .eq("practitioner_user_id", userId)
       .order("service_name");
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getSpecialisations(userId: string) {
+    const { data, error } = await this.supabase.from("practitioner_specialisations")
+      .select("id, name, sort_order").eq("practitioner_user_id", userId).order("sort_order").order("name");
     if (error) throw new Error(error.message);
     return data;
   }
@@ -308,7 +324,14 @@ export class PractitionerService {
     if (input.professionalEmail !== undefined) values.professional_email = input.professionalEmail;
     if (input.phone !== undefined) values.phone = input.phone;
     if (input.country !== undefined) values.country = input.country;
+    if (input.profession !== undefined) values.profession = input.profession;
+    if (input.registrationNumber !== undefined) values.registration_number = input.registrationNumber;
+    if (input.registrationAuthority !== undefined) values.registration_authority = input.registrationAuthority;
+    if (input.registrationCountry !== undefined) values.registration_country = input.registrationCountry;
+    if (input.registrationExpiryDate !== undefined) values.registration_expiry_date = input.registrationExpiryDate;
     if (input.city !== undefined) values.city = input.city;
+    if (input.districtProvince !== undefined) values.district_province = input.districtProvince;
+    if (input.clinicHospital !== undefined) values.clinic_hospital = input.clinicHospital;
     if (input.preferredContactMethod !== undefined) values.preferred_contact_method = input.preferredContactMethod;
     if (input.specialisation !== undefined) values.specialisation = input.specialisation;
     if (input.yearsExperience !== undefined) values.years_experience = input.yearsExperience;
@@ -319,6 +342,21 @@ export class PractitionerService {
     if (Object.keys(values).length) {
       const { error } = await this.supabase.from("practitioner_profiles").update(values).eq("user_id", userId);
       if (error) throw new Error(error.message);
+    }
+    if (input.specialisations !== undefined) {
+      const { error: deleteError } = await this.supabase.from("practitioner_specialisations").delete().eq("practitioner_user_id", userId);
+      if (deleteError) throw new Error(deleteError.message);
+      if (input.specialisations.length) {
+        const { error: insertError } = await this.supabase.from("practitioner_specialisations").insert(input.specialisations.map((name, index) => ({ practitioner_user_id: userId, name, sort_order: index })));
+        if (insertError) throw new Error(insertError.message);
+      }
+    }
+    if (input.selectedServiceCodes !== undefined) {
+      const existing = await this.getCapabilities(userId);
+      const { error: deleteError } = await this.supabase.from("practitioner_capabilities").delete().eq("practitioner_user_id", userId);
+      if (deleteError) throw new Error(deleteError.message);
+      const rows = input.selectedServiceCodes.map((code) => ({ practitioner_user_id: userId, service_code: code, service_name: code, approval_status: existing.find((item) => item.service_code === code)?.approval_status ?? "Pending" }));
+      if (rows.length) { const { error: insertError } = await this.supabase.from("practitioner_capabilities").insert(rows); if (insertError) throw new Error(insertError.message); }
     }
     return this.getProfile(userId);
   }
@@ -332,6 +370,17 @@ export class PractitionerService {
       .upload(path, decoded.bytes, { contentType: decoded.contentType, upsert: true });
     if (uploadError) throw new Error(uploadError.message);
     const { error } = await this.supabase.from("practitioner_profiles").update({ profile_photo_path: path }).eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return this.getProfile(userId);
+  }
+
+  async deletePhoto(userId: string) {
+    const profile = await this.getProfile(userId);
+    if (profile.profile_photo_path) {
+      const { error: removeError } = await this.supabase.storage.from("practitioner-profile-photos").remove([profile.profile_photo_path]);
+      if (removeError) throw new Error(removeError.message);
+    }
+    const { error } = await this.supabase.from("practitioner_profiles").update({ profile_photo_path: null }).eq("user_id", userId);
     if (error) throw new Error(error.message);
     return this.getProfile(userId);
   }

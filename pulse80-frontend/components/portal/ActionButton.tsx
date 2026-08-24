@@ -28,7 +28,7 @@ export function ActionButton({
     <button
       type="button"
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:pointer-events-none disabled:opacity-70",
+        "pulse-action-button inline-flex items-center justify-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:pointer-events-none disabled:opacity-70",
         variantStyles[variant],
         className,
       )}

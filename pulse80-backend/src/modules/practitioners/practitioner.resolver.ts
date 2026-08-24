@@ -16,9 +16,18 @@ const updateSchema = z.object({
   professionalEmail: z.email().trim().toLowerCase().optional(),
   phone: z.string().trim().max(40).nullish(),
   country: z.string().trim().min(2).max(100).optional(),
+  profession: z.string().trim().min(2).max(120).optional(),
+  registrationNumber: z.string().trim().max(120).nullish(),
+  registrationAuthority: z.string().trim().max(180).nullish(),
+  registrationCountry: z.string().trim().max(100).nullish(),
+  registrationExpiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   city: z.string().trim().max(120).nullish(),
+  districtProvince: z.string().trim().max(120).nullish(),
+  clinicHospital: z.string().trim().max(180).nullish(),
   preferredContactMethod: z.enum(contactMethods).optional(),
   specialisation: z.string().trim().max(180).nullish(),
+  specialisations: z.array(z.string().trim().min(2).max(180)).max(20).optional(),
+  selectedServiceCodes: z.array(z.string().trim().min(2).max(120)).max(50).optional(),
   yearsExperience: z.number().int().min(0).max(80).optional(),
   qualifications: z.array(z.string().trim().min(2).max(200)).max(20).optional(),
   assignmentNotifications: z.boolean().optional(),
@@ -70,7 +79,7 @@ function completeness(row: Awaited<ReturnType<PractitionerService["getProfile"]>
 function profileShape(service: PractitionerService, row: Awaited<ReturnType<PractitionerService["getProfile"]>>, capabilityCount = 0) {
   return {
     userId: row.user_id, fullName: row.full_name ?? "Practitioner", professionalEmail: row.professional_email,
-    phone: row.phone, country: row.country, city: row.city, preferredContactMethod: row.preferred_contact_method,
+    phone: row.phone, country: row.country, city: row.city, districtProvince: row.district_province, clinicHospital: row.clinic_hospital, preferredContactMethod: row.preferred_contact_method,
     profession: row.profession, specialisation: row.specialisation, yearsExperience: row.years_experience,
     qualifications: row.qualifications, registrationNumber: row.registration_number,
     registrationAuthority: row.registration_authority, registrationCountry: row.registration_country,
@@ -103,15 +112,15 @@ async function loadProfile(context: GraphQLContext) {
   const { user } = requireAuthenticatedUser(context);
   if (context.identity.organisationRole !== "practitioner") throw new GraphQLError("Practitioner access required.", { extensions: { code: "FORBIDDEN" } });
   const service = new PractitionerService(context.adminSupabase);
-  const [profile, capabilities] = await Promise.all([service.getProfile(user.id), service.getCapabilities(user.id)]);
-  return { service, userId: user.id, profile, capabilities };
+  const [profile, capabilities, specialisations] = await Promise.all([service.getProfile(user.id), service.getCapabilities(user.id), service.getSpecialisations(user.id)]);
+  return { service, userId: user.id, profile, capabilities, specialisations };
 }
 
 export const practitionerResolvers = {
   Query: {
     practitionerProfile: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
-      const { service, profile, capabilities } = await loadProfile(context);
-      return { ...profileShape(service, profile, capabilities.length), capabilities };
+      const { service, profile, capabilities, specialisations } = await loadProfile(context);
+      return { ...profileShape(service, profile, capabilities.length), capabilities, selectedServices: capabilities, specialisations };
     },
     adminPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
@@ -126,6 +135,8 @@ export const practitionerResolvers = {
   },
   PractitionerProfile: {
     capabilities: (parent: { capabilities?: unknown[] }) => parent.capabilities ?? [],
+    selectedServices: (parent: { selectedServices?: unknown[] }) => parent.selectedServices ?? [],
+    specialisations: (parent: { specialisations?: unknown[] }) => parent.specialisations ?? [],
     assignments: async (_parent: unknown, arguments_: { limit?: number }, context: GraphQLContext) => {
       const { service, userId } = await loadProfile(context);
       return service.getAssignments(userId, Math.min(Math.max(arguments_.limit ?? 5, 1), 20));
@@ -139,6 +150,9 @@ export const practitionerResolvers = {
     code: (row: { service_code: string }) => row.service_code,
     name: (row: { service_name: string }) => row.service_name,
     approvalStatus: (row: { approval_status: string }) => row.approval_status,
+  },
+  PractitionerSpecialisation: {
+    sortOrder: (row: { sort_order: number }) => row.sort_order,
   },
   PractitionerAssignment: {
     organisationName: (row: { organisations: { name: string } | null }) => row.organisations?.name ?? "Pulse80 programme",
@@ -189,12 +203,19 @@ export const practitionerResolvers = {
     updatePractitionerProfile: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       const { service, userId, capabilities } = await loadProfile(context);
       const profile = await service.updateProfile(userId, parse(updateSchema, arguments_.input));
-      return { ...profileShape(service, profile, capabilities.length), capabilities };
+      const refreshedCapabilities = await service.getCapabilities(userId);
+      const specialisations = await service.getSpecialisations(userId);
+      return { ...profileShape(service, profile, refreshedCapabilities.length), capabilities: refreshedCapabilities, selectedServices: refreshedCapabilities, specialisations };
     },
     uploadPractitionerPhoto: async (_parent: unknown, arguments_: { file: unknown }, context: GraphQLContext) => {
       const { service, userId, capabilities } = await loadProfile(context);
       const profile = await service.uploadPhoto(userId, parse(fileSchema, arguments_.file));
-      return { ...profileShape(service, profile, capabilities.length), capabilities };
+      return { ...profileShape(service, profile, capabilities.length), capabilities, selectedServices: capabilities, specialisations: await service.getSpecialisations(userId) };
+    },
+    deletePractitionerPhoto: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { service, userId, capabilities } = await loadProfile(context);
+      const profile = await service.deletePhoto(userId);
+      return { ...profileShape(service, profile, capabilities.length), capabilities, selectedServices: capabilities, specialisations: await service.getSpecialisations(userId) };
     },
     uploadPractitionerDocument: async (_parent: unknown, arguments_: unknown, context: GraphQLContext) => {
       const { service, userId } = await loadProfile(context);

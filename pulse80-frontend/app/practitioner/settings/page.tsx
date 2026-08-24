@@ -1,6 +1,7 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { PractitionerSettingsPage } from "@/components/practitioner/PractitionerSettingsPage";
+import { loadPractitionerProfile } from "@/app/actions/practitioner-profile";
 
-export default function PractitionerSettingsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/practitioner/settings"]} />;
+export default async function PractitionerSettingsRoute() {
+  const profile = await loadPractitionerProfile();
+  return <PractitionerSettingsPage initialProfile={profile} />;
 }
