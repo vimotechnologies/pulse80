@@ -508,13 +508,50 @@ export type Database = {
           },
         ]
       }
+      practitioner_specialisations: {
+        Row: {
+          id: string
+          practitioner_user_id: string
+          name: string
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          practitioner_user_id: string
+          name: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          practitioner_user_id?: string
+          name?: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_specialisations_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       practitioner_profiles: {
         Row: {
           assignment_notifications: boolean
           city: string | null
+          clinic_hospital: string | null
           country: string
           created_at: string
           document_notifications: boolean
+          district_province: string | null
           payment_notifications: boolean
           phone: string | null
           practitioner_status: string
@@ -536,9 +573,11 @@ export type Database = {
         Insert: {
           assignment_notifications?: boolean
           city?: string | null
+          clinic_hospital?: string | null
           country?: string
           created_at?: string
           document_notifications?: boolean
+          district_province?: string | null
           payment_notifications?: boolean
           phone?: string | null
           practitioner_status?: string
@@ -560,9 +599,11 @@ export type Database = {
         Update: {
           assignment_notifications?: boolean
           city?: string | null
+          clinic_hospital?: string | null
           country?: string
           created_at?: string
           document_notifications?: boolean
+          district_province?: string | null
           payment_notifications?: boolean
           phone?: string | null
           practitioner_status?: string

@@ -7,6 +7,7 @@ type PortalTopNavProps = {
   userLabel: string;
   userRole: string;
   sidebarCollapsed?: boolean;
+  userPhotoUrl?: string | null;
 };
 
 export function PortalTopNav({
@@ -14,6 +15,7 @@ export function PortalTopNav({
   userLabel,
   userRole,
   sidebarCollapsed = false,
+  userPhotoUrl,
 }: PortalTopNavProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-card-border bg-surface/95 backdrop-blur">
@@ -53,8 +55,8 @@ export function PortalTopNav({
             <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-pulse-red" />
           </button>
           <div className="flex items-center gap-3 rounded-lg border border-card-border bg-surface py-1.5 pl-2 pr-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
-              {userLabel
+            <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+              {userPhotoUrl ? <Image src={userPhotoUrl} alt="" fill unoptimized className="object-cover" /> : userLabel
                 .split(" ")
                 .map((part) => part[0])
                 .join("")

@@ -15,6 +15,7 @@ type PortalLayoutProps = {
   portalDescription: string;
   userLabel: string;
   userRole: string;
+  userPhotoUrl?: string | null;
 };
 
 export function PortalLayout({
@@ -24,6 +25,7 @@ export function PortalLayout({
   portalDescription,
   userLabel,
   userRole,
+  userPhotoUrl,
 }: PortalLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -40,6 +42,7 @@ export function PortalLayout({
         portalName={portalName}
         userLabel={userLabel}
         userRole={userRole}
+        userPhotoUrl={userPhotoUrl}
         sidebarCollapsed={sidebarCollapsed}
       />
       <main

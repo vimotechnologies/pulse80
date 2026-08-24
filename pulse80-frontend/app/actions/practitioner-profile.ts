@@ -19,23 +19,23 @@ export type PractitionerDocument = {
 };
 export type PractitionerProfile = {
   userId: string; fullName: string; professionalEmail: string; phone: string | null;
-  country: string; city: string | null; preferredContactMethod: string; profession: string;
-  specialisation: string | null; yearsExperience: number; qualifications: string[];
+  country: string; city: string | null; districtProvince: string | null; clinicHospital: string | null; preferredContactMethod: string; profession: string;
+  specialisation: string | null; specialisations: { id: string; name: string; sortOrder: number }[]; yearsExperience: number; qualifications: string[];
   registrationNumber: string | null; registrationAuthority: string | null;
   registrationCountry: string | null; registrationExpiryDate: string | null;
   verificationStatus: string; practitionerStatus: string; profilePhotoUrl: string | null;
   profileCompleteness: number; assignmentNotifications: boolean; documentNotifications: boolean;
-  paymentNotifications: boolean; capabilities: PractitionerCapability[];
+  paymentNotifications: boolean; capabilities: PractitionerCapability[]; selectedServices: PractitionerCapability[];
   assignments: PractitionerAssignment[]; documents: PractitionerDocument[];
 };
 
 const fields = /* GraphQL */ `
-  userId fullName professionalEmail phone country city preferredContactMethod
-  profession specialisation yearsExperience qualifications registrationNumber
+  userId fullName professionalEmail phone country city districtProvince clinicHospital preferredContactMethod
+  profession specialisation specialisations { id name sortOrder } yearsExperience qualifications registrationNumber
   registrationAuthority registrationCountry registrationExpiryDate verificationStatus
   practitionerStatus profilePhotoUrl profileCompleteness assignmentNotifications
   documentNotifications paymentNotifications
-  capabilities { id code name approvalStatus }
+  capabilities { id code name approvalStatus } selectedServices { id code name approvalStatus }
   assignments(limit: 5) { id organisationName programmeName activityName serviceName location startsAt endsAt status }
   documents { id documentType fileName expiryDate verificationStatus uploadedAt downloadUrl }
 `;
@@ -46,6 +46,7 @@ const updateMutation = /* GraphQL */ `mutation UpdatePractitionerProfile($input:
 const photoMutation = /* GraphQL */ `mutation UploadPractitionerPhoto($file: PractitionerFileInput!) {
   uploadPractitionerPhoto(file: $file) { ${fields} }
 }`;
+const deletePhotoMutation = /* GraphQL */ `mutation DeletePractitionerPhoto { deletePractitionerPhoto { ${fields} } }`;
 const documentMutation = /* GraphQL */ `mutation UploadPractitionerDocument($documentType: String!, $expiryDate: String, $file: PractitionerFileInput!) {
   uploadPractitionerDocument(documentType: $documentType, expiryDate: $expiryDate, file: $file) {
     id documentType fileName expiryDate verificationStatus uploadedAt downloadUrl
@@ -59,9 +60,12 @@ async function selectedOrganisationId() {
 const updateSchema = z.object({
   fullName: z.string().trim().min(2).max(160),
   professionalEmail: z.email().trim().toLowerCase(),
-  phone: z.string().trim().max(40), country: z.string().trim().min(2).max(100),
+  phone: z.string().trim().max(40), country: z.string().trim().min(2).max(100), profession: z.string().trim().min(2).max(120),
+  districtProvince: z.string().trim().max(120), clinicHospital: z.string().trim().max(180),
+  registrationNumber: z.string().trim().max(120), registrationAuthority: z.string().trim().max(180), registrationCountry: z.string().trim().max(100), registrationExpiryDate: z.string().nullable(),
   city: z.string().trim().max(120), preferredContactMethod: z.enum(["Email", "Phone", "WhatsApp"]),
-  specialisation: z.string().trim().max(180), yearsExperience: z.number().int().min(0).max(80),
+  specialisation: z.string().trim().max(180), specialisations: z.array(z.string().trim().min(2).max(180)).max(20), yearsExperience: z.number().int().min(0).max(80),
+  selectedServiceCodes: z.array(z.string().trim().min(2).max(120)).max(50),
   qualifications: z.array(z.string().trim().min(2).max(200)).max(20),
   assignmentNotifications: z.boolean(), documentNotifications: z.boolean(), paymentNotifications: z.boolean(),
 });
@@ -96,6 +100,16 @@ export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl:
     return { ok: true as const, profile: result.uploadPractitionerPhoto };
   } catch {
     return { ok: false as const, error: "The profile photo could not be uploaded." };
+  }
+}
+
+export async function deletePractitionerPhoto() {
+  try {
+    const result = await graphqlRequest<{ deletePractitionerPhoto: PractitionerProfile }>(deletePhotoMutation, { organisationId: await selectedOrganisationId() });
+    revalidatePath("/practitioner/profile");
+    return { ok: true as const, profile: result.deletePractitionerPhoto };
+  } catch {
+    return { ok: false as const, error: "The profile photo could not be deleted." };
   }
 }
 
