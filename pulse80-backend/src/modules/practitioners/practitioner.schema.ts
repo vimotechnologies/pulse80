@@ -47,6 +47,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     profession: String!
     specialisation: String
     specialisations: [PractitionerSpecialisation!]!
+    yearsExperience: Int!
     qualifications: [String!]!
     registrationNumber: String
     registrationAuthority: String
