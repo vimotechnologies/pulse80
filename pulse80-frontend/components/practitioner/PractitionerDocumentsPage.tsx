@@ -133,7 +133,7 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
                       <button
                         type="button"
                         onClick={() => setPreviewDocument({ fileName: existingDocument.fileName, downloadUrl: existingDocument.downloadUrl! })}
-                        className="text-xs font-semibold text-primary hover:underline"
+                        className="text-xs font-semibold text-primary"
                       >
                         Preview
                       </button>
