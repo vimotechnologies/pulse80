@@ -387,7 +387,7 @@ export class PractitionerService {
   }
 
   async uploadDocument(userId: string, documentType: string, expiryDate: string | null, file: EncodedFile) {
-    const decoded = decodeFile(file.dataUrl, ["application/pdf", "image/png", "image/jpeg"], 5 * 1024 * 1024);
+    const decoded = decodeFile(file.dataUrl, ["application/pdf", "image/png", "image/jpeg"], 2 * 1024 * 1024);
     const path = `${userId}/${crypto.randomUUID()}-${safeFileName(file.fileName)}`;
     const { error: uploadError } = await this.supabase.storage
       .from("practitioner-verification-documents")

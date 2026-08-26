@@ -24,19 +24,44 @@ const documentTypes = [
   "Identity document",
   "Verification evidence",
 ] as const;
-const professions = ["General Practitioner", "Nurse", "Midwife", "Clinical Psychologist", "Counsellor", "Physiotherapist", "Occupational Therapist", "Dietitian", "Social Worker", "Radiographer", "Pharmacist"];
+const MAX_DOCUMENT_SIZE_BYTES = 2 * 1024 * 1024;
+const professions = [
+  "Neurologist", "Psychiatrist", "Neurosurgeon", "Clinical Psychologist", "Dermatologist",
+  "Endocrinologist", "Nephrologist", "Urologist", "Otolaryngologist", "Oncologist",
+  "Dietitian", "Physical Therapist", "Pulmonologist", "Radiologist", "Podiatrist",
+  "Audiologist", "Dentist", "Optometrist", "Physiotherapist", "Orthotist",
+];
 const qualificationOptions = ["MBBS", "BSc Nursing", "Diploma in Nursing", "Midwifery Certificate", "MSc Clinical Psychology", "BSc Physiotherapy", "BSc Occupational Therapy", "BSc Dietetics", "Social Work Degree", "Public Health Diploma"];
 const specialisationOptions = ["Primary care", "Maternal health", "Child health", "Mental health", "Occupational health", "Chronic disease management", "Emergency care", "Rehabilitation", "Nutrition", "Public health"];
-const locations = {
+const locations: Record<string, { areaLabel: string; areas: Record<string, string[]> }> = {
   Botswana: {
-    districts: ["Central", "Chobe", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng", "North-East", "North-West", "South-East", "Southern"],
-    cities: ["Gaborone", "Francistown", "Lobatse", "Selibe Phikwe", "Jwaneng", "Orapa", "Maun", "Molepolole", "Mochudi", "Kanye", "Kasane", "Palapye", "Serowe"],
-    facilities: ["Botswana Occupational Health Centre", "Princess Marina Hospital", "Sir Ketumile Masire Teaching Hospital", "Gaborone Private Hospital", "Bokamoso Private Hospital", "Sidilega Private Hospital"],
+    areaLabel: "District",
+    areas: {
+      Central: ["Palapye", "Serowe", "Mahalapye", "Letlhakane", "Bobonong", "Tonota", "Tutume"],
+      Chobe: ["Kasane", "Kazungula", "Kachikau"],
+      Ghanzi: ["Ghanzi", "Charles Hill", "Ncojane"],
+      Kgalagadi: ["Tshabong", "Hukuntsi", "Kang", "Werda"],
+      Kgatleng: ["Mochudi", "Oodi", "Modipane", "Mmathubudukwane"],
+      Kweneng: ["Molepolole", "Mogoditshane", "Gabane", "Thamaga", "Lentsweletau"],
+      "North-East": ["Francistown", "Masunga", "Tati Siding"],
+      "North-West": ["Maun", "Gumare", "Shakawe", "Etsha"],
+      "South-East": ["Gaborone", "Tlokweng", "Ramotswa", "Otse"],
+      Southern: ["Kanye", "Lobatse", "Jwaneng", "Moshupa", "Goodhope"],
+    },
   },
   "South Africa": {
-    districts: ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"],
-    cities: ["Johannesburg", "Pretoria", "Cape Town", "Durban", "Gqeberha", "Bloemfontein", "Polokwane", "Mbombela", "Mahikeng", "Kimberley"],
-    facilities: ["Chris Hani Baragwanath Academic Hospital", "Charlotte Maxeke Johannesburg Academic Hospital", "Groote Schuur Hospital", "Netcare Milpark Hospital"],
+    areaLabel: "Province",
+    areas: {
+      "Eastern Cape": ["Gqeberha", "East London", "Mthatha", "Komani", "Makhanda"],
+      "Free State": ["Bloemfontein", "Welkom", "Bethlehem", "Sasolburg", "Kroonstad"],
+      Gauteng: ["Johannesburg", "Pretoria", "Soweto", "Sandton", "Midrand", "Centurion", "Germiston", "Boksburg", "Benoni", "Vereeniging"],
+      "KwaZulu-Natal": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Ballito"],
+      Limpopo: ["Polokwane", "Tzaneen", "Thohoyandou", "Musina", "Mokopane", "Lephalale"],
+      Mpumalanga: ["Mbombela", "Emalahleni", "Middelburg", "Secunda", "Ermelo", "White River"],
+      "North West": ["Mahikeng", "Rustenburg", "Klerksdorp", "Potchefstroom", "Brits"],
+      "Northern Cape": ["Kimberley", "Upington", "Kuruman", "De Aar", "Springbok"],
+      "Western Cape": ["Cape Town", "Stellenbosch", "Paarl", "George", "Worcester", "Mossel Bay"],
+    },
   },
 };
 const registrationAuthorities: Record<string, string[]> = {
@@ -53,8 +78,8 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [documentFiles, setDocumentFiles] = useState<Record<string, File | null>>({});
-  const [documentExpiryDates, setDocumentExpiryDates] = useState<Record<string, string>>({});
-  const [documentUploadProgress, setDocumentUploadProgress] = useState<number | null>(null);
+  const [documentErrors, setDocumentErrors] = useState<Record<string, string | null>>({});
+  const [documentUploadProgress, setDocumentUploadProgress] = useState<{ completed: number; total: number } | null>(null);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
   const [photoUploadProgress, setPhotoUploadProgress] = useState<number | null>(null);
@@ -91,25 +116,36 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
     const filesToUpload = documentTypes.filter((documentType) => documentFiles[documentType]);
     if (!filesToUpload.length) return showMessage("Choose at least one document to upload.");
     setUploadingDocument(true);
+    setDocumentUploadProgress({ completed: 0, total: filesToUpload.length });
+    let completed = 0;
+    let failed = 0;
     for (const documentType of filesToUpload) {
       const file = documentFiles[documentType];
       if (!file) continue;
-      setDocumentUploadProgress(12);
-      const progressTimer = window.setInterval(() => setDocumentUploadProgress((current) => Math.min((current ?? 12) + 8, 88)), 180);
-      const result = await uploadPractitionerDocument({ documentType, expiryDate: documentExpiryDates[documentType] || null, file: { fileName: file.name, dataUrl: await readFile(file) } });
-      window.clearInterval(progressTimer);
+      const result = await uploadPractitionerDocument({ documentType, expiryDate: null, file: { fileName: file.name, dataUrl: await readFile(file) } });
       if (!result.ok) {
-        setDocumentUploadProgress(null);
-        showMessage(result.error);
+        failed += 1;
+        setDocumentErrors((current) => ({ ...current, [documentType]: result.error }));
         continue;
       }
-      setDocumentUploadProgress(100);
+      completed += 1;
+      setDocumentUploadProgress({ completed, total: filesToUpload.length });
       setProfile((current) => ({ ...current, documents: [result.document, ...current.documents] }));
       setDocumentFiles((current) => ({ ...current, [documentType]: null }));
-      setDocumentExpiryDates((current) => ({ ...current, [documentType]: "" }));
     }
     setUploadingDocument(false);
-    showMessage("Document upload complete.");
+    showMessage(failed ? `${completed} of ${filesToUpload.length} documents uploaded.` : "Document upload complete.");
+  }
+
+  function selectDocument(documentType: string, file: File | null) {
+    setDocumentUploadProgress(null);
+    if (file && file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      setDocumentFiles((current) => ({ ...current, [documentType]: null }));
+      setDocumentErrors((current) => ({ ...current, [documentType]: "File exceeds the 2 MB size limit." }));
+      return;
+    }
+    setDocumentFiles((current) => ({ ...current, [documentType]: file }));
+    setDocumentErrors((current) => ({ ...current, [documentType]: null }));
   }
 
   async function uploadCroppedPhoto(file: File) {
@@ -151,7 +187,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 
       <div className="space-y-5">
         <Section title="Personal & contact information" icon={User}>
-          <div className="grid gap-4 md:grid-cols-2"><Editable label="Full name" value={draft.fullName} editable={editing} onChange={(fullName) => setDraft({ ...draft, fullName })} /><Editable label="Professional email" type="email" value={draft.professionalEmail} editable={editing} onChange={(professionalEmail) => setDraft({ ...draft, professionalEmail })} /><Editable label="Phone number" value={draft.phone ?? ""} editable={editing} onChange={(phone) => setDraft({ ...draft, phone })} /><SelectField label="Country" value={draft.country} editable={editing} options={Object.keys(locations)} onChange={(country) => setDraft({ ...draft, country, city: "", districtProvince: "" })} /><SelectField label="City / town" value={draft.city ?? ""} editable={editing} options={locations[draft.country as keyof typeof locations]?.cities ?? []} onChange={(city) => setDraft({ ...draft, city })} /><SelectField label="District / province" value={draft.districtProvince ?? ""} editable={editing} options={locations[draft.country as keyof typeof locations]?.districts ?? []} onChange={(districtProvince) => setDraft({ ...draft, districtProvince })} /><DatalistField label="Clinic / hospital" value={draft.clinicHospital ?? ""} editable={editing} options={locations[draft.country as keyof typeof locations]?.facilities ?? []} onChange={(clinicHospital) => setDraft({ ...draft, clinicHospital })} /><SelectField label="Preferred contact method" value={draft.preferredContactMethod} editable={editing} options={["Email", "Phone", "WhatsApp"]} onChange={(preferredContactMethod) => setDraft({ ...draft, preferredContactMethod })} /></div>
+          <div className="grid gap-4 md:grid-cols-2"><Editable label="Full name" value={draft.fullName} editable={editing} onChange={(fullName) => setDraft({ ...draft, fullName })} /><Editable label="Professional email" type="email" value={draft.professionalEmail} editable={editing} onChange={(professionalEmail) => setDraft({ ...draft, professionalEmail })} /><Editable label="Phone number" value={draft.phone ?? ""} editable={editing} onChange={(phone) => setDraft({ ...draft, phone })} /><SelectField label="Country" value={draft.country} editable={editing} options={Object.keys(locations)} onChange={(country) => setDraft({ ...draft, country, city: "", districtProvince: "" })} /><SelectField label={locations[draft.country]?.areaLabel ?? "District / province"} value={draft.districtProvince ?? ""} editable={editing} options={Object.keys(locations[draft.country]?.areas ?? {})} onChange={(districtProvince) => setDraft({ ...draft, districtProvince, city: "" })} /><SelectField label="City / town" value={draft.city ?? ""} editable={editing} disabled={!draft.districtProvince} options={locations[draft.country]?.areas[draft.districtProvince ?? ""] ?? []} onChange={(city) => setDraft({ ...draft, city })} /><Editable label="Clinic / hospital" value={draft.clinicHospital ?? ""} editable={editing} onChange={(clinicHospital) => setDraft({ ...draft, clinicHospital })} /><SelectField label="Preferred contact method" value={draft.preferredContactMethod} editable={editing} options={["Email", "Phone", "WhatsApp"]} onChange={(preferredContactMethod) => setDraft({ ...draft, preferredContactMethod })} /></div>
         </Section>
 
         <Section title="Professional details" icon={Stethoscope}>
@@ -170,11 +206,10 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
         <DocumentUploadList
           documents={profile.documents}
           documentFiles={documentFiles}
-          documentExpiryDates={documentExpiryDates}
+          documentErrors={documentErrors}
           documentUploadProgress={documentUploadProgress}
           uploadingDocument={uploadingDocument}
-          onFileChange={(documentType, file) => { setDocumentFiles((current) => ({ ...current, [documentType]: file })); setDocumentUploadProgress(null); }}
-          onExpiryDateChange={(documentType, expiryDate) => setDocumentExpiryDates((current) => ({ ...current, [documentType]: expiryDate }))}
+          onFileChange={selectDocument}
           onUpload={uploadDocuments}
         />
       </Section>
@@ -189,27 +224,23 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 function Section({ title, icon: Icon, action, children }: { title: string; icon: typeof User; action?: React.ReactNode; children: React.ReactNode }) { return <DashboardWidget><div className="flex items-center justify-between border-b border-card-border px-5 py-4"><div className="flex items-center gap-2"><Icon className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold text-navy">{title}</h2></div>{action}</div><div className="p-5">{children}</div></DashboardWidget>; }
 function ReadField({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-semibold text-navy">{label}</p><p className="mt-2 flex min-h-11 items-center rounded-lg border border-card-border bg-soft-bg px-3 text-sm text-navy">{value || "Not provided"}</p></div>; }
 function Editable({ label, value, editable, onChange, type = "text", multiline = false }: { label: string; value: string; editable: boolean; onChange: (value: string) => void; type?: string; multiline?: boolean }) { if (!editable) return <ReadField label={label} value={multiline ? value.replace(/\n/g, ", ") : value} />; return <label className="block"><span className="text-xs font-semibold text-navy">{label}</span>{multiline ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-primary/40 bg-white px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-primary/10" /> : <input type={type} min={type === "number" ? 0 : undefined} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10" />}</label>; }
-function SelectField({ label, value, editable, options, onChange }: { label: string; value: string; editable: boolean; options: string[]; onChange: (value: string) => void }) {
+function SelectField({ label, value, editable, options, disabled = false, onChange }: { label: string; value: string; editable: boolean; options: string[]; disabled?: boolean; onChange: (value: string) => void }) {
   if (!editable) return <ReadField label={label} value={value} />;
-  return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10"><option value="">Select {label.toLowerCase()}</option>{options.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>;
-}
-function DatalistField({ label, value, editable, options, onChange }: { label: string; value: string; editable: boolean; options: string[]; onChange: (value: string) => void }) {
-  const listId = `practitioner-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
-  if (!editable) return <ReadField label={label} value={value} />;
-  return <label className="block"><span className="text-xs font-semibold text-navy">{label}</span><input list={listId} value={value} placeholder={`Search or enter ${label.toLowerCase()}`} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10" /><datalist id={listId}>{options.map((item) => <option key={item} value={item} />)}</datalist></label>;
+  return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-soft-bg disabled:text-muted"><option value="">{disabled ? "Select district / province first" : `Select ${label.toLowerCase()}`}</option>{options.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>;
 }
 function MultiSelectField({ label, value, options, editable, onChange }: { label: string; value: string[]; options: string[]; editable: boolean; onChange: (value: string[]) => void }) {
   if (!editable) return <ReadField label={label} value={value.join(", ")} />;
   return <fieldset><legend className="text-xs font-semibold text-navy">{label}</legend><div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((item) => { const checked = value.includes(item); return <label key={item} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? "border-primary/50 bg-primary/5 text-navy" : "border-card-border bg-white text-subtle hover:border-primary/30"}`}><input type="checkbox" checked={checked} onChange={() => onChange(checked ? value.filter((selected) => selected !== item) : [...value, item])} className="h-4 w-4 accent-primary" /><span>{item}</span></label>; })}</div></fieldset>;
 }
-function DocumentUploadList({ documents, documentFiles, documentExpiryDates, documentUploadProgress, uploadingDocument, onFileChange, onExpiryDateChange, onUpload }: { documents: PractitionerProfile["documents"]; documentFiles: Record<string, File | null>; documentExpiryDates: Record<string, string>; documentUploadProgress: number | null; uploadingDocument: boolean; onFileChange: (documentType: string, file: File | null) => void; onExpiryDateChange: (documentType: string, expiryDate: string) => void; onUpload: () => void }) {
+function DocumentUploadList({ documents, documentFiles, documentErrors, documentUploadProgress, uploadingDocument, onFileChange, onUpload }: { documents: PractitionerProfile["documents"]; documentFiles: Record<string, File | null>; documentErrors: Record<string, string | null>; documentUploadProgress: { completed: number; total: number } | null; uploadingDocument: boolean; onFileChange: (documentType: string, file: File | null) => void; onUpload: () => void }) {
   return <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-2">{documentTypes.map((documentType) => {
       const file = documentFiles[documentType];
+      const error = documentErrors[documentType];
       const existingDocument = documents.find((document) => document.documentType === documentType);
-      return <div key={documentType} className="rounded-lg border border-card-border bg-soft-bg p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-navy">{documentType}</p>{existingDocument ? <p className="mt-1 truncate text-xs text-subtle" title={existingDocument.fileName}>Current: {existingDocument.fileName}</p> : null}</div>{existingDocument?.downloadUrl ? <a href={existingDocument.downloadUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a> : null}</div><label htmlFor={`practitioner-document-${documentType}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onFileChange(documentType, event.dataTransfer.files[0] ?? null); }} className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/40 bg-white px-4 py-4 text-center text-sm text-subtle hover:border-primary hover:bg-primary/5"><CloudUpload className="mb-2 h-6 w-6 text-primary" /><span className="font-semibold text-navy">{file?.name ?? (existingDocument ? "Choose a replacement document" : "Drop a document here or choose a file")}</span><span className="mt-1 text-xs">PDF, PNG, or JPEG</span></label><input id={`practitioner-document-${documentType}`} type="file" accept="application/pdf,image/png,image/jpeg" className="sr-only" onChange={(event) => onFileChange(documentType, event.target.files?.[0] ?? null)} /><label className="mt-3 block"><span className="text-xs font-semibold text-navy">Expiry date (if applicable)</span><input type="date" value={documentExpiryDates[documentType] ?? existingDocument?.expiryDate ?? ""} onChange={(event) => onExpiryDateChange(documentType, event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-card-border bg-white px-3 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10" /></label></div>;
+      return <div key={documentType} className={`rounded-lg border p-4 ${error ? "border-pulse-red bg-pulse-red/5" : "border-card-border bg-soft-bg"}`}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-navy">{documentType}</p>{existingDocument ? <p className="mt-1 truncate text-xs text-subtle" title={existingDocument.fileName}>Current: {existingDocument.fileName}</p> : null}</div>{existingDocument?.downloadUrl ? <a href={existingDocument.downloadUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a> : null}</div><label htmlFor={`practitioner-document-${documentType}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onFileChange(documentType, event.dataTransfer.files[0] ?? null); }} className={`mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-white px-4 py-4 text-center text-sm text-subtle ${error ? "border-pulse-red" : "border-primary/40 hover:border-primary hover:bg-primary/5"}`}><CloudUpload className={`mb-2 h-6 w-6 ${error ? "text-pulse-red" : "text-primary"}`} /><span className="font-semibold text-navy">{file?.name ?? (existingDocument ? "Choose a replacement document" : "Drop a document here or choose a file")}</span><span className="mt-1 text-xs">PDF, PNG, or JPEG · Maximum 2 MB</span></label><input id={`practitioner-document-${documentType}`} type="file" accept="application/pdf,image/png,image/jpeg" className="sr-only" onChange={(event) => { onFileChange(documentType, event.target.files?.[0] ?? null); event.currentTarget.value = ""; }} />{error ? <p role="alert" className="mt-2 text-xs font-semibold text-pulse-red">{error}</p> : null}</div>;
     })}</div>
-    {documentUploadProgress !== null ? <div className="relative h-7 overflow-hidden rounded-lg bg-soft-bg"><div className={`flex h-full items-center justify-center text-xs font-semibold text-white transition-all duration-200 ${documentUploadProgress === 100 ? "bg-success" : "bg-navy"}`} style={{ width: `${documentUploadProgress}%` }}>{documentUploadProgress}%</div></div> : null}
+    {documentUploadProgress ? <div><div className="mb-2 flex items-center justify-between text-xs font-semibold text-navy"><span>Documents uploaded</span><span>{documentUploadProgress.completed}/{documentUploadProgress.total}</span></div><div className="h-3 overflow-hidden rounded-full bg-soft-bg"><div className="h-full rounded-full bg-success transition-all duration-300" style={{ width: `${(documentUploadProgress.completed / documentUploadProgress.total) * 100}%` }} /></div></div> : null}
     <ActionButton loading={uploadingDocument} onClick={onUpload} className="w-full sm:w-auto">Upload documents</ActionButton>
   </div>;
 }
