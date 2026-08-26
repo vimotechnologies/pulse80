@@ -15,6 +15,7 @@ import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Props = { initialProfile: PractitionerProfile };
@@ -158,7 +159,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 
       </div>
 
-      {message ? <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-card-border bg-white px-4 py-3 text-sm font-semibold text-navy shadow-xl">{message}</div> : null}
+      <ToastMessage message={message} />
       {photoToCrop ? <PhotoCropDialog file={photoToCrop} onCancel={() => setPhotoToCrop(null)} onConfirm={async (file) => { setPhotoToCrop(null); await uploadCroppedPhoto(file); }} /> : null}
     </div>
   );

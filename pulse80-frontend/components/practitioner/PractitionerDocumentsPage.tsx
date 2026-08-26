@@ -10,6 +10,7 @@ import { CloudUpload, FileText } from "@/components/icons/IconsaxIcons";
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 
 type Props = { initialProfile: PractitionerProfile };
 
@@ -100,6 +101,7 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
     }
 
     setUploading(false);
+    if (!failed) setUploadProgress(null);
     showMessage(failed ? `${completed} of ${filesToUpload.length} documents uploaded.` : "Document upload complete.");
   }
 
@@ -178,7 +180,7 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
         </div>
       </DashboardWidget>
 
-      {message ? <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-card-border bg-white px-4 py-3 text-sm font-semibold text-navy shadow-xl">{message}</div> : null}
+      <ToastMessage message={message} />
       {previewDocument ? <DocumentPreviewModal document={previewDocument} onClose={() => setPreviewDocument(null)} /> : null}
     </div>
   );

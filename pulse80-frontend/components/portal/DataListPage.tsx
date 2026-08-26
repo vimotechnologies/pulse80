@@ -19,6 +19,7 @@ import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { FormInput } from "@/components/portal/FormInput";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 import {
   UnifiedTablePagination,
   UnifiedTableSurface,
@@ -312,11 +313,7 @@ export function DataListPage<RecordType extends DataRecord>({
         }
       />
 
-      {toast ? (
-        <div className="rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm font-semibold text-success shadow-sm">
-          {toast}
-        </div>
-      ) : null}
+      <ToastMessage message={toast} />
 
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
