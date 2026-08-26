@@ -5,12 +5,11 @@ import Image from "next/image";
 
 import {
   updatePractitionerProfile,
-  uploadPractitionerDocument,
   uploadPractitionerPhoto,
   deletePractitionerPhoto,
   type PractitionerProfile,
 } from "@/app/actions/practitioner-profile";
-import { CloudUpload, Edit, Eye, FileText, Location, ShieldCheck, Stethoscope, Trash, User } from "@/components/icons/IconsaxIcons";
+import { Edit, Eye, Location, ShieldCheck, Stethoscope, Trash, User } from "@/components/icons/IconsaxIcons";
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
@@ -18,13 +17,6 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Props = { initialProfile: PractitionerProfile };
 
-const documentTypes = [
-  "Professional licence",
-  "Qualification certificate",
-  "Identity document",
-  "Verification evidence",
-] as const;
-const MAX_DOCUMENT_SIZE_BYTES = 2 * 1024 * 1024;
 const professions = [
   "Neurologist", "Psychiatrist", "Neurosurgeon", "Clinical Psychologist", "Dermatologist",
   "Endocrinologist", "Nephrologist", "Urologist", "Otolaryngologist", "Oncologist",
@@ -77,10 +69,6 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [documentFiles, setDocumentFiles] = useState<Record<string, File | null>>({});
-  const [documentErrors, setDocumentErrors] = useState<Record<string, string | null>>({});
-  const [documentUploadProgress, setDocumentUploadProgress] = useState<{ completed: number; total: number } | null>(null);
-  const [uploadingDocument, setUploadingDocument] = useState(false);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
   const [photoUploadProgress, setPhotoUploadProgress] = useState<number | null>(null);
 
@@ -110,42 +98,6 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
       reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("File read failed"));
       reader.readAsDataURL(file);
     });
-  }
-
-  async function uploadDocuments() {
-    const filesToUpload = documentTypes.filter((documentType) => documentFiles[documentType]);
-    if (!filesToUpload.length) return showMessage("Choose at least one document to upload.");
-    setUploadingDocument(true);
-    setDocumentUploadProgress({ completed: 0, total: filesToUpload.length });
-    let completed = 0;
-    let failed = 0;
-    for (const documentType of filesToUpload) {
-      const file = documentFiles[documentType];
-      if (!file) continue;
-      const result = await uploadPractitionerDocument({ documentType, expiryDate: null, file: { fileName: file.name, dataUrl: await readFile(file) } });
-      if (!result.ok) {
-        failed += 1;
-        setDocumentErrors((current) => ({ ...current, [documentType]: result.error }));
-        continue;
-      }
-      completed += 1;
-      setDocumentUploadProgress({ completed, total: filesToUpload.length });
-      setProfile((current) => ({ ...current, documents: [result.document, ...current.documents] }));
-      setDocumentFiles((current) => ({ ...current, [documentType]: null }));
-    }
-    setUploadingDocument(false);
-    showMessage(failed ? `${completed} of ${filesToUpload.length} documents uploaded.` : "Document upload complete.");
-  }
-
-  function selectDocument(documentType: string, file: File | null) {
-    setDocumentUploadProgress(null);
-    if (file && file.size > MAX_DOCUMENT_SIZE_BYTES) {
-      setDocumentFiles((current) => ({ ...current, [documentType]: null }));
-      setDocumentErrors((current) => ({ ...current, [documentType]: "File exceeds the 2 MB size limit." }));
-      return;
-    }
-    setDocumentFiles((current) => ({ ...current, [documentType]: file }));
-    setDocumentErrors((current) => ({ ...current, [documentType]: null }));
   }
 
   async function uploadCroppedPhoto(file: File) {
@@ -202,17 +154,6 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
         {editing ? <MultiSelectField label="Services" value={draft.selectedServices.map((item) => item.code)} options={serviceOptions} editable onChange={(selectedServiceCodes) => setDraft({ ...draft, selectedServices: selectedServiceCodes.map((code, index) => ({ id: String(index), code, name: code, approvalStatus: "Pending" })) })} /> : <div className="grid gap-3 sm:grid-cols-2">{profile.capabilities.map((capability) => <div key={capability.id} className="rounded-lg border border-card-border bg-soft-bg px-3 py-3 text-sm"><span className="font-medium text-navy">{capability.name}</span></div>)}</div>}
       </Section>
 
-      <Section title="Documents & verification" icon={FileText}>
-        <DocumentUploadList
-          documents={profile.documents}
-          documentFiles={documentFiles}
-          documentErrors={documentErrors}
-          documentUploadProgress={documentUploadProgress}
-          uploadingDocument={uploadingDocument}
-          onFileChange={selectDocument}
-          onUpload={uploadDocuments}
-        />
-      </Section>
       </div>
 
       {message ? <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-card-border bg-white px-4 py-3 text-sm font-semibold text-navy shadow-xl">{message}</div> : null}
@@ -232,19 +173,6 @@ function MultiSelectField({ label, value, options, editable, onChange }: { label
   if (!editable) return <ReadField label={label} value={value.join(", ")} />;
   return <fieldset><legend className="text-xs font-semibold text-navy">{label}</legend><div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((item) => { const checked = value.includes(item); return <label key={item} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? "border-primary/50 bg-primary/5 text-navy" : "border-card-border bg-white text-subtle hover:border-primary/30"}`}><input type="checkbox" checked={checked} onChange={() => onChange(checked ? value.filter((selected) => selected !== item) : [...value, item])} className="h-4 w-4 accent-primary" /><span>{item}</span></label>; })}</div></fieldset>;
 }
-function DocumentUploadList({ documents, documentFiles, documentErrors, documentUploadProgress, uploadingDocument, onFileChange, onUpload }: { documents: PractitionerProfile["documents"]; documentFiles: Record<string, File | null>; documentErrors: Record<string, string | null>; documentUploadProgress: { completed: number; total: number } | null; uploadingDocument: boolean; onFileChange: (documentType: string, file: File | null) => void; onUpload: () => void }) {
-  return <div className="space-y-4">
-    <div className="grid gap-4 md:grid-cols-2">{documentTypes.map((documentType) => {
-      const file = documentFiles[documentType];
-      const error = documentErrors[documentType];
-      const existingDocument = documents.find((document) => document.documentType === documentType);
-      return <div key={documentType} className={`rounded-lg border p-4 ${error ? "border-pulse-red bg-pulse-red/5" : "border-card-border bg-soft-bg"}`}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-navy">{documentType}</p>{existingDocument ? <p className="mt-1 truncate text-xs text-subtle" title={existingDocument.fileName}>Current: {existingDocument.fileName}</p> : null}</div>{existingDocument?.downloadUrl ? <a href={existingDocument.downloadUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a> : null}</div><label htmlFor={`practitioner-document-${documentType}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onFileChange(documentType, event.dataTransfer.files[0] ?? null); }} className={`mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-white px-4 py-4 text-center text-sm text-subtle ${error ? "border-pulse-red" : "border-primary/40 hover:border-primary hover:bg-primary/5"}`}><CloudUpload className={`mb-2 h-6 w-6 ${error ? "text-pulse-red" : "text-primary"}`} /><span className="font-semibold text-navy">{file?.name ?? (existingDocument ? "Choose a replacement document" : "Drop a document here or choose a file")}</span><span className="mt-1 text-xs">PDF, PNG, or JPEG · Maximum 2 MB</span></label><input id={`practitioner-document-${documentType}`} type="file" accept="application/pdf,image/png,image/jpeg" className="sr-only" onChange={(event) => { onFileChange(documentType, event.target.files?.[0] ?? null); event.currentTarget.value = ""; }} />{error ? <p role="alert" className="mt-2 text-xs font-semibold text-pulse-red">{error}</p> : null}</div>;
-    })}</div>
-    {documentUploadProgress ? <div><div className="mb-2 flex items-center justify-between text-xs font-semibold text-navy"><span>Documents uploaded</span><span>{documentUploadProgress.completed}/{documentUploadProgress.total}</span></div><div className="h-3 overflow-hidden rounded-full bg-soft-bg"><div className="h-full rounded-full bg-success transition-all duration-300" style={{ width: `${(documentUploadProgress.completed / documentUploadProgress.total) * 100}%` }} /></div></div> : null}
-    <ActionButton loading={uploadingDocument} onClick={onUpload} className="w-full sm:w-auto">Upload documents</ActionButton>
-  </div>;
-}
-
 function PhotoCropDialog({ file, onCancel, onConfirm }: { file: File; onCancel: () => void; onConfirm: (file: File) => Promise<void> }) {
   const [source] = useState(() => URL.createObjectURL(file));
   const [zoom, setZoom] = useState(1);
