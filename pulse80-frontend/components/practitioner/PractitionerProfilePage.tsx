@@ -9,10 +9,12 @@ import {
   deletePractitionerPhoto,
   type PractitionerProfile,
 } from "@/app/actions/practitioner-profile";
-import { Edit, Eye, Location, ShieldCheck, Stethoscope, Trash, User } from "@/components/icons/IconsaxIcons";
+import { CalendarDays, Edit, Eye, Location, ShieldCheck, Stethoscope, Trash, User } from "@/components/icons/IconsaxIcons";
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Props = { initialProfile: PractitionerProfile };
@@ -143,7 +145,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
         </Section>
 
         <Section title="Professional details" icon={Stethoscope}>
-          <div className="grid gap-4 md:grid-cols-2"><SelectField label="Profession" value={draft.profession} editable={editing} options={professions} onChange={(profession) => setDraft({ ...draft, profession })} /><MultiSelectField label="Specialisations" value={draft.specialisations.map((item) => item.name)} options={specialisationOptions} editable={editing} onChange={(specialisations) => setDraft({ ...draft, specialisations: specialisations.map((name, index) => ({ id: String(index), name, sortOrder: index })) })} /><Editable label="Years of experience" type="number" value={String(draft.yearsExperience)} editable={editing} onChange={(value) => setDraft({ ...draft, yearsExperience: Number(value) || 0 })} /><Editable label="Registration number" value={draft.registrationNumber ?? ""} editable={editing} onChange={(registrationNumber) => setDraft({ ...draft, registrationNumber })} /><SelectField label="Registration body" value={draft.registrationAuthority ?? ""} editable={editing} options={registrationAuthorities[draft.registrationCountry ?? draft.country] ?? []} onChange={(registrationAuthority) => setDraft({ ...draft, registrationAuthority })} /><SelectField label="Registration country" value={draft.registrationCountry ?? ""} editable={editing} options={["Botswana", "South Africa", "Botswana and South Africa"]} onChange={(registrationCountry) => setDraft({ ...draft, registrationCountry, registrationAuthority: "" })} /><Editable label="Registration expiry" type="date" value={draft.registrationExpiryDate ?? ""} editable={editing} onChange={(registrationExpiryDate) => setDraft({ ...draft, registrationExpiryDate })} /><ReadField label="Verification status" value={profile.verificationStatus} /></div>
+          <div className="grid gap-4 md:grid-cols-2"><SelectField label="Profession" value={draft.profession} editable={editing} options={professions} onChange={(profession) => setDraft({ ...draft, profession })} /><MultiSelectField label="Specialisations" value={draft.specialisations.map((item) => item.name)} options={specialisationOptions} editable={editing} onChange={(specialisations) => setDraft({ ...draft, specialisations: specialisations.map((name, index) => ({ id: String(index), name, sortOrder: index })) })} /><Editable label="Years of experience" type="number" value={String(draft.yearsExperience)} editable={editing} onChange={(value) => setDraft({ ...draft, yearsExperience: Number(value) || 0 })} /><Editable label="Registration number" value={draft.registrationNumber ?? ""} editable={editing} onChange={(registrationNumber) => setDraft({ ...draft, registrationNumber })} /><SelectField label="Registration body" value={draft.registrationAuthority ?? ""} editable={editing} options={registrationAuthorities[draft.registrationCountry ?? draft.country] ?? []} onChange={(registrationAuthority) => setDraft({ ...draft, registrationAuthority })} /><SelectField label="Registration country" value={draft.registrationCountry ?? ""} editable={editing} options={["Botswana", "South Africa", "Botswana and South Africa"]} onChange={(registrationCountry) => setDraft({ ...draft, registrationCountry, registrationAuthority: "" })} /><DatePickerField label="Registration expiry" value={draft.registrationExpiryDate ?? ""} editable={editing} onChange={(registrationExpiryDate) => setDraft({ ...draft, registrationExpiryDate })} /><ReadField label="Verification status" value={profile.verificationStatus} /></div>
           <div className="mt-4"><MultiSelectField label="Qualifications" value={draft.qualifications} options={qualificationOptions} editable={editing} onChange={(qualifications) => setDraft({ ...draft, qualifications })} /></div>
         </Section>
 
@@ -165,6 +167,40 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 function Section({ title, icon: Icon, action, children }: { title: string; icon: typeof User; action?: React.ReactNode; children: React.ReactNode }) { return <DashboardWidget><div className="flex items-center justify-between border-b border-card-border px-5 py-4"><div className="flex items-center gap-2"><Icon className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold text-navy">{title}</h2></div>{action}</div><div className="p-5">{children}</div></DashboardWidget>; }
 function ReadField({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-semibold text-navy">{label}</p><p className="mt-2 flex min-h-11 items-center rounded-lg border border-card-border bg-soft-bg px-3 text-sm text-navy">{value || "Not provided"}</p></div>; }
 function Editable({ label, value, editable, onChange, type = "text", multiline = false }: { label: string; value: string; editable: boolean; onChange: (value: string) => void; type?: string; multiline?: boolean }) { if (!editable) return <ReadField label={label} value={multiline ? value.replace(/\n/g, ", ") : value} />; return <label className="block"><span className="text-xs font-semibold text-navy">{label}</span>{multiline ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-primary/40 bg-white px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-primary/10" /> : <input type={type} min={type === "number" ? 0 : undefined} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10" />}</label>; }
+function DatePickerField({ label, value, editable, onChange }: { label: string; value: string; editable: boolean; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const selected = parseDate(value);
+  const displayValue = selected ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(selected) : "";
+  if (!editable) return <ReadField label={label} value={displayValue} />;
+  return (
+    <div>
+      <span className="text-xs font-semibold text-navy">{label}</span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button type="button" className="mt-2 flex h-11 w-full items-center justify-between rounded-lg border border-primary/40 bg-white px-3 text-left text-sm text-navy outline-none transition hover:border-primary focus:ring-4 focus:ring-primary/10">
+            <span className={displayValue ? "text-navy" : "text-muted"}>{displayValue || "Pick an expiry date"}</span>
+            <CalendarDays className="h-4 w-4 text-primary" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start">
+          <Calendar selected={selected} onSelect={(date) => { onChange(formatDateValue(date)); setOpen(false); }} />
+          {value ? <button type="button" onClick={() => { onChange(""); setOpen(false); }} className="mt-2 w-full rounded-lg px-3 py-2 text-xs font-semibold text-subtle hover:bg-soft-bg hover:text-navy">Clear date</button> : null}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+function parseDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return undefined;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+function formatDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 function SelectField({ label, value, editable, options, disabled = false, onChange }: { label: string; value: string; editable: boolean; options: string[]; disabled?: boolean; onChange: (value: string) => void }) {
   if (!editable) return <ReadField label={label} value={value} />;
   return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-soft-bg disabled:text-muted"><option value="">{disabled ? "Select district / province first" : `Select ${label.toLowerCase()}`}</option>{options.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>;
