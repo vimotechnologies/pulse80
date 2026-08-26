@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   uploadPractitionerDocument,
@@ -21,6 +21,11 @@ const documentTypes = [
   "Verification evidence",
 ] as const;
 
+type PreviewDocument = {
+  fileName: string;
+  downloadUrl: string;
+};
+
 export function PractitionerDocumentsPage({ initialProfile }: Props) {
   const [documents, setDocuments] = useState(initialProfile.documents);
   const [documentFiles, setDocumentFiles] = useState<Record<string, File | null>>({});
@@ -28,6 +33,18 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
   const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<PreviewDocument | null>(null);
+
+  useEffect(() => {
+    if (!previewDocument) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setPreviewDocument(null);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [previewDocument]);
 
   function showMessage(value: string) {
     setMessage(value);
@@ -112,7 +129,15 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
                       <p className="text-sm font-semibold text-navy">{documentType}</p>
                       {existingDocument ? <p className="mt-1 truncate text-xs text-subtle" title={existingDocument.fileName}>Current: {existingDocument.fileName}</p> : null}
                     </div>
-                    {existingDocument?.downloadUrl ? <a href={existingDocument.downloadUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a> : null}
+                    {existingDocument?.downloadUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDocument({ fileName: existingDocument.fileName, downloadUrl: existingDocument.downloadUrl! })}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Preview
+                      </button>
+                    ) : null}
                   </div>
                   <label
                     htmlFor={`practitioner-document-${documentType}`}
@@ -154,6 +179,41 @@ export function PractitionerDocumentsPage({ initialProfile }: Props) {
       </DashboardWidget>
 
       {message ? <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-card-border bg-white px-4 py-3 text-sm font-semibold text-navy shadow-xl">{message}</div> : null}
+      {previewDocument ? <DocumentPreviewModal document={previewDocument} onClose={() => setPreviewDocument(null)} /> : null}
+    </div>
+  );
+}
+
+function DocumentPreviewModal({ document, onClose }: { document: PreviewDocument; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-navy/60 p-4"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="document-preview-title"
+        className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+      >
+        <header className="flex items-center justify-between gap-4 border-b border-card-border px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Document preview</p>
+            <h2 id="document-preview-title" className="truncate text-base font-semibold text-navy">{document.fileName}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-card-border px-4 py-2 text-xs font-semibold text-navy hover:bg-soft-bg">
+            Close
+          </button>
+        </header>
+        <iframe
+          src={document.downloadUrl}
+          title={`Preview of ${document.fileName}`}
+          className="min-h-0 flex-1 bg-soft-bg"
+        />
+      </section>
     </div>
   );
 }
