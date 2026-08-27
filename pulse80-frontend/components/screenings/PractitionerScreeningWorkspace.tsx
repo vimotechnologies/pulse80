@@ -63,6 +63,8 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
   const [importError, setImportError] = useState<string | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [manualError, setManualError] = useState<string | null>(null);
+  const [manualSaving, setManualSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -167,13 +169,34 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
     });
   }
 
+  async function saveManualScreening(form: ScreeningCaptureForm) {
+    setManualError(null);
+    setManualSaving(true);
+
+    try {
+      const result = await captureScreening(form);
+      if (!result.ok) {
+        const error = errorText(result.error);
+        setManualError(error);
+        setMessage(error);
+        return;
+      }
+
+      setMessage("Screening submitted for quality assurance.");
+      setManualOpen(false);
+      router.refresh();
+    } finally {
+      setManualSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PortalPageHeader
         eyebrow="Health Practitioner"
         title="Screenings"
         description="Capture and manage anonymized employee wellness screening records linked to your assigned programmes."
-        actions={<button type="button" onClick={() => setManualOpen(true)} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">Capture screening</button>}
+        actions={<button type="button" onClick={() => { setManualError(null); setManualOpen(true); }} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">Capture screening</button>}
       />
       <ToastMessage message={message} />
 
@@ -305,14 +328,14 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
         ) : null}
       </section>
 
-      {manualOpen ? <CaptureModal assignments={assignments} screenings={screenings} pending={pending} onClose={() => setManualOpen(false)} onSave={(form) => startTransition(async () => {
-        const result = await captureScreening(form);
-        setMessage(result.ok ? "Screening submitted for quality assurance." : errorText(result.error));
-        if (result.ok) {
-          setManualOpen(false);
-          router.refresh();
-        }
-      })} /> : null}
+      {manualOpen ? <CaptureModal
+        assignments={assignments}
+        screenings={screenings}
+        pending={manualSaving}
+        serverError={manualError}
+        onClose={() => { if (!manualSaving) setManualOpen(false); }}
+        onSave={(form) => { void saveManualScreening(form); }}
+      /> : null}
     </div>
   );
 }
@@ -376,7 +399,7 @@ function statusTone(status: string): "success" | "warning" | "danger" | "info" |
   return "info";
 }
 
-function CaptureModal({ assignments, screenings, pending, onClose, onSave }: { assignments: ScreeningAssignmentOption[]; screenings: Screening[]; pending: boolean; onClose: () => void; onSave: (form: ScreeningCaptureForm) => void }) {
+function CaptureModal({ assignments, screenings, pending, serverError, onClose, onSave }: { assignments: ScreeningAssignmentOption[]; screenings: Screening[]; pending: boolean; serverError: string | null; onClose: () => void; onSave: (form: ScreeningCaptureForm) => void }) {
   const [form, setForm] = useState<ScreeningCaptureForm>({ assignmentId: "", participantReference: "", department: "", consentConfirmed: false, practitionerNote: "", systolicMmhg: "", diastolicMmhg: "", glucoseMmolL: "", cholesterolMmolL: "", heightCm: "", weightKg: "" });
   const [submitted, setSubmitted] = useState(false);
 
@@ -396,6 +419,7 @@ function CaptureModal({ assignments, screenings, pending, onClose, onSave }: { a
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">Capture screening</h2><button type="button" onClick={onClose} className="text-xs font-semibold text-muted">Close</button></div>
 
       {submitted && errorCount ? <div className="mt-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3"><p className="text-xs font-semibold text-danger">{errorCount === 1 ? "1 field needs attention." : `${errorCount} fields need attention.`}</p></div> : null}
+      {serverError ? <div role="alert" className="mt-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3"><p className="text-xs font-semibold text-danger">{serverError}</p></div> : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <ValidatedField label="Assignment" error={showError("assignmentId")}>
