@@ -30,6 +30,21 @@ type ImportRow = {
   practitionerNote: string;
 };
 
+type CaptureErrors = Partial<Record<
+  | "assignmentId"
+  | "participantReference"
+  | "department"
+  | "measurements"
+  | "systolicMmhg"
+  | "diastolicMmhg"
+  | "glucoseMmolL"
+  | "cholesterolMmolL"
+  | "heightCm"
+  | "weightKg"
+  | "consentConfirmed",
+  string
+>>;
+
 const recordsPerPage = 10;
 
 export function PractitionerScreeningWorkspace({ screenings, assignments }: { screenings: Screening[]; assignments: ScreeningAssignmentOption[] }) {
@@ -290,7 +305,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
         ) : null}
       </section>
 
-      {manualOpen ? <CaptureModal assignments={assignments} pending={pending} onClose={() => setManualOpen(false)} onSave={(form) => startTransition(async () => {
+      {manualOpen ? <CaptureModal assignments={assignments} screenings={screenings} pending={pending} onClose={() => setManualOpen(false)} onSave={(form) => startTransition(async () => {
         const result = await captureScreening(form);
         setMessage(result.ok ? "Screening submitted for quality assurance." : errorText(result.error));
         if (result.ok) {
@@ -361,33 +376,136 @@ function statusTone(status: string): "success" | "warning" | "danger" | "info" |
   return "info";
 }
 
-function CaptureModal({ assignments, pending, onClose, onSave }: { assignments: ScreeningAssignmentOption[]; pending: boolean; onClose: () => void; onSave: (form: ScreeningCaptureForm) => void }) {
+function CaptureModal({ assignments, screenings, pending, onClose, onSave }: { assignments: ScreeningAssignmentOption[]; screenings: Screening[]; pending: boolean; onClose: () => void; onSave: (form: ScreeningCaptureForm) => void }) {
   const [form, setForm] = useState<ScreeningCaptureForm>({ assignmentId: "", participantReference: "", department: "", consentConfirmed: false, practitionerNote: "", systolicMmhg: "", diastolicMmhg: "", glucoseMmolL: "", cholesterolMmolL: "", heightCm: "", weightKg: "" });
-  const set = (key: keyof ScreeningCaptureForm, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
-  const hasMeasurement = [form.systolicMmhg, form.glucoseMmolL, form.cholesterolMmolL, form.heightCm].some(Boolean);
-  const valid = Boolean(form.assignmentId && form.participantReference && form.consentConfirmed && hasMeasurement && (Boolean(form.systolicMmhg) === Boolean(form.diastolicMmhg)) && (Boolean(form.heightCm) === Boolean(form.weightKg)));
+  const [submitted, setSubmitted] = useState(false);
 
-  return <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4"><form onSubmit={(event) => { event.preventDefault(); if (valid) onSave(form); }} className="my-6 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-    <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">Capture screening</h2><button type="button" onClick={onClose} className="text-xs font-semibold text-muted">Close</button></div>
-    <div className="mt-6 grid gap-4 sm:grid-cols-2">
-      <Field label="Assignment"><select className={inputClass} value={form.assignmentId} onChange={(event) => set("assignmentId", event.target.value)}><option value="">Choose assignment</option>{assignments.map((item) => <option key={item.id} value={item.id}>{item.organisationName} · {item.activationName ?? item.serviceName}</option>)}</select></Field>
-      <Field label="Participant reference"><input className={inputClass} value={form.participantReference} onChange={(event) => set("participantReference", event.target.value)} /></Field>
-      <Field label="Department"><input className={inputClass} value={form.department} onChange={(event) => set("department", event.target.value)} /></Field>
-      <Field label="Systolic (mmHg)"><input className={inputClass} type="number" value={form.systolicMmhg} onChange={(event) => set("systolicMmhg", event.target.value)} /></Field>
-      <Field label="Diastolic (mmHg)"><input className={inputClass} type="number" value={form.diastolicMmhg} onChange={(event) => set("diastolicMmhg", event.target.value)} /></Field>
-      <Field label="Glucose (mmol/L)"><input className={inputClass} type="number" step="0.01" value={form.glucoseMmolL} onChange={(event) => set("glucoseMmolL", event.target.value)} /></Field>
-      <Field label="Cholesterol (mmol/L)"><input className={inputClass} type="number" step="0.01" value={form.cholesterolMmolL} onChange={(event) => set("cholesterolMmolL", event.target.value)} /></Field>
-      <Field label="Height (cm)"><input className={inputClass} type="number" value={form.heightCm} onChange={(event) => set("heightCm", event.target.value)} /></Field>
-      <Field label="Weight (kg)"><input className={inputClass} type="number" value={form.weightKg} onChange={(event) => set("weightKg", event.target.value)} /></Field>
-      <Field label="Practitioner note"><input className={inputClass} value={form.practitionerNote} onChange={(event) => set("practitionerNote", event.target.value)} /></Field>
-      <label className="flex items-center gap-3 text-sm font-semibold text-navy sm:col-span-2"><input type="checkbox" checked={form.consentConfirmed} onChange={(event) => set("consentConfirmed", event.target.checked)} />Participant consent has been confirmed</label>
-    </div>
-    <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-lg border border-card-border px-4 py-2 text-xs font-semibold text-navy">Cancel</button><button disabled={!valid || pending} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">{pending ? "Saving…" : "Save"}</button></div>
-  </form></div>;
+  const errors = validateCaptureForm(form, screenings);
+  const errorCount = Object.keys(errors).length;
+  const set = (key: keyof ScreeningCaptureForm, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
+  const showError = (key: keyof CaptureErrors) => submitted ? errors[key] : undefined;
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitted(true);
+    if (!errorCount) onSave(form);
+  }
+
+  return <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4">
+    <form onSubmit={submit} noValidate className="my-6 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+      <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">Capture screening</h2><button type="button" onClick={onClose} className="text-xs font-semibold text-muted">Close</button></div>
+
+      {submitted && errorCount ? <div className="mt-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3"><p className="text-xs font-semibold text-danger">{errorCount === 1 ? "1 field needs attention." : `${errorCount} fields need attention.`}</p></div> : null}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <ValidatedField label="Assignment" error={showError("assignmentId")}>
+          <select className={fieldClass(Boolean(showError("assignmentId")))} value={form.assignmentId} onChange={(event) => set("assignmentId", event.target.value)} aria-invalid={Boolean(showError("assignmentId"))}>
+            <option value="">Choose assignment</option>
+            {assignments.map((item) => <option key={item.id} value={item.id}>{item.organisationName} · {item.activationName ?? item.serviceName}</option>)}
+          </select>
+        </ValidatedField>
+
+        <ValidatedField label="Participant reference" error={showError("participantReference")}>
+          <input className={fieldClass(Boolean(showError("participantReference")))} value={form.participantReference} onChange={(event) => set("participantReference", event.target.value)} aria-invalid={Boolean(showError("participantReference"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Department" error={showError("department")}>
+          <input className={fieldClass(Boolean(showError("department")))} value={form.department} onChange={(event) => set("department", event.target.value)} aria-invalid={Boolean(showError("department"))} />
+        </ValidatedField>
+
+        <div className="hidden sm:block" aria-hidden="true" />
+
+        {showError("measurements") ? <p className="sm:col-span-2 text-xs font-medium text-danger">{showError("measurements")}</p> : null}
+
+        <ValidatedField label="Systolic (mmHg)" error={showError("systolicMmhg")}>
+          <input className={fieldClass(Boolean(showError("systolicMmhg")))} type="number" value={form.systolicMmhg} onChange={(event) => set("systolicMmhg", event.target.value)} aria-invalid={Boolean(showError("systolicMmhg"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Diastolic (mmHg)" error={showError("diastolicMmhg")}>
+          <input className={fieldClass(Boolean(showError("diastolicMmhg")))} type="number" value={form.diastolicMmhg} onChange={(event) => set("diastolicMmhg", event.target.value)} aria-invalid={Boolean(showError("diastolicMmhg"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Glucose (mmol/L)" error={showError("glucoseMmolL")}>
+          <input className={fieldClass(Boolean(showError("glucoseMmolL")))} type="number" step="0.01" value={form.glucoseMmolL} onChange={(event) => set("glucoseMmolL", event.target.value)} aria-invalid={Boolean(showError("glucoseMmolL"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Cholesterol (mmol/L)" error={showError("cholesterolMmolL")}>
+          <input className={fieldClass(Boolean(showError("cholesterolMmolL")))} type="number" step="0.01" value={form.cholesterolMmolL} onChange={(event) => set("cholesterolMmolL", event.target.value)} aria-invalid={Boolean(showError("cholesterolMmolL"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Height (cm)" error={showError("heightCm")}>
+          <input className={fieldClass(Boolean(showError("heightCm")))} type="number" value={form.heightCm} onChange={(event) => set("heightCm", event.target.value)} aria-invalid={Boolean(showError("heightCm"))} />
+        </ValidatedField>
+
+        <ValidatedField label="Weight (kg)" error={showError("weightKg")}>
+          <input className={fieldClass(Boolean(showError("weightKg")))} type="number" value={form.weightKg} onChange={(event) => set("weightKg", event.target.value)} aria-invalid={Boolean(showError("weightKg"))} />
+        </ValidatedField>
+
+        <Field label="Practitioner note"><input className={inputClass} value={form.practitionerNote} onChange={(event) => set("practitionerNote", event.target.value)} /></Field>
+
+        <div className="sm:col-span-2">
+          <label className="flex items-center gap-3 text-sm font-semibold text-navy"><input type="checkbox" checked={form.consentConfirmed} onChange={(event) => set("consentConfirmed", event.target.checked)} aria-invalid={Boolean(showError("consentConfirmed"))} />Participant consent has been confirmed</label>
+          {showError("consentConfirmed") ? <p className="mt-2 text-xs font-medium text-danger">{showError("consentConfirmed")}</p> : null}
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="rounded-lg border border-card-border px-4 py-2 text-xs font-semibold text-navy">Cancel</button><button disabled={pending} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">{pending ? "Saving…" : "Save"}</button></div>
+    </form>
+  </div>;
+}
+
+function validateCaptureForm(form: ScreeningCaptureForm, screenings: Screening[]): CaptureErrors {
+  const errors: CaptureErrors = {};
+  const reference = form.participantReference.trim().toLowerCase();
+
+  if (!form.assignmentId) errors.assignmentId = "Select an assignment before capturing this screening.";
+  if (!reference) {
+    errors.participantReference = "Participant reference is required.";
+  } else if (form.assignmentId && screenings.some((item) => item.assignmentId === form.assignmentId && item.participantReference.trim().toLowerCase() === reference)) {
+    errors.participantReference = "This participant reference already has a screening for this assignment.";
+  }
+  if (!form.department.trim()) errors.department = "Select or enter the employee's department.";
+  if (!form.consentConfirmed) errors.consentConfirmed = "Confirm participant consent before submitting.";
+
+  const hasMeasurement = [form.systolicMmhg, form.diastolicMmhg, form.glucoseMmolL, form.cholesterolMmolL, form.heightCm, form.weightKg].some((value) => value.trim());
+  if (!hasMeasurement) errors.measurements = "Record at least one screening measurement.";
+
+  if (Boolean(form.systolicMmhg.trim()) !== Boolean(form.diastolicMmhg.trim())) {
+    if (!form.systolicMmhg.trim()) errors.systolicMmhg = "Enter both systolic and diastolic blood pressure.";
+    if (!form.diastolicMmhg.trim()) errors.diastolicMmhg = "Enter both systolic and diastolic blood pressure.";
+  }
+
+  if (form.systolicMmhg.trim() && !withinRange(form.systolicMmhg, 40, 300)) errors.systolicMmhg = "Enter a valid blood pressure measurement.";
+  if (form.diastolicMmhg.trim() && !withinRange(form.diastolicMmhg, 20, 200)) errors.diastolicMmhg = "Enter a valid blood pressure measurement.";
+  if (form.glucoseMmolL.trim() && !withinRange(form.glucoseMmolL, 0.5, 50)) errors.glucoseMmolL = "Enter a valid glucose measurement in mmol/L.";
+  if (form.cholesterolMmolL.trim() && !withinRange(form.cholesterolMmolL, 0.5, 30)) errors.cholesterolMmolL = "Enter a valid cholesterol measurement in mmol/L.";
+
+  if (Boolean(form.heightCm.trim()) !== Boolean(form.weightKg.trim())) {
+    if (!form.heightCm.trim()) errors.heightCm = "Enter both height and weight to calculate BMI.";
+    if (!form.weightKg.trim()) errors.weightKg = "Enter both height and weight to calculate BMI.";
+  }
+
+  if (form.heightCm.trim() && !withinRange(form.heightCm, 50, 260)) errors.heightCm = "Enter a valid height/weight measurement.";
+  if (form.weightKg.trim() && !withinRange(form.weightKg, 2, 500)) errors.weightKg = "Enter a valid height/weight measurement.";
+
+  return errors;
+}
+
+function withinRange(value: string, min: number, max: number) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= min && numeric <= max;
+}
+
+function ValidatedField({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+  return <label className="space-y-2 text-xs font-semibold text-navy"><span>{label}</span>{children}{error ? <span className="block text-xs font-medium leading-4 text-danger">{error}</span> : null}</label>;
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="space-y-2 text-xs font-semibold text-navy"><span>{label}</span>{children}</label>;
+}
+
+function fieldClass(hasError: boolean) {
+  return `${inputClass} ${hasError ? "border-danger focus:border-danger focus:ring-danger/10" : ""}`;
 }
 
 const inputClass = "h-11 w-full rounded-lg border border-card-border bg-white px-3 text-sm font-normal text-navy outline-none focus:border-primary focus:ring-4 focus:ring-primary/10";
