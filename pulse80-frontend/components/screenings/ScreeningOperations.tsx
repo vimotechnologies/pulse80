@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { useMemo, useRef, useState, useTransition, type DragEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { captureScreening, captureScreeningBatch, reviewScreening } from "@/app/actions/screening-operations";
@@ -51,6 +51,7 @@ export function AdminScreeningOperations({ screenings, mode }: { screenings: Scr
 export function PractitionerScreeningOperations({ screenings, assignments }: { screenings: Screening[]; assignments: ScreeningAssignmentOption[] }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const dragDepthRef = useRef(0);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [riskFilter, setRiskFilter] = useState("All");
@@ -62,6 +63,7 @@ export function PractitionerScreeningOperations({ screenings, assignments }: { s
   const [importFileName, setImportFileName] = useState("");
   const [importAssignmentId, setImportAssignmentId] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const organisationOptions = useMemo(() => ["All", ...Array.from(new Set(assignments.map((item) => item.organisationName))).sort()], [assignments]);
   const rows = useMemo(() => {
@@ -91,6 +93,9 @@ export function PractitionerScreeningOperations({ screenings, assignments }: { s
   async function handleImport(file: File) {
     setImportError(null);
     try {
+      if (!/\.(csv|xlsx|xls)$/i.test(file.name)) {
+        throw new Error("Choose a CSV or Excel file (.csv, .xlsx, or .xls).");
+      }
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -108,9 +113,35 @@ export function PractitionerScreeningOperations({ screenings, assignments }: { s
     }
   }
 
+  function handleDragEnter(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    if (!event.dataTransfer.types.includes("Files")) return;
+    dragDepthRef.current += 1;
+    setIsDraggingFile(true);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setIsDraggingFile(false);
+  }
+
+  function handleDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    dragDepthRef.current = 0;
+    setIsDraggingFile(false);
+    const file = event.dataTransfer.files[0];
+    if (file) void handleImport(file);
+  }
+
   function submitImport() {
     if (!importAssignmentId) {
-      setImportError("Select one of Naledi's assignments before submitting the imported records.");
+      setImportError("Select a practitioner assignment before submitting the imported records.");
       return;
     }
     if (!importRows.length) return;
@@ -149,29 +180,28 @@ export function PractitionerScreeningOperations({ screenings, assignments }: { s
     { label: "Needs correction", value: needsCorrection, detail: needsCorrection === 1 ? "Record requires action" : "Records require action", icon: Activity },
     { label: "Submitted", value: submitted, detail: "Awaiting quality assurance", icon: Microscope },
     { label: "Escalated", value: escalated, detail: "Require clinical attention", icon: HeartPulse },
-  ]}>
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div><h2 className="text-sm font-semibold text-navy">Screening records</h2><p className="mt-1 text-xs text-muted">Anonymized records captured against your practitioner assignments.</p></div>
-      <p className="text-xs font-medium text-muted">{rows.length} of {screenings.length} records</p>
-    </div>
+  ]} bare>
+    <UnifiedFilterCard>
+      <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
+        <UnifiedFilterSearch value={query} onChange={setQuery} placeholder="Search screenings" />
+        <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Submitted", "Needs Correction", "Approved"]} onChange={setStatusFilter} />
+        <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={setRiskFilter} />
+        <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={setOrganisationFilter} />
+        <UnifiedFilterClear onClick={clearFilters} />
+      </div>
+    </UnifiedFilterCard>
 
-    <div className="mt-4">
-      <UnifiedFilterCard>
-        <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
-          <UnifiedFilterSearch value={query} onChange={setQuery} placeholder="Search screenings" />
-          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Submitted", "Needs Correction", "Approved"]} onChange={setStatusFilter} />
-          <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={setRiskFilter} />
-          <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={setOrganisationFilter} />
-          <UnifiedFilterClear onClick={clearFilters} />
-        </div>
-      </UnifiedFilterCard>
-    </div>
-
-    <section className="mt-5 rounded-lg border border-card-border bg-[#f8fafc] p-4">
+    <section
+      className={`rounded-lg border p-4 transition-colors ${isDraggingFile ? "border-primary bg-primary/5" : "border-card-border bg-[#f8fafc]"}`}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-navy">Bulk screening upload</h3>
-          <p className="mt-1 text-xs leading-5 text-muted">Upload CSV or Excel, preview the employee rows in Pulse80, then submit them against one of Naledi&apos;s current assignments.</p>
+          <h3 className="text-sm font-semibold text-navy">File upload</h3>
+          <p className="mt-1 text-xs leading-5 text-muted">Drag and drop a CSV or Excel file here, or choose a file to upload.</p>
         </div>
         <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-card-border bg-white px-4 text-xs font-semibold text-navy transition hover:border-primary/35 hover:text-primary">
           <CloudUpload className="h-4 w-4" aria-hidden="true" />
@@ -179,29 +209,33 @@ export function PractitionerScreeningOperations({ screenings, assignments }: { s
         </button>
         <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleImport(file); }} />
       </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(260px,1fr)_auto]">
-        <label className="space-y-2 text-xs font-semibold text-navy">
-          <span>Assignment for imported records</span>
-          <select className={inputClass} value={importAssignmentId} onChange={(event) => setImportAssignmentId(event.target.value)}>
-            <option value="">Select Naledi assignment</option>
-            {assignments.map((item) => <option key={item.id} value={item.id}>{item.organisationName} · {item.activationName ?? item.serviceName} · {item.location}</option>)}
-          </select>
-        </label>
-        {importRows.length ? <button type="button" disabled={!importAssignmentId || pending} onClick={submitImport} className="self-end rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-40">{pending ? "Submitting…" : `Submit ${importRows.length} records`}</button> : null}
-      </div>
-
-      {selectedImportAssignment ? <p className="mt-2 text-xs text-muted">Selected: <span className="font-semibold text-navy">{selectedImportAssignment.organisationName}</span> · {selectedImportAssignment.serviceName} · {formatDate(selectedImportAssignment.startsAt)}</p> : null}
       {importError ? <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-xs font-medium text-danger">{importError}</p> : null}
-
-      {importRows.length ? <div className="mt-4 rounded-lg border border-card-border bg-white p-3">
-        <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold text-navy">Import preview</p><p className="mt-1 text-xs text-muted">{importFileName} · {importRows.length} employee records</p></div><button type="button" onClick={() => { setImportRows([]); setImportFileName(""); setImportError(null); }} className="text-xs font-semibold text-primary">Clear import</button></div>
-        <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[980px] text-left text-xs"><thead className="bg-[#f8fafc] text-muted"><tr>{["Reference", "Department", "Blood pressure", "Glucose", "Cholesterol", "Height", "Weight", "Consent"].map((header) => <th key={header} className="px-3 py-2 font-semibold">{header}</th>)}</tr></thead><tbody>{importRows.map((row, index) => <tr key={`${row.employeeReference}-${index}`} className="border-t border-card-border"><td className="px-3 py-3 font-semibold text-navy">{row.employeeReference}</td><td className="px-3 py-3 text-navy">{row.department || "Not set"}</td><td className="px-3 py-3 text-navy">{row.systolicMmhg && row.diastolicMmhg ? `${row.systolicMmhg}/${row.diastolicMmhg} mmHg` : "—"}</td><td className="px-3 py-3 text-navy">{row.glucoseMmolL || "—"}</td><td className="px-3 py-3 text-navy">{row.cholesterolMmolL || "—"}</td><td className="px-3 py-3 text-navy">{row.heightCm || "—"}</td><td className="px-3 py-3 text-navy">{row.weightKg || "—"}</td><td className="px-3 py-3"><StatusBadge status={row.consentConfirmed ? "Confirmed" : "Missing"} tone={row.consentConfirmed ? "success" : "danger"} /></td></tr>)}</tbody></table></div>
-      </div> : null}
     </section>
 
-    <Table headers={["Reference", "Activation", "Organisation", "Department", "Risk", "Captured", "Status"]}>{rows.map((item) => <tr key={item.id} className="border-t border-card-border transition-colors hover:bg-[#f8fafc]/70"><Cell><b>{item.participantReference}</b><small>Anonymous participant reference</small></Cell><Cell>{item.activationName ?? "Assignment capture"}</Cell><Cell>{item.organisationName}</Cell><Cell>{item.department ?? "Not set"}</Cell><Risk item={item} /><Cell>{formatDate(item.capturedAt)}</Cell><Status item={item} /></tr>)}</Table>
-    {!rows.length && <Empty text={screenings.length ? "No screening records match the selected filters." : "No screening records have been captured yet. Use Capture screening or upload a spreadsheet when you are ready to record assigned screenings."} />}
+    {importRows.length ? <section className="rounded-lg border border-card-border bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold text-navy">Import preview</p><p className="mt-1 text-xs text-muted">{importFileName} · {importRows.length} employee records</p></div><button type="button" onClick={() => { setImportRows([]); setImportFileName(""); setImportError(null); }} className="text-xs font-semibold text-primary">Clear import</button></div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(260px,1fr)_auto]">
+          <label className="space-y-2 text-xs font-semibold text-navy">
+            <span>Programme assignment</span>
+            <select className={inputClass} value={importAssignmentId} onChange={(event) => setImportAssignmentId(event.target.value)}>
+              <option value="">Choose assignment</option>
+              {assignments.map((item) => <option key={item.id} value={item.id}>{item.organisationName} · {item.activationName ?? item.serviceName} · {item.location}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={!importAssignmentId || pending} onClick={submitImport} className="self-end rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white disabled:opacity-40">{pending ? "Submitting…" : `Submit ${importRows.length} records`}</button>
+        </div>
+        {selectedImportAssignment ? <p className="mt-2 text-xs text-muted">Selected: <span className="font-semibold text-navy">{selectedImportAssignment.organisationName}</span> · {selectedImportAssignment.serviceName} · {formatDate(selectedImportAssignment.startsAt)}</p> : null}
+        <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[980px] text-left text-xs"><thead className="bg-[#f8fafc] text-muted"><tr>{["Reference", "Department", "Blood pressure", "Glucose", "Cholesterol", "Height", "Weight", "Consent"].map((header) => <th key={header} className="px-3 py-2 font-semibold">{header}</th>)}</tr></thead><tbody>{importRows.map((row, index) => <tr key={`${row.employeeReference}-${index}`} className="border-t border-card-border"><td className="px-3 py-3 font-semibold text-navy">{row.employeeReference}</td><td className="px-3 py-3 text-navy">{row.department || "Not set"}</td><td className="px-3 py-3 text-navy">{row.systolicMmhg && row.diastolicMmhg ? `${row.systolicMmhg}/${row.diastolicMmhg} mmHg` : "—"}</td><td className="px-3 py-3 text-navy">{row.glucoseMmolL || "—"}</td><td className="px-3 py-3 text-navy">{row.cholesterolMmolL || "—"}</td><td className="px-3 py-3 text-navy">{row.heightCm || "—"}</td><td className="px-3 py-3 text-navy">{row.weightKg || "—"}</td><td className="px-3 py-3"><StatusBadge status={row.consentConfirmed ? "Confirmed" : "Missing"} tone={row.consentConfirmed ? "success" : "danger"} /></td></tr>)}</tbody></table></div>
+      </section> : null}
+
+    <section className="rounded-lg border border-card-border bg-surface p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div><h2 className="text-sm font-semibold text-navy">Screening records</h2><p className="mt-1 text-xs text-muted">Anonymized records captured against your practitioner assignments.</p></div>
+        <p className="text-xs font-medium text-muted">{rows.length} of {screenings.length} records</p>
+      </div>
+      <Table headers={["Reference", "Activation", "Organisation", "Department", "Risk", "Captured", "Status"]}>{rows.map((item) => <tr key={item.id} className="border-t border-card-border transition-colors hover:bg-[#f8fafc]/70"><Cell><b>{item.participantReference}</b><small>Anonymous participant reference</small></Cell><Cell>{item.activationName ?? "Assignment capture"}</Cell><Cell>{item.organisationName}</Cell><Cell>{item.department ?? "Not set"}</Cell><Risk item={item} /><Cell>{formatDate(item.capturedAt)}</Cell><Status item={item} /></tr>)}</Table>
+      {!rows.length && !importRows.length ? <Empty text={screenings.length ? "No screening records match the selected filters." : "No screening records have been captured yet. Use Capture screening or upload a spreadsheet when you are ready to record assigned screenings."} /> : null}
+    </section>
     {open && <CaptureModal assignments={assignments} pending={pending} onClose={() => setOpen(false)} onSave={(form) => startTransition(async () => { const result = await captureScreening(form); setMessage(result.ok ? "Screening submitted for quality assurance." : errorText(result.error)); if (result.ok) { setOpen(false); router.refresh(); } })} />}
   </Workspace>;
 }
@@ -224,7 +258,7 @@ function normalizeImportRow(source: Record<string, unknown>): ImportRow {
   };
 }
 
-function Workspace({ eyebrow = "Wellness Operations", title, description, message, action, onAction, metrics, children }: { eyebrow?: string; title: string; description: string; message: string | null; action?: string; onAction?: () => void; metrics: Array<{ label: string; value: number; detail: string; icon: typeof Activity }>; children: ReactNode }) { return <div className="space-y-6"><PortalPageHeader eyebrow={eyebrow} title={title} description={description} actions={action && onAction ? <button onClick={onAction} disabled={false} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">{action}</button> : undefined} /><ToastMessage message={message} /><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <ListSummaryMetric key={metric.label} metric={{ ...metric, value: metric.value.toLocaleString("en-BW"), tone: "primary" }} />)}</section><section className="rounded-lg border border-card-border bg-surface p-4 shadow-sm sm:p-5">{children}</section></div>; }
+function Workspace({ eyebrow = "Wellness Operations", title, description, message, action, onAction, metrics, children, bare = false }: { eyebrow?: string; title: string; description: string; message: string | null; action?: string; onAction?: () => void; metrics: Array<{ label: string; value: number; detail: string; icon: typeof Activity }>; children: ReactNode; bare?: boolean }) { return <div className="space-y-6"><PortalPageHeader eyebrow={eyebrow} title={title} description={description} actions={action && onAction ? <button onClick={onAction} disabled={false} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">{action}</button> : undefined} /><ToastMessage message={message} /><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <ListSummaryMetric key={metric.label} metric={{ ...metric, value: metric.value.toLocaleString("en-BW"), tone: "primary" }} />)}</section>{bare ? children : <section className="rounded-lg border border-card-border bg-surface p-4 shadow-sm sm:p-5">{children}</section>}</div>; }
 function Filters({ query, setQuery, risk, setRisk }: { query: string; setQuery: (value: string) => void; risk: string; setRisk: (value: string) => void }) { return <div className="grid gap-3 md:grid-cols-[1fr_220px]"><input className={inputClass} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search reference, organisation, activation" /><select className={inputClass} value={risk} onChange={(event) => setRisk(event.target.value)}>{["All", "Low", "Medium", "High", "Incomplete"].map((value) => <option key={value}>{value}</option>)}</select></div>; }
 function Table({ headers, children }: { headers: string[]; children: ReactNode }) { return <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[950px] text-left text-sm"><thead className="bg-[#f8fafc] text-xs text-muted"><tr>{headers.map((header, index) => <th key={`${header}-${index}`} className="px-4 py-3 font-semibold">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
 function Cell({ children }: { children: ReactNode }) { return <td className="px-4 py-4 text-navy">{children}</td>; }
