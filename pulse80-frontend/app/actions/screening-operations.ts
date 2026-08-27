@@ -20,20 +20,53 @@ export async function loadPractitionerScreenings() {
 
 const optionalNumber = (value: string) => value.trim() ? Number(value) : null;
 
+function screeningInput(form: ScreeningCaptureForm) {
+  return {
+    assignmentId: form.assignmentId,
+    participantReference: form.participantReference,
+    department: form.department || null,
+    consentConfirmed: form.consentConfirmed,
+    practitionerNote: form.practitionerNote || null,
+    systolicMmhg: optionalNumber(form.systolicMmhg),
+    diastolicMmhg: optionalNumber(form.diastolicMmhg),
+    glucoseMmolL: optionalNumber(form.glucoseMmolL),
+    cholesterolMmolL: optionalNumber(form.cholesterolMmolL),
+    heightCm: optionalNumber(form.heightCm),
+    weightKg: optionalNumber(form.weightKg),
+  };
+}
+
 export async function captureScreening(form: ScreeningCaptureForm) {
   try {
-    const result = await graphqlRequest<{ captureScreening: Screening }>(captureMutation, { variables: { input: {
-      assignmentId: form.assignmentId, participantReference: form.participantReference,
-      department: form.department || null, consentConfirmed: form.consentConfirmed,
-      practitionerNote: form.practitionerNote || null,
-      systolicMmhg: optionalNumber(form.systolicMmhg), diastolicMmhg: optionalNumber(form.diastolicMmhg),
-      glucoseMmolL: optionalNumber(form.glucoseMmolL), cholesterolMmolL: optionalNumber(form.cholesterolMmolL),
-      heightCm: optionalNumber(form.heightCm), weightKg: optionalNumber(form.weightKg),
-    } } });
+    const result = await graphqlRequest<{ captureScreening: Screening }>(captureMutation, {
+      variables: { input: screeningInput(form) },
+    });
     revalidateScreenings();
     return { ok: true as const, result };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "CAPTURE_FAILED" };
+  }
+}
+
+export async function captureScreeningBatch(forms: ScreeningCaptureForm[]) {
+  const results: Screening[] = [];
+
+  try {
+    for (const form of forms) {
+      const result = await graphqlRequest<{ captureScreening: Screening }>(captureMutation, {
+        variables: { input: screeningInput(form) },
+      });
+      results.push(result.captureScreening);
+    }
+
+    revalidateScreenings();
+    return { ok: true as const, results };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "BULK_CAPTURE_FAILED",
+      submittedCount: results.length,
+    };
   }
 }
 
