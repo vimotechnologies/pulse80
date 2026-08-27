@@ -27,7 +27,16 @@ const professions = [
   "Audiologist", "Dentist", "Optometrist", "Physiotherapist", "Orthotist",
 ];
 const qualificationOptions = ["MBBS", "BSc Nursing", "Diploma in Nursing", "Midwifery Certificate", "MSc Clinical Psychology", "BSc Physiotherapy", "BSc Occupational Therapy", "BSc Dietetics", "Social Work Degree", "Public Health Diploma"];
-const specialisationOptions = ["Primary care", "Maternal health", "Child health", "Mental health", "Occupational health", "Chronic disease management", "Emergency care", "Rehabilitation", "Nutrition", "Public health"];
+const specialisationOptionsByProfession: Record<string, string[]> = {
+  Physiotherapist: [
+    "Industrial Ergonomics",
+    "Musculoskeletal Risk",
+    "Work Capacity",
+    "Rehabilitation",
+    "Sports Physiotherapy",
+    "Neurological Physiotherapy",
+  ],
+};
 const locations: Record<string, { areaLabel: string; areas: Record<string, string[]> }> = {
   Botswana: {
     areaLabel: "District",
@@ -74,6 +83,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
   const [photoUploadProgress, setPhotoUploadProgress] = useState<number | null>(null);
+  const specialisationOptions = specialisationOptionsByProfession[draft.profession] ?? [];
 
   const showMessage = (value: string) => {
     setMessage(value);
@@ -146,7 +156,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
         </Section>
 
         <Section title="Professional details" icon={Stethoscope}>
-          <div className="grid gap-4 md:grid-cols-2"><SelectField label="Profession" value={draft.profession} editable={editing} options={professions} onChange={(profession) => setDraft({ ...draft, profession })} /><MultiSelectField label="Specialisations" value={draft.specialisations.map((item) => item.name)} options={specialisationOptions} editable={editing} onChange={(specialisations) => setDraft({ ...draft, specialisations: specialisations.map((name, index) => ({ id: String(index), name, sortOrder: index })) })} /><Editable label="Years of experience" type="number" value={String(draft.yearsExperience)} editable={editing} onChange={(value) => setDraft({ ...draft, yearsExperience: Number(value) || 0 })} /><Editable label="Registration number" value={draft.registrationNumber ?? ""} editable={editing} onChange={(registrationNumber) => setDraft({ ...draft, registrationNumber })} /><SelectField label="Registration body" value={draft.registrationAuthority ?? ""} editable={editing} options={registrationAuthorities[draft.registrationCountry ?? draft.country] ?? []} onChange={(registrationAuthority) => setDraft({ ...draft, registrationAuthority })} /><SelectField label="Registration country" value={draft.registrationCountry ?? ""} editable={editing} options={["Botswana", "South Africa", "Botswana and South Africa"]} onChange={(registrationCountry) => setDraft({ ...draft, registrationCountry, registrationAuthority: "" })} /><DatePickerField label="Registration expiry" value={draft.registrationExpiryDate ?? ""} editable={editing} onChange={(registrationExpiryDate) => setDraft({ ...draft, registrationExpiryDate })} /><ReadField label="Verification status" value={profile.verificationStatus} /></div>
+          <div className="grid gap-4 md:grid-cols-2"><SelectField label="Profession" value={draft.profession} editable={editing} options={professions} onChange={(profession) => setDraft({ ...draft, profession, specialisation: "", specialisations: [] })} />{draft.profession ? <MultiSelectField label="Specialisations" value={draft.specialisations.map((item) => item.name)} options={specialisationOptions} editable={editing} onChange={(specialisations) => setDraft({ ...draft, specialisation: specialisations.join(", "), specialisations: specialisations.map((name, index) => ({ id: String(index), name, sortOrder: index })) })} /> : null}<Editable label="Years of experience" type="number" value={String(draft.yearsExperience)} editable={editing} onChange={(value) => setDraft({ ...draft, yearsExperience: Number(value) || 0 })} /><Editable label="Registration number" value={draft.registrationNumber ?? ""} editable={editing} onChange={(registrationNumber) => setDraft({ ...draft, registrationNumber })} /><SelectField label="Registration body" value={draft.registrationAuthority ?? ""} editable={editing} options={registrationAuthorities[draft.registrationCountry ?? draft.country] ?? []} onChange={(registrationAuthority) => setDraft({ ...draft, registrationAuthority })} /><SelectField label="Registration country" value={draft.registrationCountry ?? ""} editable={editing} options={["Botswana", "South Africa", "Botswana and South Africa"]} onChange={(registrationCountry) => setDraft({ ...draft, registrationCountry, registrationAuthority: "" })} /><DatePickerField label="Registration expiry" value={draft.registrationExpiryDate ?? ""} editable={editing} onChange={(registrationExpiryDate) => setDraft({ ...draft, registrationExpiryDate })} /><ReadField label="Verification status" value={profile.verificationStatus} /></div>
           <div className="mt-4"><MultiSelectField label="Qualifications" value={draft.qualifications} options={qualificationOptions} editable={editing} onChange={(qualifications) => setDraft({ ...draft, qualifications })} /></div>
         </Section>
 
