@@ -240,7 +240,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
           </div>
           <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) stageFile(file); }} />
         </div>
-        {importError ? <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-xs font-medium text-danger">{importError}</p> : null}
+        {importError ? <p className="mt-3 text-xs font-medium text-red-600">{importError}</p> : null}
       </section>
 
       {importRows.length ? (
@@ -418,8 +418,7 @@ function CaptureModal({ assignments, screenings, pending, serverError, onClose, 
     <form onSubmit={submit} noValidate className="my-6 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">Capture screening</h2><button type="button" onClick={onClose} className="text-xs font-semibold text-muted">Close</button></div>
 
-      {submitted && errorCount ? <div className="mt-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3"><p className="text-xs font-semibold text-danger">{errorCount === 1 ? "1 field needs attention." : `${errorCount} fields need attention.`}</p></div> : null}
-      {serverError ? <div role="alert" className="mt-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-3"><p className="text-xs font-semibold text-danger">{serverError}</p></div> : null}
+      {serverError ? <p role="alert" className="mt-4 text-xs font-semibold text-red-600">{serverError}</p> : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <ValidatedField label="Assignment" error={showError("assignmentId")}>
@@ -439,7 +438,7 @@ function CaptureModal({ assignments, screenings, pending, serverError, onClose, 
 
         <div className="hidden sm:block" aria-hidden="true" />
 
-        {showError("measurements") ? <p className="sm:col-span-2 text-xs font-medium text-danger">{showError("measurements")}</p> : null}
+        {showError("measurements") ? <p className="sm:col-span-2 text-xs font-medium text-red-600">{showError("measurements")}</p> : null}
 
         <ValidatedField label="Systolic (mmHg)" error={showError("systolicMmhg")}>
           <input className={fieldClass(Boolean(showError("systolicMmhg")))} type="number" value={form.systolicMmhg} onChange={(event) => set("systolicMmhg", event.target.value)} aria-invalid={Boolean(showError("systolicMmhg"))} />
@@ -469,7 +468,7 @@ function CaptureModal({ assignments, screenings, pending, serverError, onClose, 
 
         <div className="sm:col-span-2">
           <label className="flex items-center gap-3 text-sm font-semibold text-navy"><input type="checkbox" checked={form.consentConfirmed} onChange={(event) => set("consentConfirmed", event.target.checked)} aria-invalid={Boolean(showError("consentConfirmed"))} />Participant consent has been confirmed</label>
-          {showError("consentConfirmed") ? <p className="mt-2 text-xs font-medium text-danger">{showError("consentConfirmed")}</p> : null}
+          {showError("consentConfirmed") ? <p className="mt-2 text-xs font-medium text-red-600">{showError("consentConfirmed")}</p> : null}
         </div>
       </div>
 
@@ -521,7 +520,7 @@ function withinRange(value: string, min: number, max: number) {
 }
 
 function ValidatedField({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
-  return <label className="space-y-2 text-xs font-semibold text-navy"><span>{label}</span>{children}{error ? <span className="block text-xs font-medium leading-4 text-danger">{error}</span> : null}</label>;
+  return <label className="space-y-2 text-xs font-semibold text-navy"><span>{label}</span>{children}{error ? <span className="block text-xs font-medium leading-4 text-red-600">{error}</span> : null}</label>;
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
