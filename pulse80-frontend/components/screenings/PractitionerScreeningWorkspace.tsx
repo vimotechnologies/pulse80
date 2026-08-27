@@ -30,6 +30,8 @@ type ImportRow = {
   practitionerNote: string;
 };
 
+const recordsPerPage = 10;
+
 export function PractitionerScreeningWorkspace({ screenings, assignments }: { screenings: Screening[]; assignments: ScreeningAssignmentOption[] }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -38,6 +40,8 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
   const [statusFilter, setStatusFilter] = useState("All");
   const [riskFilter, setRiskFilter] = useState("All");
   const [organisationFilter, setOrganisationFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importRows, setImportRows] = useState<ImportRow[]>([]);
   const [importFileName, setImportFileName] = useState("");
   const [importAssignmentId, setImportAssignmentId] = useState("");
@@ -65,6 +69,9 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
   }, [organisationFilter, query, riskFilter, screenings, statusFilter]);
 
   const selectedImportAssignment = assignments.find((item) => item.id === importAssignmentId);
+  const pageCount = Math.max(1, Math.ceil(rows.length / recordsPerPage));
+  const activePage = Math.min(currentPage, pageCount);
+  const paginatedRows = rows.slice((activePage - 1) * recordsPerPage, activePage * recordsPerPage);
   const needsCorrection = screenings.filter((item) => item.status === "Needs Correction").length;
   const submitted = screenings.filter((item) => item.status === "Submitted").length;
   const escalated = screenings.filter((item) => item.result.escalationRequired).length;
@@ -74,6 +81,17 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
     setStatusFilter("All");
     setRiskFilter("All");
     setOrganisationFilter("All");
+    setCurrentPage(1);
+  }
+
+  function stageFile(file: File) {
+    setImportError(null);
+    if (!/\.(csv|xlsx|xls)$/i.test(file.name)) {
+      setSelectedFile(null);
+      setImportError("Choose a CSV or Excel file (.csv, .xlsx, or .xls).");
+      return;
+    }
+    setSelectedFile(file);
   }
 
   async function handleImport(file: File) {
@@ -93,6 +111,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
       setImportFileName("");
       setImportError(error instanceof Error ? error.message : "The spreadsheet could not be read.");
     } finally {
+      setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -144,7 +163,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
       <ToastMessage message={message} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <ListSummaryMetric metric={{ label: "Captured", value: screenings.length.toLocaleString("en-BW"), detail: "Screening records", tone: "primary", icon: ClipboardCheck }} />
+        <ListSummaryMetric metric={{ label: "Captured", value: (screenings.length + importRows.length).toLocaleString("en-BW"), detail: "Screening records", tone: "primary", icon: ClipboardCheck }} />
         <ListSummaryMetric metric={{ label: "Needs correction", value: needsCorrection.toLocaleString("en-BW"), detail: "Require your action", tone: "primary", icon: Activity }} />
         <ListSummaryMetric metric={{ label: "Submitted", value: submitted.toLocaleString("en-BW"), detail: "Awaiting quality assurance", tone: "primary", icon: Microscope }} />
         <ListSummaryMetric metric={{ label: "Escalated", value: escalated.toLocaleString("en-BW"), detail: "Require clinical attention", tone: "primary", icon: HeartPulse }} />
@@ -152,10 +171,10 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
 
       <UnifiedFilterCard>
         <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
-          <UnifiedFilterSearch value={query} onChange={setQuery} placeholder="Search screenings" />
-          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Submitted", "Needs Correction", "Approved"]} onChange={setStatusFilter} />
-          <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={setRiskFilter} />
-          <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={setOrganisationFilter} />
+          <UnifiedFilterSearch value={query} onChange={(value) => { setQuery(value); setCurrentPage(1); }} placeholder="Search screenings" />
+          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Submitted", "Needs Correction", "Approved"]} onChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} />
+          <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={(value) => { setRiskFilter(value); setCurrentPage(1); }} />
+          <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={(value) => { setOrganisationFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterClear onClick={clearFilters} />
         </div>
       </UnifiedFilterCard>
@@ -165,18 +184,23 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
         onDragEnter={(event) => { event.preventDefault(); if (!event.dataTransfer.types.includes("Files")) return; dragDepthRef.current += 1; setIsDraggingFile(true); }}
         onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
         onDragLeave={(event) => { event.preventDefault(); dragDepthRef.current = Math.max(0, dragDepthRef.current - 1); if (!dragDepthRef.current) setIsDraggingFile(false); }}
-        onDrop={(event: DragEvent<HTMLElement>) => { event.preventDefault(); dragDepthRef.current = 0; setIsDraggingFile(false); const file = event.dataTransfer.files[0]; if (file) void handleImport(file); }}
+        onDrop={(event: DragEvent<HTMLElement>) => { event.preventDefault(); dragDepthRef.current = 0; setIsDraggingFile(false); const file = event.dataTransfer.files[0]; if (file) stageFile(file); }}
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-sm font-semibold text-navy">Bulk import screenings</h2>
-            <p className="mt-1 text-xs leading-5 text-muted">Upload CSV or Excel, review the compact record preview, then submit the rows to Pulse80.</p>
+            <p className="mt-1 text-xs leading-5 text-muted">Drag and drop your CSV or Excel file here, or click to browse.</p>
+            <p className="text-[11px] leading-5 text-muted">Supported formats: CSV, XLSX and XLS.</p>
           </div>
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-card-border bg-white px-4 text-xs font-semibold text-navy transition hover:border-primary/35 hover:text-primary">
-            <CloudUpload className="h-4 w-4" aria-hidden="true" />
-            Upload Excel or CSV
-          </button>
-          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleImport(file); }} />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {selectedFile ? <span className="max-w-64 truncate text-xs font-medium text-muted">{selectedFile.name}</span> : null}
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-card-border bg-white px-4 text-xs font-semibold text-navy transition hover:border-primary/35 hover:text-primary">
+              <CloudUpload className="h-4 w-4" aria-hidden="true" />
+              Choose file
+            </button>
+            {selectedFile ? <button type="button" onClick={() => void handleImport(selectedFile)} className="h-10 rounded-lg bg-primary px-4 text-xs font-semibold text-white">Upload</button> : null}
+          </div>
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) stageFile(file); }} />
         </div>
         {importError ? <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-xs font-medium text-danger">{importError}</p> : null}
       </section>
@@ -227,13 +251,12 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-sm font-semibold text-navy">Screening records</h2>
-            <p className="mt-1 text-xs text-muted">Open a record to view its full measurements and assessment details.</p>
           </div>
           <p className="text-xs font-medium text-muted">{rows.length} of {screenings.length} records</p>
         </div>
 
         <CompactTable headers={["Reference", "Activation", "Organisation", "Department", "Risk", "Captured", "Status"]}>
-          {rows.map((item) => (
+          {paginatedRows.map((item) => (
             <tr
               key={item.id}
               tabIndex={0}
@@ -255,6 +278,16 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
         </CompactTable>
 
         {!rows.length ? <Empty text={screenings.length ? "No screening records match the selected filters." : "No screening records have been captured yet."} /> : null}
+        {rows.length ? (
+          <div className="mt-4 flex flex-col gap-3 border-t border-card-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-muted">Showing {(activePage - 1) * recordsPerPage + 1}–{Math.min(activePage * recordsPerPage, rows.length)} of {rows.length}</p>
+            <div className="flex items-center gap-2">
+              <button type="button" disabled={activePage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} className="rounded-lg border border-card-border px-3 py-2 text-xs font-semibold text-navy disabled:opacity-40">Previous</button>
+              <span className="px-2 text-xs font-semibold text-navy">Page {activePage} of {pageCount}</span>
+              <button type="button" disabled={activePage === pageCount} onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))} className="rounded-lg border border-card-border px-3 py-2 text-xs font-semibold text-navy disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {manualOpen ? <CaptureModal assignments={assignments} pending={pending} onClose={() => setManualOpen(false)} onSave={(form) => startTransition(async () => {
