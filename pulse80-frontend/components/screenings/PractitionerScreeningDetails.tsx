@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft2, HeartPulse, Microscope, ShieldCheck } from "@/components/icons/IconsaxIcons";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
@@ -66,7 +67,7 @@ function SummaryCard({ icon: Icon, label, value, detail }: { icon: typeof Micros
   return <article className="rounded-lg border border-card-border bg-white p-4 shadow-sm"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary"><Icon className="h-4 w-4" aria-hidden="true" /></span><div><p className="text-xs font-medium text-muted">{label}</p><p className="mt-1 text-sm font-semibold text-navy">{value}</p><p className="mt-1 text-xs text-muted">{detail}</p></div></div></article>;
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="rounded-lg border border-card-border bg-white p-5 shadow-sm"><h2 className="text-sm font-semibold text-navy">{title}</h2><div className="mt-4 divide-y divide-card-border">{children}</div></section>;
 }
 
