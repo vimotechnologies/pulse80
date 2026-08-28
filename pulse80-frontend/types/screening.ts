@@ -55,3 +55,5 @@ export interface ScreeningCaptureForm {
   heightCm: string;
   weightKg: string;
 }
+
+export type ScreeningCorrectionForm = Omit<ScreeningCaptureForm, "assignmentId">;

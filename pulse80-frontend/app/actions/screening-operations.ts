@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { graphqlRequest } from "@/lib/graphql/client";
-import type { Screening, ScreeningAssignmentOption, ScreeningCaptureForm } from "@/types/screening";
+import type { Screening, ScreeningAssignmentOption, ScreeningCaptureForm, ScreeningCorrectionForm } from "@/types/screening";
 
 const fields = `id organisationId organisationName activationId activationName assignmentId practitionerName participantReference department status consentConfirmed practitionerNote capturedAt submittedAt reviewedAt reviewNote result { systolicMmhg diastolicMmhg glucoseMmolL cholesterolMmolL heightCm weightKg bmi riskLevel escalationRequired }`;
 const adminQuery = `query AdminScreenings { adminScreenings { ${fields} } }`;
 const practitionerQuery = `query MyScreeningWorkspace { myScreenings { ${fields} } myScreeningAssignments { id organisationName activationName serviceName location startsAt status } }`;
 const captureMutation = `mutation CaptureScreening($input: ScreeningCaptureInput!) { captureScreening(input: $input) { ${fields} } }`;
+const resubmitMutation = `mutation ResubmitScreening($id: ID!, $input: ScreeningCorrectionInput!) { resubmitScreening(id: $id, input: $input) { ${fields} } }`;
 const reviewMutation = `mutation ReviewScreening($id: ID!, $input: ScreeningReviewInput!) { reviewScreening(id: $id, input: $input) { ${fields} } }`;
 
 export async function loadAdminScreenings() {
@@ -23,6 +24,21 @@ const optionalNumber = (value: string) => value.trim() ? Number(value) : null;
 function screeningInput(form: ScreeningCaptureForm) {
   return {
     assignmentId: form.assignmentId,
+    participantReference: form.participantReference,
+    department: form.department || null,
+    consentConfirmed: form.consentConfirmed,
+    practitionerNote: form.practitionerNote || null,
+    systolicMmhg: optionalNumber(form.systolicMmhg),
+    diastolicMmhg: optionalNumber(form.diastolicMmhg),
+    glucoseMmolL: optionalNumber(form.glucoseMmolL),
+    cholesterolMmolL: optionalNumber(form.cholesterolMmolL),
+    heightCm: optionalNumber(form.heightCm),
+    weightKg: optionalNumber(form.weightKg),
+  };
+}
+
+function correctionInput(form: ScreeningCorrectionForm) {
+  return {
     participantReference: form.participantReference,
     department: form.department || null,
     consentConfirmed: form.consentConfirmed,
@@ -77,6 +93,19 @@ export async function reviewScreening(id: string, status: "Approved" | "Needs Co
     return { ok: true as const, result };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "REVIEW_FAILED" };
+  }
+}
+
+export async function resubmitScreening(id: string, form: ScreeningCorrectionForm) {
+  try {
+    const result = await graphqlRequest<{ resubmitScreening: Screening }>(resubmitMutation, {
+      variables: { id, input: correctionInput(form) },
+    });
+    revalidateScreenings();
+    revalidatePath(`/practitioner/screenings/${id}`);
+    return { ok: true as const, screening: result.resubmitScreening };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "RESUBMISSION_FAILED" };
   }
 }
 
