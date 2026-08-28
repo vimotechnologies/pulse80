@@ -111,6 +111,7 @@ type DataListPageProps<RecordType extends DataRecord> = {
   enableBulkActions?: boolean;
   onCycleStatus?: (record: RecordType) => Partial<RecordType>;
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
+  onOpenRecord?: (record: RecordType) => void;
   rowActions?: {
     edit?: boolean;
     archive?: boolean;
@@ -136,6 +137,7 @@ export function DataListPage<RecordType extends DataRecord>({
   enableBulkActions = false,
   onCycleStatus,
   onRoleChange,
+  onOpenRecord,
   rowActions,
 }: DataListPageProps<RecordType>) {
   const [records, setRecords] = useState<RecordType[]>(() => config.records);
@@ -204,6 +206,14 @@ export function DataListPage<RecordType extends DataRecord>({
   function updateRecord(id: string, patch: Partial<RecordType>) {
     setRecords((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
     setSelected((item) => (item?.id === id ? { ...item, ...patch } : item));
+  }
+
+  function openRecord(record: RecordType) {
+    if (onOpenRecord) {
+      onOpenRecord(record);
+      return;
+    }
+    setSelected(record);
   }
 
   function resetFilters() {
@@ -406,7 +416,7 @@ export function DataListPage<RecordType extends DataRecord>({
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
-            onOpen={setSelected}
+            onOpen={openRecord}
             enableBulkActions={enableBulkActions}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
@@ -426,7 +436,7 @@ export function DataListPage<RecordType extends DataRecord>({
             renderActions={(record) => (
               <RowActionMenu
                 record={record}
-                onView={() => setSelected(record)}
+                onView={() => openRecord(record)}
                 onEdit={rowActions?.edit === false ? undefined : () => {
                   setSelected(record);
                   setModalMode("edit");

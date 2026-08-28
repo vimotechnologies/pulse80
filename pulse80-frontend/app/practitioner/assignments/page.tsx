@@ -1,10 +1,10 @@
 import { PractitionerWorkspacePage } from "@/components/practitioner/PractitionerWorkspacePage";
-import { loadPractitionerProfile, type PractitionerAssignment } from "@/app/actions/practitioner-profile";
+import { loadPractitionerAssignments, type PractitionerAssignment } from "@/app/actions/practitioner-profile";
 import type { PractitionerRecord } from "@/data/practitioner-portal-ui";
 
 export default async function PractitionerAssignmentsPage() {
-  const profile = await loadPractitionerProfile();
-  return <PractitionerWorkspacePage configId="assignments" records={profile.assignments.map(toAssignmentRecord)} />;
+  const assignments = await loadPractitionerAssignments();
+  return <PractitionerWorkspacePage configId="assignments" records={assignments.map(toAssignmentRecord)} />;
 }
 
 function toAssignmentRecord(assignment: PractitionerAssignment): PractitionerRecord {

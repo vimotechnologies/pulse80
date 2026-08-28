@@ -40,6 +40,11 @@ const fields = /* GraphQL */ `
   documents { id documentType fileName expiryDate verificationStatus uploadedAt downloadUrl }
 `;
 const query = /* GraphQL */ `query PractitionerProfile { practitionerProfile { ${fields} } }`;
+const assignmentsQuery = /* GraphQL */ `query PractitionerAssignments {
+  practitionerProfile {
+    assignments(limit: 20) { id organisationName programmeName activityName serviceName location startsAt endsAt status }
+  }
+}`;
 const updateMutation = /* GraphQL */ `mutation UpdatePractitionerProfile($input: UpdatePractitionerProfileInput!) {
   updatePractitionerProfile(input: $input) { ${fields} }
 }`;
@@ -75,6 +80,13 @@ export async function loadPractitionerProfile() {
     organisationId: await selectedOrganisationId(),
   });
   return result.practitionerProfile;
+}
+
+export async function loadPractitionerAssignments() {
+  const result = await graphqlRequest<{ practitionerProfile: { assignments: PractitionerAssignment[] } }>(assignmentsQuery, {
+    organisationId: await selectedOrganisationId(),
+  });
+  return result.practitionerProfile.assignments;
 }
 
 export async function updatePractitionerProfile(input: unknown) {

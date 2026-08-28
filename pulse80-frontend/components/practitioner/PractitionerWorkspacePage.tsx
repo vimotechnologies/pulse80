@@ -8,6 +8,7 @@ import {
   listField,
   type DataColumn,
 } from "@/components/portal/DataListPage";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Location } from "@/components/icons/IconsaxIcons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
@@ -22,6 +23,7 @@ type PractitionerWorkspacePageProps = {
 };
 
 export function PractitionerWorkspacePage({ configId, records }: PractitionerWorkspacePageProps) {
+  const router = useRouter();
   const baseConfig = practitionerPageConfigs[configId];
   const config = records ? { ...baseConfig, records } : baseConfig;
 
@@ -31,6 +33,7 @@ export function PractitionerWorkspacePage({ configId, records }: PractitionerWor
       columns={practitionerColumns(config.id)}
       detailEyebrow={`${config.eyebrow} details`}
       onCycleStatus={(record) => cyclePractitionerStatus(config.id, record)}
+      onOpenRecord={config.id === "assignments" ? (record) => router.push(`/practitioner/assignments/${record.id}`) : undefined}
       rowActions={config.id === "assignments" ? { edit: false, archive: false, download: false } : undefined}
     />
   );
