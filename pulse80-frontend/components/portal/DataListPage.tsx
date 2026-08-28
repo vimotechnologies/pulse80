@@ -111,6 +111,8 @@ type DataListPageProps<RecordType extends DataRecord> = {
   enableBulkActions?: boolean;
   onCycleStatus?: (record: RecordType) => Partial<RecordType>;
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
+  onRecordOpen?: (record: RecordType) => void;
+  hideDefaultDetailModal?: boolean;
   rowActions?: {
     edit?: boolean;
     archive?: boolean;
@@ -136,6 +138,8 @@ export function DataListPage<RecordType extends DataRecord>({
   enableBulkActions = false,
   onCycleStatus,
   onRoleChange,
+  onRecordOpen,
+  hideDefaultDetailModal = false,
   rowActions,
 }: DataListPageProps<RecordType>) {
   const [records, setRecords] = useState<RecordType[]>(() => config.records);
@@ -199,6 +203,14 @@ export function DataListPage<RecordType extends DataRecord>({
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 2400);
+  }
+
+  function openRecord(record: RecordType) {
+    if (onRecordOpen) {
+      onRecordOpen(record);
+      return;
+    }
+    setSelected(record);
   }
 
   function updateRecord(id: string, patch: Partial<RecordType>) {
@@ -341,7 +353,7 @@ export function DataListPage<RecordType extends DataRecord>({
               <p className="mt-2 text-sm leading-6 text-subtle">{config.featured.meta}</p>
             </div>
             <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-              <ActionButton variant="secondary" onClick={() => setSelected(config.featured ?? null)}>
+              <ActionButton variant="secondary" onClick={() => openRecord(config.featured as RecordType)}>
                 <Eye className="mr-2 h-5 w-5" aria-hidden="true" />
                 Preview
               </ActionButton>
@@ -399,59 +411,57 @@ export function DataListPage<RecordType extends DataRecord>({
       ) : null}
 
       {!loading && pageRecords.length > 0 ? (
-        <>
-          <DataTable
-            columns={columns}
-            records={pageRecords}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSort={toggleSort}
-            onOpen={setSelected}
-            enableBulkActions={enableBulkActions}
-            selectedIds={selectedIds}
-            onSelectedIdsChange={setSelectedIds}
-            pagination={
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                rowsPerPage={rowsPerPage}
-                totalRows={sortedRecords.length}
-                onPageChange={setPage}
-                onRowsPerPageChange={(value) => {
-                  setRowsPerPage(value);
-                  setPage(1);
-                }}
-              />
-            }
-            renderActions={(record) => (
-              <RowActionMenu
-                record={record}
-                onView={() => setSelected(record)}
-                onEdit={rowActions?.edit === false ? undefined : () => {
-                  setSelected(record);
-                  setModalMode("edit");
-                }}
-                onArchive={rowActions?.archive === false ? undefined : () => {
-                  setSelected(record);
-                  setModalMode("archive");
-                }}
-                onDownload={rowActions?.download === false ? undefined : () => showToast("Download prepared as a placeholder.")}
-                onCycleStatus={rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
-                onRoleChange={
-                  onRoleChange
-                    ? (role) => {
-                        updateRecord(record.id, onRoleChange(record, role));
-                        showToast("Role changed locally.");
-                      }
-                    : undefined
-                }
-              />
-            )}
-          />
-        </>
+        <DataTable
+          columns={columns}
+          records={pageRecords}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          onOpen={openRecord}
+          enableBulkActions={enableBulkActions}
+          selectedIds={selectedIds}
+          onSelectedIdsChange={setSelectedIds}
+          pagination={
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              rowsPerPage={rowsPerPage}
+              totalRows={sortedRecords.length}
+              onPageChange={setPage}
+              onRowsPerPageChange={(value) => {
+                setRowsPerPage(value);
+                setPage(1);
+              }}
+            />
+          }
+          renderActions={(record) => (
+            <RowActionMenu
+              record={record}
+              onView={() => openRecord(record)}
+              onEdit={rowActions?.edit === false ? undefined : () => {
+                setSelected(record);
+                setModalMode("edit");
+              }}
+              onArchive={rowActions?.archive === false ? undefined : () => {
+                setSelected(record);
+                setModalMode("archive");
+              }}
+              onDownload={rowActions?.download === false ? undefined : () => showToast("Download prepared as a placeholder.")}
+              onCycleStatus={rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
+              onRoleChange={
+                onRoleChange
+                  ? (role) => {
+                      updateRecord(record.id, onRoleChange(record, role));
+                      showToast("Role changed locally.");
+                    }
+                  : undefined
+              }
+            />
+          )}
+        />
       ) : null}
 
-      {selected ? (
+      {!hideDefaultDetailModal && selected ? (
         <DetailModal
           eyebrow={detailEyebrow}
           record={selected}
@@ -571,9 +581,7 @@ export function SearchInput({
   onChange: (value: string) => void;
   placeholder: string;
 }) {
-  return (
-    <UnifiedFilterSearch value={value} onChange={onChange} placeholder={placeholder} />
-  );
+  return <UnifiedFilterSearch value={value} onChange={onChange} placeholder={placeholder} />;
 }
 
 export function FilterSelect({
@@ -740,9 +748,7 @@ export function DataTableHeader<RecordType extends DataRecord>({
             </button>
           </th>
         ))}
-        <th className={cn("w-24 text-right", unifiedTableHeaderClass)}>
-          Actions
-        </th>
+        <th className={cn("w-24 text-right", unifiedTableHeaderClass)}>Actions</th>
       </tr>
     </thead>
   );
@@ -780,10 +786,7 @@ export function DataTableRow<RecordType extends DataRecord>({
         </td>
       ) : null}
       {columns.map((column) => (
-        <td
-          key={`${record.id}-${column.key}`}
-          className={cn(unifiedTableCellClass, column.className)}
-        >
+        <td key={`${record.id}-${column.key}`} className={cn(unifiedTableCellClass, column.className)}>
           <button
             type="button"
             onClick={onOpen}
@@ -831,17 +834,19 @@ export function RowActionMenu<RecordType extends DataRecord>({
       >
         <Eye className="h-4 w-4" aria-hidden="true" />
       </button>
-      {hasMenuActions ? <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen((value) => !value);
-        }}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-black transition hover:bg-[#e4e7ec] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
-        aria-label={`Open actions for ${record.title}`}
-      >
-        <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-      </button> : null}
+      {hasMenuActions ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen((value) => !value);
+          }}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-black transition hover:bg-[#e4e7ec] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          aria-label={`Open actions for ${record.title}`}
+        >
+          <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+        </button>
+      ) : null}
       {open && hasMenuActions ? (
         <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-card-border bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
           <ActionItem icon={Eye} label="View details" onClick={onView} />
@@ -921,12 +926,7 @@ export function DetailModal<RecordType extends DataRecord>({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label="Close details"
-        onClick={onClose}
-      />
+      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close details" onClick={onClose} />
       <section
         role="dialog"
         aria-modal="true"
@@ -1008,16 +1008,16 @@ export function DetailModal<RecordType extends DataRecord>({
         </div>
 
         <div className="flex flex-wrap gap-2 border-t border-card-border p-5">
-          {onEdit ? <ActionButton onClick={onEdit}>
-            <Edit className="mr-2 h-5 w-5" aria-hidden="true" />
-            Edit details
-          </ActionButton> : null}
-          <ActionButton variant="secondary" onClick={onAction}>
-            {actionLabel}
-          </ActionButton>
-          {onArchive ? <ActionButton variant="secondary" className="text-pulse-red" onClick={onArchive}>
-            Archive
-          </ActionButton> : null}
+          {onEdit ? (
+            <ActionButton onClick={onEdit}>
+              <Edit className="mr-2 h-5 w-5" aria-hidden="true" />
+              Edit details
+            </ActionButton>
+          ) : null}
+          <ActionButton variant="secondary" onClick={onAction}>{actionLabel}</ActionButton>
+          {onArchive ? (
+            <ActionButton variant="secondary" className="text-pulse-red" onClick={onArchive}>Archive</ActionButton>
+          ) : null}
         </div>
       </section>
     </div>
@@ -1064,12 +1064,8 @@ export function BulkActionBar({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/10 px-4 py-3">
       <p className="text-sm font-semibold text-navy">{count} selected</p>
       <div className="flex gap-2">
-        <ActionButton variant="secondary" className="h-9 px-3" onClick={onClear}>
-          Clear
-        </ActionButton>
-        <ActionButton className="h-9 px-3" onClick={onAction}>
-          Apply action
-        </ActionButton>
+        <ActionButton variant="secondary" className="h-9 px-3" onClick={onClear}>Clear</ActionButton>
+        <ActionButton className="h-9 px-3" onClick={onAction}>Apply action</ActionButton>
       </div>
     </div>
   );
@@ -1091,9 +1087,7 @@ export function EmptyState({
       </div>
       <h2 className="mt-4 text-lg font-semibold text-navy">{title}</h2>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-subtle">{description}</p>
-      <ActionButton className="mt-5" variant="secondary" onClick={onReset}>
-        Clear filters
-      </ActionButton>
+      <ActionButton className="mt-5" variant="secondary" onClick={onReset}>Clear filters</ActionButton>
     </DashboardWidget>
   );
 }
@@ -1122,9 +1116,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
           <AlertCircle className="h-5 w-5" aria-hidden="true" />
           {message}
         </p>
-        <ActionButton variant="secondary" className="h-9 px-3" onClick={onRetry}>
-          Retry
-        </ActionButton>
+        <ActionButton variant="secondary" className="h-9 px-3" onClick={onRetry}>Retry</ActionButton>
       </div>
     </div>
   );
@@ -1194,9 +1186,7 @@ function ListModal<RecordType extends DataRecord>({
           )}
         </div>
         <div className="flex flex-wrap justify-end gap-2 border-t border-card-border p-5">
-          <ActionButton variant="secondary" onClick={onClose}>
-            Cancel
-          </ActionButton>
+          <ActionButton variant="secondary" onClick={onClose}>Cancel</ActionButton>
           <ActionButton onClick={onSubmit} className={isArchive ? "bg-pulse-red hover:bg-pulse-red" : undefined}>
             {isArchive ? "Archive" : "Save locally"}
           </ActionButton>
@@ -1216,9 +1206,7 @@ export function RecordIdentity({ record }: { record: DataRecord }) {
 
   return (
     <div className="flex min-w-[220px] items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
-        {initials}
-      </span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">{initials}</span>
       <span className="min-w-0">
         <span className="block truncate font-semibold text-navy">{record.title}</span>
         <span className="mt-1 block truncate text-xs font-medium text-muted">{record.subtitle}</span>
@@ -1248,13 +1236,14 @@ export function ProgressCell({ record }: { record: DataRecord }) {
   );
 }
 
-export const listField = field;
-export const listDetail = detail;
+export function listField(record: DataRecord, label: string) {
+  return field(record, label) || detail(record, label);
+}
 
 function toneText(tone: DetailTone) {
-  if (tone === "success") return "text-success";
-  if (tone === "warning") return "text-warning";
   if (tone === "danger") return "text-pulse-red";
+  if (tone === "warning") return "text-warning";
+  if (tone === "success") return "text-success";
   if (tone === "primary" || tone === "info") return "text-primary";
-  return "text-muted";
+  return "text-navy";
 }
