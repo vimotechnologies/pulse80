@@ -64,7 +64,7 @@ export function PractitionerScreeningDetails({ screening }: { screening: Screeni
       </section>
 
       {highRisk ? (
-        <section className="rounded-2xl border border-red-200 bg-red-50/70 p-4">
+        <section className="rounded-2xl border border-card-border bg-red-50/70 p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
             <div>
@@ -127,7 +127,7 @@ export function PractitionerScreeningDetails({ screening }: { screening: Screeni
         </div>
       </section>
 
-      <section className={`rounded-2xl border bg-white p-5 shadow-sm ${highRisk ? "border-red-200" : "border-card-border"}`}>
+      <section className={`rounded-2xl border border-card-border p-5 shadow-sm ${assessmentBackground(screening.result.riskLevel)}`}>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Assessment</p>
@@ -240,7 +240,7 @@ function MeasurementCard({
   alert?: boolean;
 }) {
   return (
-    <article className={`rounded-2xl border bg-white p-5 shadow-sm ${alert ? "border-red-200" : "border-card-border"}`}>
+    <article className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2">
           <Icon className="h-5 w-5 text-black" aria-hidden="true" />
@@ -313,6 +313,12 @@ function assessmentCopy(screening: Screening, abnormalMeasurements: string[]) {
   }
   if (screening.result.escalationRequired) return "This screening requires follow-up and escalation.";
   return "No immediate escalation is required based on the available measurements.";
+}
+
+function assessmentBackground(riskLevel: string) {
+  if (riskLevel === "High") return "bg-red-50/70";
+  if (riskLevel === "Medium" || riskLevel === "Moderate") return "bg-orange-50/70";
+  return "bg-yellow-50/70";
 }
 
 function bloodPressureValue(screening: Screening) {
