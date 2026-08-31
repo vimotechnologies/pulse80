@@ -10,6 +10,13 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
+# Python analytics
+data-analytics/.venv/
+data-analytics/data/
+**/.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+
 # testing
 coverage/
 
