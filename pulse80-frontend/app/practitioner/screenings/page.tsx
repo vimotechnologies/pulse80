@@ -1,7 +1,7 @@
 import { loadPractitionerScreenings } from "@/app/actions/screening-operations";
-import { PractitionerScreeningOperations } from "@/components/screenings/ScreeningOperations";
+import { PractitionerScreeningWorkspace } from "@/components/screenings/PractitionerScreeningWorkspace";
 
 export default async function PractitionerScreeningsPage() {
   const { myScreenings, myScreeningAssignments } = await loadPractitionerScreenings();
-  return <PractitionerScreeningOperations screenings={myScreenings} assignments={myScreeningAssignments} />;
+  return <PractitionerScreeningWorkspace screenings={myScreenings} assignments={myScreeningAssignments} />;
 }

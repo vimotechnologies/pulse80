@@ -18,6 +18,8 @@ export interface ScreeningCaptureInput {
   weightKg: number | null;
 }
 
+export type ScreeningCorrectionInput = Omit<ScreeningCaptureInput, "assignmentId">;
+
 const screeningSelect = `
   id, organisation_id, activation_id, assignment_id, practitioner_user_id,
   participant_reference, department, consent_confirmed, status,
@@ -58,11 +60,7 @@ export class ScreeningService {
   }
 
   async capture(userId: string, input: ScreeningCaptureInput) {
-    if (!input.consentConfirmed) throw new Error("Participant consent must be confirmed before submission.");
-    const measurements = [input.systolicMmhg, input.diastolicMmhg, input.glucoseMmolL, input.cholesterolMmolL, input.heightCm, input.weightKg];
-    if (measurements.every((value) => value === null)) throw new Error("At least one screening measurement is required.");
-    if ((input.systolicMmhg === null) !== (input.diastolicMmhg === null)) throw new Error("Both blood pressure values are required together.");
-    if ((input.heightCm === null) !== (input.weightKg === null)) throw new Error("Height and weight are required together for BMI.");
+    validateMeasurements(input);
 
     const { data: assignment, error: assignmentError } = await this.supabase
       .from("practitioner_assignments")
@@ -113,6 +111,64 @@ export class ScreeningService {
     return this.get(screening.id);
   }
 
+  async resubmit(id: string, userId: string, input: ScreeningCorrectionInput) {
+    validateMeasurements(input);
+
+    const { data: screening, error: screeningError } = await this.supabase
+      .from("screenings")
+      .select("id, practitioner_user_id, status")
+      .eq("id", id)
+      .eq("practitioner_user_id", userId)
+      .maybeSingle();
+    if (screeningError) throw new Error(screeningError.message);
+    if (!screening) throw new Error("Screening record is unavailable.");
+    if (screening.status !== "Needs Correction") throw new Error("Only screenings returned for correction can be resubmitted.");
+
+    const { data: previousResult, error: previousResultError } = await this.supabase
+      .from("screening_results")
+      .select("systolic_mmhg, diastolic_mmhg, glucose_mmol_l, cholesterol_mmol_l, height_cm, weight_kg, bmi, risk_level, escalation_required")
+      .eq("screening_id", id)
+      .single();
+    if (previousResultError) throw new Error(previousResultError.message);
+
+    const bmi = input.heightCm && input.weightKg
+      ? Number((input.weightKg / ((input.heightCm / 100) ** 2)).toFixed(2))
+      : null;
+    const riskLevel = calculateRisk({ ...input, assignmentId: "", bmi });
+    const nextResult = {
+      systolic_mmhg: input.systolicMmhg,
+      diastolic_mmhg: input.diastolicMmhg,
+      glucose_mmol_l: input.glucoseMmolL,
+      cholesterol_mmol_l: input.cholesterolMmolL,
+      height_cm: input.heightCm,
+      weight_kg: input.weightKg,
+      bmi,
+      risk_level: riskLevel,
+      escalation_required: riskLevel === "High",
+    };
+
+    const { error: resultError } = await this.supabase.from("screening_results").update(nextResult).eq("screening_id", id);
+    if (resultError) throw new Error(resultError.message);
+
+    const { data: updated, error: updateError } = await this.supabase.from("screenings").update({
+      participant_reference: input.participantReference,
+      department: input.department,
+      consent_confirmed: true,
+      practitioner_note: input.practitionerNote,
+      status: "Submitted",
+      submitted_at: new Date().toISOString(),
+      reviewed_by: null,
+      reviewed_at: null,
+    }).eq("id", id).eq("practitioner_user_id", userId).eq("status", "Needs Correction").select("id").maybeSingle();
+
+    if (updateError || !updated) {
+      await this.supabase.from("screening_results").update(previousResult).eq("screening_id", id);
+      throw new Error(updateError?.message ?? "Screening status changed before it could be resubmitted.");
+    }
+
+    return this.get(id);
+  }
+
   async review(id: string, reviewerId: string, status: "Approved" | "Needs Correction", reviewNote: string | null) {
     if (status === "Needs Correction" && !reviewNote) throw new Error("A correction note is required.");
     const { error } = await this.supabase.from("screenings").update({
@@ -130,6 +186,14 @@ export class ScreeningService {
     if (error) throw new Error(error.message);
     return data;
   }
+}
+
+function validateMeasurements(input: ScreeningCorrectionInput) {
+  if (!input.consentConfirmed) throw new Error("Participant consent must be confirmed before submission.");
+  const measurements = [input.systolicMmhg, input.diastolicMmhg, input.glucoseMmolL, input.cholesterolMmolL, input.heightCm, input.weightKg];
+  if (measurements.every((value) => value === null)) throw new Error("At least one screening measurement is required.");
+  if ((input.systolicMmhg === null) !== (input.diastolicMmhg === null)) throw new Error("Both blood pressure values are required together.");
+  if ((input.heightCm === null) !== (input.weightKg === null)) throw new Error("Height and weight are required together for BMI.");
 }
 
 function calculateRisk(input: ScreeningCaptureInput & { bmi: number | null }) {
