@@ -334,6 +334,7 @@ export class PractitionerService {
     if (input.clinicHospital !== undefined) values.clinic_hospital = input.clinicHospital;
     if (input.preferredContactMethod !== undefined) values.preferred_contact_method = input.preferredContactMethod;
     if (input.specialisation !== undefined) values.specialisation = input.specialisation;
+    if (input.specialisations !== undefined) values.specialisation = input.specialisations[0] ?? null;
     if (input.yearsExperience !== undefined) values.years_experience = input.yearsExperience;
     if (input.qualifications !== undefined) values.qualifications = input.qualifications;
     if (input.assignmentNotifications !== undefined) values.assignment_notifications = input.assignmentNotifications;
@@ -386,7 +387,7 @@ export class PractitionerService {
   }
 
   async uploadDocument(userId: string, documentType: string, expiryDate: string | null, file: EncodedFile) {
-    const decoded = decodeFile(file.dataUrl, ["application/pdf", "image/png", "image/jpeg"], 5 * 1024 * 1024);
+    const decoded = decodeFile(file.dataUrl, ["application/pdf", "image/png", "image/jpeg"], 2 * 1024 * 1024);
     const path = `${userId}/${crypto.randomUUID()}-${safeFileName(file.fileName)}`;
     const { error: uploadError } = await this.supabase.storage
       .from("practitioner-verification-documents")

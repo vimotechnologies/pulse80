@@ -16,6 +16,7 @@ const captureSchema = z.object({
   glucoseMmolL: nullableNumber(0.5, 50), cholesterolMmolL: nullableNumber(0.5, 30),
   heightCm: nullableNumber(50, 260), weightKg: nullableNumber(2, 500),
 });
+const correctionSchema = captureSchema.omit({ assignmentId: true });
 const reviewSchema = z.object({ status: z.enum(["Approved", "Needs Correction"]), reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null) });
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -65,6 +66,14 @@ export const screeningResolvers = {
     captureScreening: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       const { user } = requireAuthenticatedUser(context);
       return shape(await new ScreeningService(context.adminSupabase).capture(user.id, parse(captureSchema, arguments_.input) as ScreeningCaptureInput));
+    },
+    resubmitScreening: async (_parent: unknown, arguments_: { id: string; input: unknown }, context: GraphQLContext) => {
+      const { user } = requireAuthenticatedUser(context);
+      return shape(await new ScreeningService(context.adminSupabase).resubmit(
+        z.uuid().parse(arguments_.id),
+        user.id,
+        parse(correctionSchema, arguments_.input),
+      ));
     },
     reviewScreening: async (_parent: unknown, arguments_: { id: string; input: unknown }, context: GraphQLContext) => {
       const { user } = requirePlatformPermission(context, "screening:review");

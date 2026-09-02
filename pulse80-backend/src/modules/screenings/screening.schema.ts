@@ -60,6 +60,19 @@ export const screeningTypeDefs = /* GraphQL */ `
     reviewNote: String
   }
 
+  input ScreeningCorrectionInput {
+    participantReference: String!
+    department: String
+    consentConfirmed: Boolean!
+    practitionerNote: String
+    systolicMmhg: Int
+    diastolicMmhg: Int
+    glucoseMmolL: Float
+    cholesterolMmolL: Float
+    heightCm: Float
+    weightKg: Float
+  }
+
   extend type Query {
     adminScreenings: [Screening!]!
     myScreenings: [Screening!]!
@@ -68,6 +81,7 @@ export const screeningTypeDefs = /* GraphQL */ `
 
   extend type Mutation {
     captureScreening(input: ScreeningCaptureInput!): Screening!
+    resubmitScreening(id: ID!, input: ScreeningCorrectionInput!): Screening!
     reviewScreening(id: ID!, input: ScreeningReviewInput!): Screening!
   }
 `;
