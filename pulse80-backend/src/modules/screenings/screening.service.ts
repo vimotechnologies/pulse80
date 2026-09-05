@@ -86,7 +86,7 @@ export class ScreeningService {
       participant_reference: input.participantReference,
       department: input.department,
       consent_confirmed: true,
-      status: "Submitted",
+      status: "Under Review",
       practitioner_note: input.practitionerNote,
       submitted_at: new Date().toISOString(),
     }).select("id").single();
@@ -155,7 +155,7 @@ export class ScreeningService {
       department: input.department,
       consent_confirmed: true,
       practitioner_note: input.practitionerNote,
-      status: "Submitted",
+      status: "Under Review",
       submitted_at: new Date().toISOString(),
       reviewed_by: null,
       reviewed_at: null,
@@ -166,18 +166,44 @@ export class ScreeningService {
       throw new Error(updateError?.message ?? "Screening status changed before it could be resubmitted.");
     }
 
+    const { error: resolveError } = await this.supabase
+      .from("screening_correction_errors")
+      .update({ resolved_at: new Date().toISOString() })
+      .eq("screening_id", id)
+      .is("resolved_at", null);
+    if (resolveError) throw new Error(resolveError.message);
+
     return this.get(id);
   }
 
-  async review(id: string, reviewerId: string, status: "Approved" | "Needs Correction", reviewNote: string | null) {
-    if (status === "Needs Correction" && !reviewNote) throw new Error("A correction note is required.");
+  async review(
+    id: string,
+    reviewerId: string,
+    status: "Approved" | "Needs Correction",
+    reviewNote: string | null,
+    errors: Array<{ field: string; message: string }>,
+  ) {
+    if (status === "Needs Correction" && !errors.length) throw new Error("At least one correction error is required.");
     const { error } = await this.supabase.from("screenings").update({
       status,
       review_note: reviewNote,
       reviewed_by: reviewerId,
       reviewed_at: new Date().toISOString(),
-    }).eq("id", id).in("status", ["Submitted", "Needs Correction"]);
+    }).eq("id", id).in("status", ["Submitted", "Under Review", "Needs Correction"]);
     if (error) throw new Error(error.message);
+    if (status === "Needs Correction") {
+      const { error: correctionError } = await this.supabase.from("screening_correction_errors").insert(
+        errors.map((item) => ({ screening_id: id, field_name: item.field, message: item.message })),
+      );
+      if (correctionError) throw new Error(correctionError.message);
+    } else {
+      const { error: resolveError } = await this.supabase
+        .from("screening_correction_errors")
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("screening_id", id)
+        .is("resolved_at", null);
+      if (resolveError) throw new Error(resolveError.message);
+    }
     return this.get(id);
   }
 

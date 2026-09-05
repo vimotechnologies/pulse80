@@ -1,4 +1,4 @@
-export type ScreeningStatus = "Draft" | "Submitted" | "Approved" | "Needs Correction";
+export type ScreeningStatus = "Draft" | "Submitted" | "Under Review" | "Approved" | "Needs Correction";
 
 export interface ScreeningResult {
   systolicMmhg: number | null;

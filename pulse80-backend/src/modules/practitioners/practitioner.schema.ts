@@ -24,6 +24,74 @@ export const practitionerTypeDefs = /* GraphQL */ `
     status: String!
   }
 
+  type PractitionerDashboardStats {
+    upcomingAssignments: Int!
+    participantsScreened: Int!
+    screeningCompletionRate: Int!
+    pendingCorrections: Int!
+  }
+
+  type PractitionerDashboardAssignment {
+    id: ID!
+    organisationName: String!
+    programmeName: String!
+    activityName: String!
+    location: String!
+    startsAt: String!
+    endsAt: String
+    role: String
+    services: [String!]!
+    status: String!
+    confirmationRequired: Boolean!
+  }
+
+  type PractitionerAssignmentAlert {
+    id: ID!
+    message: String!
+    changeType: String!
+    urgent: Boolean!
+    changedAt: String!
+    additionalAlertCount: Int!
+  }
+
+  type ScreeningCorrectionError {
+    id: ID!
+    field: String!
+    message: String!
+    returnedAt: String!
+  }
+
+  type PractitionerDashboardCorrection {
+    id: ID!
+    participantReference: String!
+    assignmentName: String!
+    services: [String!]!
+    returnedAt: String!
+    errorCount: Int!
+    errors: [ScreeningCorrectionError!]!
+    reviewerNote: String
+  }
+
+  type PractitionerDashboard {
+    stats: PractitionerDashboardStats!
+    assignmentAlert: PractitionerAssignmentAlert
+    upcomingAssignments: [PractitionerDashboardAssignment!]!
+    recentCorrections: [PractitionerDashboardCorrection!]!
+  }
+
+  type PractitionerAssignmentResponse {
+    id: ID!
+    status: String!
+    respondedAt: String!
+    reason: String
+    urgent: Boolean!
+  }
+
+  type PractitionerAssignmentAlertAcknowledgement {
+    id: ID!
+    acknowledgedAt: String!
+  }
+
   type PractitionerDocument {
     id: ID!
     documentType: String!
@@ -163,6 +231,8 @@ export const practitionerTypeDefs = /* GraphQL */ `
     programmeName: String!
     activityName: String!
     serviceName: String!
+    serviceNames: [String!]
+    roleName: String
     location: String!
     startsAt: String!
     endsAt: String
@@ -170,12 +240,17 @@ export const practitionerTypeDefs = /* GraphQL */ `
   }
 
   extend type Query {
+    practitionerDashboard: PractitionerDashboard!
     practitionerProfile: PractitionerProfile!
     adminPractitioners: [AdminPractitioner!]!
     adminPractitionerAssignments: [AdminPractitionerAssignment!]!
   }
 
   extend type Mutation {
+    confirmPractitionerAssignment(assignmentId: ID!): PractitionerAssignmentResponse!
+    declinePractitionerAssignment(assignmentId: ID!, reason: String!): PractitionerAssignmentResponse!
+    withdrawPractitionerAssignment(assignmentId: ID!, reason: String!): PractitionerAssignmentResponse!
+    acknowledgePractitionerAssignmentAlert(alertId: ID!): PractitionerAssignmentAlertAcknowledgement!
     updatePractitionerProfile(input: UpdatePractitionerProfileInput!): PractitionerProfile!
     uploadPractitionerPhoto(file: PractitionerFileInput!): PractitionerProfile!
     deletePractitionerPhoto: PractitionerProfile!

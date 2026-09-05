@@ -58,6 +58,12 @@ export const screeningTypeDefs = /* GraphQL */ `
   input ScreeningReviewInput {
     status: String!
     reviewNote: String
+    errors: [ScreeningCorrectionErrorInput!]
+  }
+
+  input ScreeningCorrectionErrorInput {
+    field: String!
+    message: String!
   }
 
   input ScreeningCorrectionInput {

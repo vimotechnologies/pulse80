@@ -86,9 +86,14 @@ export async function captureScreeningBatch(forms: ScreeningCaptureForm[]) {
   }
 }
 
-export async function reviewScreening(id: string, status: "Approved" | "Needs Correction", reviewNote: string) {
+export async function reviewScreening(
+  id: string,
+  status: "Approved" | "Needs Correction",
+  reviewNote: string,
+  errors: Array<{ field: string; message: string }> = [],
+) {
   try {
-    const result = await graphqlRequest<{ reviewScreening: Screening }>(reviewMutation, { variables: { id, input: { status, reviewNote: reviewNote || null } } });
+    const result = await graphqlRequest<{ reviewScreening: Screening }>(reviewMutation, { variables: { id, input: { status, reviewNote: reviewNote || null, errors } } });
     revalidateScreenings();
     return { ok: true as const, result };
   } catch (error) {
@@ -113,4 +118,5 @@ function revalidateScreenings() {
   revalidatePath("/admin/screenings");
   revalidatePath("/admin/results");
   revalidatePath("/practitioner/screenings");
+  revalidatePath("/practitioner/dashboard");
 }
