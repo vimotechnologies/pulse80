@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
+import { ORGANISATION_COOKIE } from "@/lib/auth/session";
 import { graphqlRequest } from "@/lib/graphql/client";
 
 export type PractitionerDashboardData = {
@@ -79,8 +81,14 @@ const acknowledgeMutation = `mutation AcknowledgeAssignmentAlert($alertId: ID!) 
 const idSchema = z.uuid();
 const reasonSchema = z.string().trim().min(2, "Enter a reason.").max(500);
 
+async function selectedOrganisationId() {
+  return (await cookies()).get(ORGANISATION_COOKIE)?.value ?? null;
+}
+
 export async function loadPractitionerDashboard() {
-  const result = await graphqlRequest<{ practitionerDashboard: PractitionerDashboardData }>(dashboardQuery);
+  const result = await graphqlRequest<{ practitionerDashboard: PractitionerDashboardData }>(dashboardQuery, {
+    organisationId: await selectedOrganisationId(),
+  });
   return result.practitionerDashboard;
 }
 
@@ -104,6 +112,7 @@ async function assignmentResponse(mutation: string, field: string, assignmentId:
   }
   try {
     await graphqlRequest<Record<string, unknown>>(mutation, {
+      organisationId: await selectedOrganisationId(),
       variables: { assignmentId: parsedId.data, ...(parsedReason ? { reason: parsedReason.data } : {}) },
     });
     revalidatePath("/practitioner/dashboard");
@@ -118,7 +127,10 @@ export async function acknowledgeDashboardAlert(alertId: string) {
   const parsed = idSchema.safeParse(alertId);
   if (!parsed.success) return { ok: false as const, error: "Invalid alert." };
   try {
-    await graphqlRequest(acknowledgeMutation, { variables: { alertId: parsed.data } });
+    await graphqlRequest(acknowledgeMutation, {
+      organisationId: await selectedOrganisationId(),
+      variables: { alertId: parsed.data },
+    });
     revalidatePath("/practitioner/dashboard");
     return { ok: true as const };
   } catch {
