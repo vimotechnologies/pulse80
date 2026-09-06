@@ -220,100 +220,48 @@ export class PractitionerService {
 
   async createAssignment(input: PractitionerAssignmentInput) {
     const practitioner = await this.validateAssignment(input);
-    const { data, error } = await this.supabase
-      .from("practitioner_assignments")
-      .insert({
-        practitioner_user_id: input.practitionerUserId,
-        organisation_id: input.organisationId,
-        programme_name: input.programmeName,
-        activity_name: input.activityName,
-        service_name: input.serviceName,
-        role_name: input.roleName ?? practitioner.profession,
-        location: input.location,
-        starts_at: input.startsAt,
-        ends_at: input.endsAt,
-        status: input.status,
-      })
-      .select("id")
-      .single();
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+      p_assignment_id: null,
+      p_practitioner_user_id: input.practitionerUserId,
+      p_organisation_id: input.organisationId,
+      p_programme_name: input.programmeName,
+      p_activity_name: input.activityName,
+      p_service_name: input.serviceName,
+      p_service_names: serviceNames,
+      p_role_name: input.roleName ?? practitioner.profession,
+      p_location: input.location,
+      p_starts_at: input.startsAt,
+      p_ends_at: input.endsAt,
+      p_status: input.status,
+    });
     if (error) throw new Error(error.message);
-    const { error: servicesError } = await this.supabase.from("practitioner_assignment_services").insert(
-      (input.serviceNames ?? [input.serviceName]).map((serviceName) => ({
-        practitioner_assignment_id: data.id,
-        service_name: serviceName,
-      })),
-    );
-    if (servicesError) {
-      await this.supabase.from("practitioner_assignments").delete().eq("id", data.id);
-      throw new Error(servicesError.message);
-    }
-    return this.getAssignmentForAdmin(data.id);
+    return this.getAssignmentForAdmin(data);
   }
 
   async updateAssignment(assignmentId: string, input: PractitionerAssignmentInput) {
-    const { data: previous, error: previousError } = await this.supabase
-      .from("practitioner_assignments")
-      .select("practitioner_user_id, service_name, location, starts_at, ends_at, status, practitioner_assignment_services(service_name)")
-      .eq("id", assignmentId)
-      .single();
-    if (previousError) throw new Error(previousError.message);
     const practitioner = await this.validateAssignment(input, assignmentId);
-    const { error } = await this.supabase
-      .from("practitioner_assignments")
-      .update({
-        practitioner_user_id: input.practitionerUserId,
-        organisation_id: input.organisationId,
-        programme_name: input.programmeName,
-        activity_name: input.activityName,
-        service_name: input.serviceName,
-        role_name: input.roleName ?? practitioner.profession,
-        location: input.location,
-        starts_at: input.startsAt,
-        ends_at: input.endsAt,
-        status: input.status,
-      })
-      .eq("id", assignmentId);
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+      p_assignment_id: assignmentId,
+      p_practitioner_user_id: input.practitionerUserId,
+      p_organisation_id: input.organisationId,
+      p_programme_name: input.programmeName,
+      p_activity_name: input.activityName,
+      p_service_name: input.serviceName,
+      p_service_names: serviceNames,
+      p_role_name: input.roleName ?? practitioner.profession,
+      p_location: input.location,
+      p_starts_at: input.startsAt,
+      p_ends_at: input.endsAt,
+      p_status: input.status,
+    });
     if (error) throw new Error(error.message);
-    const { error: deleteServicesError } = await this.supabase
-      .from("practitioner_assignment_services")
-      .delete()
-      .eq("practitioner_assignment_id", assignmentId);
-    if (deleteServicesError) throw new Error(deleteServicesError.message);
-    const { error: servicesError } = await this.supabase.from("practitioner_assignment_services").insert(
-      (input.serviceNames ?? [input.serviceName]).map((serviceName) => ({
-        practitioner_assignment_id: assignmentId,
-        service_name: serviceName,
-      })),
-    );
-    if (servicesError) throw new Error(servicesError.message);
-
-    if (previous.practitioner_user_id === input.practitionerUserId) {
-      const changes: Array<{ change_type: "Date" | "Time" | "Location" | "Services" | "Cancellation"; message: string; urgent: boolean }> = [];
-      const oldStart = new Date(previous.starts_at);
-      const nextStart = new Date(input.startsAt);
-      if (oldStart.toLocaleDateString("en-CA", { timeZone: "Africa/Gaborone" }) !== nextStart.toLocaleDateString("en-CA", { timeZone: "Africa/Gaborone" })) changes.push({ change_type: "Date", message: "The assignment date has changed.", urgent: false });
-      if (oldStart.toLocaleTimeString("en-BW", { timeZone: "Africa/Gaborone" }) !== nextStart.toLocaleTimeString("en-BW", { timeZone: "Africa/Gaborone" })) changes.push({ change_type: "Time", message: "The assignment time has changed.", urgent: false });
-      if (previous.location !== input.location) changes.push({ change_type: "Location", message: "The assignment location has changed.", urgent: false });
-      const previousServices = (previous.practitioner_assignment_services.length
-        ? previous.practitioner_assignment_services.map((item) => item.service_name)
-        : [previous.service_name]).sort().join("|");
-      const nextServices = (input.serviceNames ?? [input.serviceName]).sort().join("|");
-      if (previousServices !== nextServices) changes.push({ change_type: "Services", message: "Your assigned services have changed.", urgent: false });
-      if (previous.status !== "Cancelled" && input.status === "Cancelled") changes.push({ change_type: "Cancellation", message: "The assignment has been cancelled.", urgent: true });
-      if (changes.length) {
-        const { error: alertError } = await this.supabase.from("practitioner_assignment_alerts").insert(changes.map((change) => ({
-          practitioner_assignment_id: assignmentId,
-          practitioner_user_id: input.practitionerUserId,
-          ...change,
-        })));
-        if (alertError) throw new Error(alertError.message);
-      }
-    }
-    return this.getAssignmentForAdmin(assignmentId);
+    return this.getAssignmentForAdmin(data);
   }
 
   private async validateAssignment(input: PractitionerAssignmentInput, assignmentId?: string) {
-    const serviceNames = input.serviceNames ?? [input.serviceName];
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
     const [{ data: practitioner, error: practitionerError }, { data: capabilities, error: capabilityError }] =
       await Promise.all([
         this.supabase
@@ -342,7 +290,7 @@ export class PractitionerService {
       .from("practitioner_assignments")
       .select("id")
       .eq("practitioner_user_id", input.practitionerUserId)
-      .neq("status", "Cancelled")
+      .in("status", ["Scheduled", "Confirmed", "In Progress", "Completed", "Action Required"])
       .lt("starts_at", input.endsAt ?? input.startsAt)
       .or(`ends_at.is.null,ends_at.gt.${input.startsAt}`);
     if (assignmentId) conflictQuery = conflictQuery.neq("id", assignmentId);

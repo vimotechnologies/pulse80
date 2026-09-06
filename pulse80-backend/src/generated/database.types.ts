@@ -1034,11 +1034,90 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      capture_screening_with_result: {
+        Args: {
+          p_assignment_id: string
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
       is_organisation_member: {
         Args: { target_organisation_id: string }
         Returns: boolean
       }
       is_platform_staff: { Args: never; Returns: boolean }
+      respond_to_practitioner_assignment: {
+        Args: {
+          p_assignment_id: string
+          p_practitioner_user_id: string
+          p_reason: string | null
+          p_responded_at: string
+          p_response: string
+          p_urgent: boolean
+        }
+        Returns: string
+      }
+      resubmit_screening_with_result: {
+        Args: {
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_screening_id: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
+      review_screening_with_errors: {
+        Args: {
+          p_errors: Json
+          p_review_note: string | null
+          p_reviewed_at: string
+          p_reviewer_id: string
+          p_screening_id: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_practitioner_assignment: {
+        Args: {
+          p_activity_name: string
+          p_assignment_id: string | null
+          p_ends_at: string | null
+          p_location: string
+          p_organisation_id: string
+          p_practitioner_user_id: string
+          p_programme_name: string
+          p_role_name: string
+          p_service_name: string
+          p_service_names: string[]
+          p_starts_at: string
+          p_status: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
