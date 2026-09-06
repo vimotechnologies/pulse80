@@ -1,5 +1,6 @@
-import { PractitionerWorkspacePage } from "@/components/practitioner/PractitionerWorkspacePage";
+import { loadPractitionerDashboard } from "@/app/actions/practitioner-dashboard";
+import { PractitionerDashboard } from "@/components/practitioner/PractitionerDashboard";
 
-export default function PractitionerDashboardPage() {
-  return <PractitionerWorkspacePage configId="dashboard" />;
+export default async function PractitionerDashboardPage() {
+  return <PractitionerDashboard dashboard={await loadPractitionerDashboard()} />;
 }

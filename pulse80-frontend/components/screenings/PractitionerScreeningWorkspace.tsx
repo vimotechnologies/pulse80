@@ -90,7 +90,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
   const activePage = Math.min(currentPage, pageCount);
   const paginatedRows = rows.slice((activePage - 1) * recordsPerPage, activePage * recordsPerPage);
   const needsCorrection = screenings.filter((item) => item.status === "Needs Correction").length;
-  const submitted = screenings.filter((item) => item.status === "Submitted").length;
+  const submitted = screenings.filter((item) => item.status === "Under Review").length;
   const escalated = screenings.filter((item) => item.result.escalationRequired).length;
 
   function clearFilters() {
@@ -203,14 +203,14 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <ListSummaryMetric metric={{ label: "Captured", value: (screenings.length + importRows.length).toLocaleString("en-BW"), detail: "Screening records", tone: "primary", icon: ClipboardCheck }} />
         <ListSummaryMetric metric={{ label: "Needs correction", value: needsCorrection.toLocaleString("en-BW"), detail: "Require your action", tone: "primary", icon: Activity }} />
-        <ListSummaryMetric metric={{ label: "Submitted", value: submitted.toLocaleString("en-BW"), detail: "Awaiting quality assurance", tone: "primary", icon: Microscope }} />
+        <ListSummaryMetric metric={{ label: "Under Review", value: submitted.toLocaleString("en-BW"), detail: "Awaiting quality assurance", tone: "primary", icon: Microscope }} />
         <ListSummaryMetric metric={{ label: "Escalated", value: escalated.toLocaleString("en-BW"), detail: "Require clinical attention", tone: "primary", icon: HeartPulse }} />
       </section>
 
       <UnifiedFilterCard>
         <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
           <UnifiedFilterSearch value={query} onChange={(value) => { setQuery(value); setCurrentPage(1); }} placeholder="Search screenings" />
-          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Submitted", "Needs Correction", "Approved"]} onChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} />
+          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Under Review", "Needs Correction", "Approved"]} onChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={(value) => { setRiskFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={(value) => { setOrganisationFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterClear onClick={clearFilters} />
@@ -395,7 +395,7 @@ function previewRisk(row: ImportRow) {
 function statusTone(status: string): "success" | "warning" | "danger" | "info" | "neutral" {
   if (status === "Approved") return "success";
   if (status === "Needs Correction") return "danger";
-  if (status === "Submitted") return "warning";
+  if (status === "Under Review") return "warning";
   return "info";
 }
 

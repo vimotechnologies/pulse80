@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
+import { PractitionerDashboardService } from "./practitioner-dashboard.service.js";
 import {
   PractitionerService,
   type PractitionerAssignmentInput,
@@ -55,6 +56,8 @@ const assignmentSchema = z.object({
   programmeName: z.string().trim().min(2).max(180),
   activityName: z.string().trim().min(2).max(180),
   serviceName: z.string().trim().min(2).max(180),
+  serviceNames: z.array(z.string().trim().min(2).max(180)).min(1).max(20).optional(),
+  roleName: z.string().trim().min(2).max(180).nullish(),
   location: z.string().trim().min(2).max(180),
   startsAt: z.iso.datetime({ offset: true }),
   endsAt: z.iso.datetime({ offset: true }).nullish(),
@@ -118,6 +121,10 @@ async function loadProfile(context: GraphQLContext) {
 
 export const practitionerResolvers = {
   Query: {
+    practitionerDashboard: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { userId } = await loadProfile(context);
+      return new PractitionerDashboardService(context.adminSupabase).getDashboard(userId);
+    },
     practitionerProfile: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       const { service, profile, capabilities, specialisations } = await loadProfile(context);
       return { ...profileShape(service, profile, capabilities.length), capabilities, selectedServices: capabilities, specialisations };
@@ -132,6 +139,18 @@ export const practitionerResolvers = {
       requirePlatformPermission(context, "provider:manage");
       return new PractitionerService(context.adminSupabase).listAssignmentsForAdmin();
     },
+  },
+  PractitionerAssignmentAlert: {
+    changeType: (row: { change_type: string }) => row.change_type,
+    changedAt: (row: { changed_at: string }) => row.changed_at,
+  },
+  PractitionerAssignmentResponse: {
+    respondedAt: (row: { responded_at: string }) => row.responded_at,
+    reason: (row: { response_reason: string | null }) => row.response_reason,
+    urgent: (row: { withdrawal_urgent: boolean }) => row.withdrawal_urgent,
+  },
+  PractitionerAssignmentAlertAcknowledgement: {
+    acknowledgedAt: (row: { acknowledged_at: string }) => row.acknowledged_at,
   },
   PractitionerProfile: {
     capabilities: (parent: { capabilities?: unknown[] }) => parent.capabilities ?? [],
@@ -200,6 +219,48 @@ export const practitionerResolvers = {
     updatedAt: (row: { updated_at: string }) => row.updated_at,
   },
   Mutation: {
+    confirmPractitionerAssignment: async (
+      _parent: unknown,
+      arguments_: { assignmentId: string },
+      context: GraphQLContext,
+    ) => {
+      const { userId } = await loadProfile(context);
+      return new PractitionerDashboardService(context.adminSupabase).respondToAssignment(
+        parse(idSchema, arguments_.assignmentId), userId, "Confirmed", null,
+      );
+    },
+    declinePractitionerAssignment: async (
+      _parent: unknown,
+      arguments_: { assignmentId: string; reason: string },
+      context: GraphQLContext,
+    ) => {
+      const { userId } = await loadProfile(context);
+      const reason = parse(z.string().trim().min(2).max(500), arguments_.reason);
+      return new PractitionerDashboardService(context.adminSupabase).respondToAssignment(
+        parse(idSchema, arguments_.assignmentId), userId, "Declined", reason,
+      );
+    },
+    withdrawPractitionerAssignment: async (
+      _parent: unknown,
+      arguments_: { assignmentId: string; reason: string },
+      context: GraphQLContext,
+    ) => {
+      const { userId } = await loadProfile(context);
+      const reason = parse(z.string().trim().min(2).max(500), arguments_.reason);
+      return new PractitionerDashboardService(context.adminSupabase).respondToAssignment(
+        parse(idSchema, arguments_.assignmentId), userId, "Withdrawn", reason,
+      );
+    },
+    acknowledgePractitionerAssignmentAlert: async (
+      _parent: unknown,
+      arguments_: { alertId: string },
+      context: GraphQLContext,
+    ) => {
+      const { userId } = await loadProfile(context);
+      return new PractitionerDashboardService(context.adminSupabase).acknowledgeAlert(
+        parse(idSchema, arguments_.alertId), userId,
+      );
+    },
     updatePractitionerProfile: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       const { service, userId, capabilities } = await loadProfile(context);
       const profile = await service.updateProfile(userId, parse(updateSchema, arguments_.input));

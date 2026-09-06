@@ -31,7 +31,22 @@ export async function loginAction(formData: FormData) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
-  if (error || !data.user || !data.session) {
+  if (error) {
+    const message = error.message.toLowerCase();
+    const isConnectivityError = message.includes("fetch")
+      || message.includes("timeout")
+      || message.includes("network")
+      || message.includes("connection");
+
+    return {
+      ok: false as const,
+      error: isConnectivityError
+        ? "Unable to connect to the authentication service. Please try again."
+        : "The email or password is incorrect.",
+    };
+  }
+
+  if (!data.user || !data.session) {
     return { ok: false as const, error: "The email or password is incorrect." };
   }
 

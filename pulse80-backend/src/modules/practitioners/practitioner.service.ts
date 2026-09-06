@@ -51,6 +51,8 @@ export interface PractitionerAssignmentInput {
   programmeName: string;
   activityName: string;
   serviceName: string;
+  serviceNames?: string[];
+  roleName?: string | null;
   location: string;
   startsAt: string;
   endsAt: string | null;
@@ -217,80 +219,85 @@ export class PractitionerService {
   }
 
   async createAssignment(input: PractitionerAssignmentInput) {
-    await this.validateAssignment(input);
-    const { data, error } = await this.supabase
-      .from("practitioner_assignments")
-      .insert({
-        practitioner_user_id: input.practitionerUserId,
-        organisation_id: input.organisationId,
-        programme_name: input.programmeName,
-        activity_name: input.activityName,
-        service_name: input.serviceName,
-        location: input.location,
-        starts_at: input.startsAt,
-        ends_at: input.endsAt,
-        status: input.status,
-      })
-      .select("id")
-      .single();
+    const practitioner = await this.validateAssignment(input);
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+      p_assignment_id: null,
+      p_practitioner_user_id: input.practitionerUserId,
+      p_organisation_id: input.organisationId,
+      p_programme_name: input.programmeName,
+      p_activity_name: input.activityName,
+      p_service_name: input.serviceName,
+      p_service_names: serviceNames,
+      p_role_name: input.roleName ?? practitioner.profession,
+      p_location: input.location,
+      p_starts_at: input.startsAt,
+      p_ends_at: input.endsAt,
+      p_status: input.status,
+    });
     if (error) throw new Error(error.message);
-    return this.getAssignmentForAdmin(data.id);
+    return this.getAssignmentForAdmin(data);
   }
 
   async updateAssignment(assignmentId: string, input: PractitionerAssignmentInput) {
-    await this.validateAssignment(input, assignmentId);
-    const { error } = await this.supabase
-      .from("practitioner_assignments")
-      .update({
-        practitioner_user_id: input.practitionerUserId,
-        organisation_id: input.organisationId,
-        programme_name: input.programmeName,
-        activity_name: input.activityName,
-        service_name: input.serviceName,
-        location: input.location,
-        starts_at: input.startsAt,
-        ends_at: input.endsAt,
-        status: input.status,
-      })
-      .eq("id", assignmentId);
+    const practitioner = await this.validateAssignment(input, assignmentId);
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+      p_assignment_id: assignmentId,
+      p_practitioner_user_id: input.practitionerUserId,
+      p_organisation_id: input.organisationId,
+      p_programme_name: input.programmeName,
+      p_activity_name: input.activityName,
+      p_service_name: input.serviceName,
+      p_service_names: serviceNames,
+      p_role_name: input.roleName ?? practitioner.profession,
+      p_location: input.location,
+      p_starts_at: input.startsAt,
+      p_ends_at: input.endsAt,
+      p_status: input.status,
+    });
     if (error) throw new Error(error.message);
-    return this.getAssignmentForAdmin(assignmentId);
+    return this.getAssignmentForAdmin(data);
   }
 
   private async validateAssignment(input: PractitionerAssignmentInput, assignmentId?: string) {
-    const [{ data: practitioner, error: practitionerError }, { data: capability, error: capabilityError }] =
+    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const [{ data: practitioner, error: practitionerError }, { data: capabilities, error: capabilityError }] =
       await Promise.all([
         this.supabase
           .from("practitioner_profiles")
-          .select("user_id, verification_status, practitioner_status")
+          .select("user_id, profession, verification_status, practitioner_status")
           .eq("user_id", input.practitionerUserId)
           .single(),
         this.supabase
           .from("practitioner_capabilities")
-          .select("id")
+          .select("service_name")
           .eq("practitioner_user_id", input.practitionerUserId)
-          .eq("service_name", input.serviceName)
+          .in("service_name", serviceNames)
           .eq("approval_status", "Approved")
-          .maybeSingle(),
+          ,
       ]);
     if (practitionerError) throw new Error(practitionerError.message);
     if (capabilityError) throw new Error(capabilityError.message);
     if (practitioner.verification_status !== "Verified" || practitioner.practitioner_status !== "Active") {
       throw new Error("Only active, verified practitioners can be assigned.");
     }
-    if (!capability) throw new Error("The practitioner is not approved for this service.");
+    const approvedServices = new Set((capabilities ?? []).map((item) => item.service_name));
+    const unsupportedService = serviceNames.find((serviceName) => !approvedServices.has(serviceName));
+    if (unsupportedService) throw new Error(`The practitioner is not approved for ${unsupportedService}.`);
 
     let conflictQuery = this.supabase
       .from("practitioner_assignments")
       .select("id")
       .eq("practitioner_user_id", input.practitionerUserId)
-      .neq("status", "Cancelled")
+      .in("status", ["Scheduled", "Confirmed", "In Progress", "Completed", "Action Required"])
       .lt("starts_at", input.endsAt ?? input.startsAt)
       .or(`ends_at.is.null,ends_at.gt.${input.startsAt}`);
     if (assignmentId) conflictQuery = conflictQuery.neq("id", assignmentId);
     const { data: conflicts, error: conflictError } = await conflictQuery.limit(1);
     if (conflictError) throw new Error(conflictError.message);
     if (conflicts.length) throw new Error("The practitioner already has an overlapping assignment.");
+    return practitioner;
   }
 
   private async getAssignmentForAdmin(assignmentId: string) {
