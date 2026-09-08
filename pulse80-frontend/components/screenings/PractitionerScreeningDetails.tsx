@@ -360,7 +360,7 @@ function RiskBadge({ risk }: { risk: string }) {
 }
 
 function statusTone(status: string): "success" | "warning" | "danger" | "info" | "neutral" {
-  if (status === "Submitted") return "success";
+  if (status === "Under Review") return "warning";
   if (status === "Needs Correction") return "danger";
   if (status === "Pending") return "warning";
   return "neutral";
