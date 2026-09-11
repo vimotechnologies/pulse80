@@ -62,6 +62,11 @@ export async function graphqlRequest<T>(
     headers["x-organisation-id"] = options.organisationId;
   }
 
+  const protectionBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (protectionBypassSecret) {
+    headers["x-vercel-protection-bypass"] = protectionBypassSecret;
+  }
+
   const response = await fetch(graphqlUrl, {
     method: "POST",
     headers,
