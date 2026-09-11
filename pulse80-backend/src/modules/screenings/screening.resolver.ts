@@ -16,7 +16,13 @@ function parse<T>(schema:z.ZodType<T>,value:unknown):T { const parsed=schema.saf
 const flexible = (context: GraphQLContext) => new FlexibleScreeningService(context.adminSupabase as unknown as SupabaseClient<any>);
 
 type ScreeningRow = Awaited<ReturnType<ScreeningService["listAll"]>>[number];
-function shape(row: ScreeningRow) { const result=row.screening_results; if(!result) throw new Error("Screening result is unavailable."); return { id:row.id,organisationId:row.organisation_id,organisationName:row.organisations?.name??"Organisation unavailable",activationId:row.activation_id,activationName:row.activations?.title??null,assignmentId:row.assignment_id,practitionerName:row.practitioner_profiles?.profiles?.full_name??"Practitioner unavailable",participantReference:row.participant_reference,department:row.department,status:row.status,consentConfirmed:row.consent_confirmed,practitionerNote:row.practitioner_note,capturedAt:row.captured_at,submittedAt:row.submitted_at,reviewedAt:row.reviewed_at,reviewNote:row.review_note,result:{systolicMmhg:result.systolic_mmhg,diastolicMmhg:result.diastolic_mmhg,glucoseMmolL:result.glucose_mmol_l,cholesterolMmolL:result.cholesterol_mmol_l,heightCm:result.height_cm,weightKg:result.weight_kg,bmi:result.bmi,riskLevel:result.risk_level,escalationRequired:result.escalation_required} }; }
+function shape(row: ScreeningRow) {
+ const result=row.screening_results;
+ return {
+  id:row.id,organisationId:row.organisation_id,organisationName:row.organisations?.name??"Organisation unavailable",activationId:row.activation_id,activationName:row.activations?.title??null,assignmentId:row.assignment_id,practitionerName:row.practitioner_profiles?.profiles?.full_name??"Practitioner unavailable",participantReference:row.participant_reference,department:row.department,status:row.status,consentConfirmed:row.consent_confirmed,practitionerNote:row.practitioner_note,capturedAt:row.captured_at,submittedAt:row.submitted_at,reviewedAt:row.reviewed_at,reviewNote:row.review_note,
+  result: result ? {systolicMmhg:result.systolic_mmhg,diastolicMmhg:result.diastolic_mmhg,glucoseMmolL:result.glucose_mmol_l,cholesterolMmolL:result.cholesterol_mmol_l,heightCm:result.height_cm,weightKg:result.weight_kg,bmi:result.bmi,riskLevel:result.risk_level,escalationRequired:result.escalation_required} : null
+ };
+}
 
 export const screeningResolvers = {
  Query: {
