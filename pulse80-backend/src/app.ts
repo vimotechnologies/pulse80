@@ -43,3 +43,8 @@ export async function buildApp() {
 
   return app;
 }
+
+const vercelApp = await buildApp();
+await vercelApp.ready();
+
+export default vercelApp.server;
