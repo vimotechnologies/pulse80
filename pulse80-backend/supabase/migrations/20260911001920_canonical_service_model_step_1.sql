@@ -68,7 +68,7 @@ using (
 -- Backfill the current programme text array without removing it yet.
 insert into public.services (code, name, category)
 select distinct
-  upper(regexp_replace(trim(service_name), '[^a-zA-Z0-9]+', '_', 'g')),
+  'LEGACY_' || substr(md5(lower(trim(service_name))), 1, 12),
   trim(service_name),
   'Other'
 from public.programmes p
@@ -106,7 +106,7 @@ create index if not exists screenings_service_idx on public.screenings(service_i
 -- initial catalogue. New services are rows, not schema changes.
 insert into public.services (code, name, category)
 select distinct
-  upper(regexp_replace(trim(service_name), '[^a-zA-Z0-9]+', '_', 'g')),
+  'LEGACY_' || substr(md5(lower(trim(service_name))), 1, 12),
   trim(service_name),
   'Other'
 from (
