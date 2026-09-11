@@ -74,7 +74,10 @@ select distinct
 from public.programmes p
 cross join lateral unnest(p.service_names) service_name
 where length(trim(service_name)) >= 2
-on conflict (name) do nothing;
+  and not exists (
+    select 1 from public.services s
+    where lower(s.name) = lower(trim(service_name))
+  );
 
 insert into public.programme_services (programme_id, service_id)
 select p.id, s.id
@@ -113,8 +116,12 @@ from (
   union
   select service_name from public.practitioner_assignments
 ) existing_services
-where service_name is not null and length(trim(service_name)) >= 2
-on conflict (name) do nothing;
+where service_name is not null
+  and length(trim(service_name)) >= 2
+  and not exists (
+    select 1 from public.services s
+    where lower(s.name) = lower(trim(existing_services.service_name))
+  );
 
 update public.practitioner_capabilities pc
 set service_id = s.id
