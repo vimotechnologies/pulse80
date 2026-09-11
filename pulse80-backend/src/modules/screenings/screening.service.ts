@@ -21,10 +21,10 @@ export interface ScreeningCaptureInput {
 export type ScreeningCorrectionInput = Omit<ScreeningCaptureInput, "assignmentId">;
 
 const screeningSelect = `
-  id, organisation_id, activation_id, assignment_id, practitioner_user_id,
+  id, organisation_id, activation_id, assignment_id, practitioner_user_id, service_id,
   participant_reference, department, consent_confirmed, status,
   practitioner_note, captured_at, submitted_at, reviewed_at, review_note,
-  organisations (name), activations (title),
+  organisations (name), activations (title), services (code, name),
   practitioner_profiles (profiles (full_name)),
   screening_results (
     systolic_mmhg, diastolic_mmhg, glucose_mmol_l,
@@ -51,7 +51,7 @@ export class ScreeningService {
   async listAssignmentOptions(userId: string) {
     const { data, error } = await this.supabase
       .from("practitioner_assignments")
-      .select("id, service_name, location, starts_at, status, organisations(name), activations(title)")
+      .select("id, service_id, service_name, location, starts_at, status, services(code, name), organisations(name), activations(title)")
       .eq("practitioner_user_id", userId)
       .in("status", ["Confirmed", "In Progress"])
       .order("starts_at", { ascending: false });
@@ -64,7 +64,7 @@ export class ScreeningService {
 
     const { data: assignment, error: assignmentError } = await this.supabase
       .from("practitioner_assignments")
-      .select("id, practitioner_user_id, organisation_id, activation_id, status")
+      .select("id, practitioner_user_id, organisation_id, activation_id, service_id, status")
       .eq("id", input.assignmentId)
       .eq("practitioner_user_id", userId)
       .in("status", ["Confirmed", "In Progress"])
@@ -72,6 +72,7 @@ export class ScreeningService {
     if (assignmentError) throw new Error(assignmentError.message);
     if (!assignment) throw new Error("Screenings can only be captured for your confirmed or active assignments.");
     if (!assignment.organisation_id) throw new Error("The assignment is not linked to an organisation.");
+    if (!assignment.service_id) throw new Error("The assignment is not linked to a Pulse80 service.");
 
     const bmi = input.heightCm && input.weightKg
       ? Number((input.weightKg / ((input.heightCm / 100) ** 2)).toFixed(2))
