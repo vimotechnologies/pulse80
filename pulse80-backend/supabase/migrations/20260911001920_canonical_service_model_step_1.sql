@@ -55,16 +55,10 @@ create index if not exists programme_services_service_idx on public.programme_se
 alter table public.programme_services enable row level security;
 grant select on public.programme_services to authenticated;
 grant all on public.programme_services to service_role;
-drop policy if exists "Authorised users can read programme services" on public.programme_services;
-create policy "Authorised users can read programme services"
-on public.programme_services for select to authenticated
-using (
-  exists (
-    select 1 from public.programmes p
-    where p.id = programme_services.programme_id
-      and (public.is_organisation_member(p.organisation_id) or public.is_platform_staff())
-  )
-);
+
+-- Programme-service writes and reads currently flow through the trusted backend.
+-- A tenant-aware authenticated policy is added when programme service management
+-- moves to direct user-scoped access.
 
 -- Backfill the current programme text array without removing it yet.
 insert into public.services (code, name, category)
