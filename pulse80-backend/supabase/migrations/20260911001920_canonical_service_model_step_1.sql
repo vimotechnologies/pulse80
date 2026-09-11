@@ -1,6 +1,7 @@
--- Canonical service model, applied to the hosted Pulse80 database on 2026-09-11.
+-- Step 1: canonical Pulse80 service model.
 -- Keep legacy service_name/service_names columns during the transition so the
--- current frontend and GraphQL contract remain compatible.
+-- current frontend and GraphQL contract remain compatible. Application queries
+-- move to service_id after generated Supabase types are refreshed.
 
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
