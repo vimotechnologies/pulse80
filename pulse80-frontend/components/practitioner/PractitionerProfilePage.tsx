@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 
 import {
@@ -13,6 +13,7 @@ import { CalendarDays, Edit, Eye, Location, ShieldCheck, Stethoscope, Trash, Use
 import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import { TouchPhotoCropDialog } from "@/components/practitioner/TouchPhotoCropDialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToastMessage } from "@/components/ui/ToastMessage";
@@ -28,14 +29,7 @@ const professions = [
 ];
 const qualificationOptions = ["MBBS", "BSc Nursing", "Diploma in Nursing", "Midwifery Certificate", "MSc Clinical Psychology", "BSc Physiotherapy", "BSc Occupational Therapy", "BSc Dietetics", "Social Work Degree", "Public Health Diploma"];
 const specialisationOptionsByProfession: Record<string, string[]> = {
-  Physiotherapist: [
-    "Industrial Ergonomics",
-    "Musculoskeletal Risk",
-    "Work Capacity",
-    "Rehabilitation",
-    "Sports Physiotherapy",
-    "Neurological Physiotherapy",
-  ],
+  Physiotherapist: ["Industrial Ergonomics", "Musculoskeletal Risk", "Work Capacity", "Rehabilitation", "Sports Physiotherapy", "Neurological Physiotherapy"],
 };
 const locations: Record<string, { areaLabel: string; areas: Record<string, string[]> }> = {
   Botswana: {
@@ -132,13 +126,13 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex shrink-0 flex-col items-center gap-1">
-            <label className="group relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-card-border bg-soft-bg text-primary">
-              {profile.profilePhotoUrl ? <Image src={profile.profilePhotoUrl} alt="" fill unoptimized className="object-cover" /> : <User className="h-10 w-10" />}
-              <span className="absolute inset-x-0 bottom-0 bg-navy/75 py-1 text-center text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">Change</span>
-              <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPhotoToCrop(file); }} />
-            </label>
-            {photoUploadProgress !== null ? <div className="h-2 w-20 overflow-hidden rounded-full bg-soft-bg"><div className={`h-full transition-all duration-200 ${photoUploadProgress === 100 ? "bg-success" : "bg-navy"}`} style={{ width: `${photoUploadProgress}%` }} /></div> : null}
-            {profile.profilePhotoUrl ? <div className="flex gap-2"><a href={profile.profilePhotoUrl} target="_blank" rel="noreferrer" aria-label="View profile picture" className="text-muted hover:text-navy"><Eye className="h-4 w-4" /></a><button type="button" aria-label="Delete profile picture" className="text-muted hover:text-pulse-red" onClick={async () => { const result = await deletePractitionerPhoto(); if (result.ok) { setProfile(result.profile); setDraft(result.profile); showMessage("Profile photo deleted."); } else showMessage(result.error); }}><Trash className="h-4 w-4" /></button></div> : null}
+              <label className="group relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-card-border bg-soft-bg text-primary">
+                {profile.profilePhotoUrl ? <Image src={profile.profilePhotoUrl} alt="" fill unoptimized className="object-cover" /> : <User className="h-10 w-10" />}
+                <span className="absolute inset-x-0 bottom-0 bg-navy/75 py-1 text-center text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">Change</span>
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPhotoToCrop(file); event.currentTarget.value = ""; }} />
+              </label>
+              {photoUploadProgress !== null ? <div className="h-2 w-20 overflow-hidden rounded-full bg-soft-bg"><div className={`h-full transition-all duration-200 ${photoUploadProgress === 100 ? "bg-success" : "bg-navy"}`} style={{ width: `${photoUploadProgress}%` }} /></div> : null}
+              {profile.profilePhotoUrl ? <div className="flex gap-2"><a href={profile.profilePhotoUrl} target="_blank" rel="noreferrer" aria-label="View profile picture" className="text-muted hover:text-navy"><Eye className="h-4 w-4" /></a><button type="button" aria-label="Delete profile picture" className="text-muted hover:text-pulse-red" onClick={async () => { const result = await deletePractitionerPhoto(); if (result.ok) { setProfile(result.profile); setDraft(result.profile); showMessage("Profile photo deleted."); } else showMessage(result.error); }}><Trash className="h-4 w-4" /></button></div> : null}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-semibold text-navy">{profile.fullName}</h2><StatusBadge status={profile.verificationStatus} tone={profile.verificationStatus === "Verified" ? "verified" : "warning"} /><StatusBadge status={profile.practitionerStatus} tone={profile.practitionerStatus === "Active" ? "success" : "warning"} /></div>
@@ -159,18 +153,16 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
           <div className="grid gap-4 md:grid-cols-2"><SelectField label="Profession" value={draft.profession} editable={editing} options={professions} onChange={(profession) => setDraft({ ...draft, profession, specialisation: "", specialisations: [] })} />{draft.profession ? <MultiSelectField label="Specialisations" value={draft.specialisations.map((item) => item.name)} options={specialisationOptions} editable={editing} onChange={(specialisations) => setDraft({ ...draft, specialisation: specialisations.join(", "), specialisations: specialisations.map((name, index) => ({ id: String(index), name, sortOrder: index })) })} /> : null}<Editable label="Years of experience" type="number" value={String(draft.yearsExperience)} editable={editing} onChange={(value) => setDraft({ ...draft, yearsExperience: Number(value) || 0 })} /><Editable label="Registration number" value={draft.registrationNumber ?? ""} editable={editing} onChange={(registrationNumber) => setDraft({ ...draft, registrationNumber })} /><SelectField label="Registration body" value={draft.registrationAuthority ?? ""} editable={editing} options={registrationAuthorities[draft.registrationCountry ?? draft.country] ?? []} onChange={(registrationAuthority) => setDraft({ ...draft, registrationAuthority })} /><SelectField label="Registration country" value={draft.registrationCountry ?? ""} editable={editing} options={["Botswana", "South Africa", "Botswana and South Africa"]} onChange={(registrationCountry) => setDraft({ ...draft, registrationCountry, registrationAuthority: "" })} /><DatePickerField label="Registration expiry" value={draft.registrationExpiryDate ?? ""} editable={editing} onChange={(registrationExpiryDate) => setDraft({ ...draft, registrationExpiryDate })} /><ReadField label="Verification status" value={profile.verificationStatus} /></div>
           <div className="mt-4"><MultiSelectField label="Qualifications" value={draft.qualifications} options={qualificationOptions} editable={editing} onChange={(qualifications) => setDraft({ ...draft, qualifications })} /></div>
         </Section>
-
       </div>
 
       <div className="space-y-5">
-      <Section title="Services & capabilities" icon={ShieldCheck}>
-        {editing ? <MultiSelectField label="Services" value={draft.selectedServices.map((item) => item.code)} options={serviceOptions} editable onChange={(selectedServiceCodes) => setDraft({ ...draft, selectedServices: selectedServiceCodes.map((code, index) => ({ id: String(index), code, name: code, approvalStatus: "Pending" })) })} /> : <div className="grid gap-3 sm:grid-cols-2">{profile.capabilities.map((capability) => <div key={capability.id} className="rounded-lg border border-card-border bg-soft-bg px-3 py-3 text-sm"><span className="font-medium text-navy">{capability.name}</span></div>)}</div>}
-      </Section>
-
+        <Section title="Services & capabilities" icon={ShieldCheck}>
+          {editing ? <MultiSelectField label="Services" value={draft.selectedServices.map((item) => item.code)} options={serviceOptions} editable onChange={(selectedServiceCodes) => setDraft({ ...draft, selectedServices: selectedServiceCodes.map((code, index) => ({ id: String(index), code, name: code, approvalStatus: "Pending" })) })} /> : <div className="grid gap-3 sm:grid-cols-2">{profile.capabilities.map((capability) => <div key={capability.id} className="rounded-lg border border-card-border bg-soft-bg px-3 py-3 text-sm"><span className="font-medium text-navy">{capability.name}</span></div>)}</div>}
+        </Section>
       </div>
 
       <ToastMessage message={message} />
-      {photoToCrop ? <PhotoCropDialog file={photoToCrop} onCancel={() => setPhotoToCrop(null)} onConfirm={async (file) => { setPhotoToCrop(null); await uploadCroppedPhoto(file); }} /> : null}
+      {photoToCrop ? <TouchPhotoCropDialog file={photoToCrop} onCancel={() => setPhotoToCrop(null)} onConfirm={async (file) => { setPhotoToCrop(null); await uploadCroppedPhoto(file); }} /> : null}
     </div>
   );
 }
@@ -183,62 +175,9 @@ function DatePickerField({ label, value, editable, onChange }: { label: string; 
   const selected = parseDate(value);
   const displayValue = selected ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(selected) : "";
   if (!editable) return <ReadField label={label} value={displayValue} />;
-  return (
-    <div>
-      <span className="text-xs font-semibold text-navy">{label}</span>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button type="button" className="mt-2 flex h-11 w-full items-center justify-between rounded-lg border border-primary/40 bg-white px-3 text-left text-sm text-navy outline-none transition hover:border-primary focus:ring-4 focus:ring-primary/10">
-            <span className={displayValue ? "text-navy" : "text-muted"}>{displayValue || "Pick an expiry date"}</span>
-            <CalendarDays className="h-4 w-4 text-primary" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start">
-          <Calendar selected={selected} onSelect={(date) => { onChange(formatDateValue(date)); setOpen(false); }} />
-          {value ? <button type="button" onClick={() => { onChange(""); setOpen(false); }} className="mt-2 w-full rounded-lg px-3 py-2 text-xs font-semibold text-subtle hover:bg-soft-bg hover:text-navy">Clear date</button> : null}
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
+  return <div><span className="text-xs font-semibold text-navy">{label}</span><Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" className="mt-2 flex h-11 w-full items-center justify-between rounded-lg border border-primary/40 bg-white px-3 text-left text-sm text-navy outline-none transition hover:border-primary focus:ring-4 focus:ring-primary/10"><span className={displayValue ? "text-navy" : "text-muted"}>{displayValue || "Pick an expiry date"}</span><CalendarDays className="h-4 w-4 text-primary" /></button></PopoverTrigger><PopoverContent align="start"><Calendar selected={selected} onSelect={(date) => { onChange(formatDateValue(date)); setOpen(false); }} />{value ? <button type="button" onClick={() => { onChange(""); setOpen(false); }} className="mt-2 w-full rounded-lg px-3 py-2 text-xs font-semibold text-subtle hover:bg-soft-bg hover:text-navy">Clear date</button> : null}</PopoverContent></Popover></div>;
 }
-function parseDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return undefined;
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-}
-function formatDateValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-function SelectField({ label, value, editable, options, disabled = false, onChange }: { label: string; value: string; editable: boolean; options: string[]; disabled?: boolean; onChange: (value: string) => void }) {
-  if (!editable) return <ReadField label={label} value={value} />;
-  return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-soft-bg disabled:text-muted"><option value="">{disabled ? "Select district / province first" : `Select ${label.toLowerCase()}`}</option>{options.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>;
-}
-function MultiSelectField({ label, value, options, editable, onChange }: { label: string; value: string[]; options: string[]; editable: boolean; onChange: (value: string[]) => void }) {
-  if (!editable) return <ReadField label={label} value={value.join(", ")} />;
-  return <fieldset><legend className="text-xs font-semibold text-navy">{label}</legend><div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((item) => { const checked = value.includes(item); return <label key={item} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? "border-primary/50 bg-primary/5 text-navy" : "border-card-border bg-white text-subtle hover:border-primary/30"}`}><input type="checkbox" checked={checked} onChange={() => onChange(checked ? value.filter((selected) => selected !== item) : [...value, item])} className="h-4 w-4 accent-primary" /><span>{item}</span></label>; })}</div></fieldset>;
-}
-function PhotoCropDialog({ file, onCancel, onConfirm }: { file: File; onCancel: () => void; onConfirm: (file: File) => Promise<void> }) {
-  const [source] = useState(() => URL.createObjectURL(file));
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => () => URL.revokeObjectURL(source), [source]);
-
-  async function confirmCrop() {
-    if (!canvasRef.current) return;
-    const image = new globalThis.Image(); image.src = source;
-    await new Promise((resolve) => { image.onload = resolve; });
-    const size = 640; const scale = Math.max(size / image.width, size / image.height) * zoom;
-    const canvas = canvasRef.current; canvas.width = size; canvas.height = size;
-    const context = canvas.getContext("2d"); if (!context) return;
-    context.drawImage(image, (size - image.width * scale) / 2 + panX, (size - image.height * scale) / 2 + panY, image.width * scale, image.height * scale);
-    canvas.toBlob((blob) => { if (blob) void onConfirm(new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" })); }, "image/jpeg", 0.9);
-  }
-
-  return <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy/60 p-4"><div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl"><h2 className="text-lg font-semibold text-navy">Adjust profile picture</h2><div className="relative mx-auto mt-4 aspect-square max-w-72 overflow-hidden rounded-full bg-soft-bg"><Image src={source} alt="Profile crop preview" fill unoptimized className="object-cover" style={{ transform: `translate(${panX / 8}px, ${panY / 8}px) scale(${zoom})` }} /></div><canvas ref={canvasRef} className="hidden" /><label className="mt-5 block text-xs font-semibold text-navy">Scale<input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="mt-2 w-full" /></label><label className="mt-3 block text-xs font-semibold text-navy">Horizontal position<input type="range" min="-320" max="320" value={panX} onChange={(event) => setPanX(Number(event.target.value))} className="mt-2 w-full" /></label><label className="mt-3 block text-xs font-semibold text-navy">Vertical position<input type="range" min="-320" max="320" value={panY} onChange={(event) => setPanY(Number(event.target.value))} className="mt-2 w-full" /></label><div className="mt-5 flex justify-end gap-2"><ActionButton variant="secondary" onClick={onCancel}>Cancel</ActionButton><ActionButton onClick={confirmCrop}>Use picture</ActionButton></div></div></div>;
-}
+function parseDate(value: string) { const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value); if (!match) return undefined; return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])); }
+function formatDateValue(date: Date) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, "0"); const day = String(date.getDate()).padStart(2, "0"); return `${year}-${month}-${day}`; }
+function SelectField({ label, value, editable, options, disabled = false, onChange }: { label: string; value: string; editable: boolean; options: string[]; disabled?: boolean; onChange: (value: string) => void }) { if (!editable) return <ReadField label={label} value={value} />; return <label><span className="text-xs font-semibold text-navy">{label}</span><select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-primary/40 bg-white px-3 text-sm outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-soft-bg disabled:text-muted"><option value="">{disabled ? "Select district / province first" : `Select ${label.toLowerCase()}`}</option>{options.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>; }
+function MultiSelectField({ label, value, options, editable, onChange }: { label: string; value: string[]; options: string[]; editable: boolean; onChange: (value: string[]) => void }) { if (!editable) return <ReadField label={label} value={value.join(", ")} />; return <fieldset><legend className="text-xs font-semibold text-navy">{label}</legend><div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((item) => { const checked = value.includes(item); return <label key={item} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${checked ? "border-primary/50 bg-primary/5 text-navy" : "border-card-border bg-white text-subtle hover:border-primary/30"}`}><input type="checkbox" checked={checked} onChange={() => onChange(checked ? value.filter((selected) => selected !== item) : [...value, item])} className="h-4 w-4 accent-primary" /><span>{item}</span></label>; })}</div></fieldset>; }
