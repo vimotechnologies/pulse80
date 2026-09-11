@@ -49,9 +49,9 @@ const updateMutation = /* GraphQL */ `mutation UpdatePractitionerProfile($input:
   updatePractitionerProfile(input: $input) { ${fields} }
 }`;
 const photoMutation = /* GraphQL */ `mutation UploadPractitionerPhoto($file: PractitionerFileInput!) {
-  uploadPractitionerPhoto(file: $file) { ${fields} }
+  uploadPractitionerPhoto(file: $file) { profilePhotoUrl }
 }`;
-const deletePhotoMutation = /* GraphQL */ `mutation DeletePractitionerPhoto { deletePractitionerPhoto { ${fields} } }`;
+const deletePhotoMutation = /* GraphQL */ `mutation DeletePractitionerPhoto { deletePractitionerPhoto { profilePhotoUrl } }`;
 const documentMutation = /* GraphQL */ `mutation UploadPractitionerDocument($documentType: String!, $expiryDate: String, $file: PractitionerFileInput!) {
   uploadPractitionerDocument(documentType: $documentType, expiryDate: $expiryDate, file: $file) {
     id documentType fileName expiryDate verificationStatus uploadedAt downloadUrl
@@ -105,11 +105,11 @@ export async function updatePractitionerProfile(input: unknown) {
 
 export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl: string }) {
   try {
-    const result = await graphqlRequest<{ uploadPractitionerPhoto: PractitionerProfile }>(photoMutation, {
+    const result = await graphqlRequest<{ uploadPractitionerPhoto: { profilePhotoUrl: string | null } }>(photoMutation, {
       organisationId: await selectedOrganisationId(), variables: { file },
     });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.uploadPractitionerPhoto };
+    return { ok: true as const, profilePhotoUrl: result.uploadPractitionerPhoto.profilePhotoUrl };
   } catch {
     return { ok: false as const, error: "The profile photo could not be uploaded." };
   }
@@ -117,9 +117,9 @@ export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl:
 
 export async function deletePractitionerPhoto() {
   try {
-    const result = await graphqlRequest<{ deletePractitionerPhoto: PractitionerProfile }>(deletePhotoMutation, { organisationId: await selectedOrganisationId() });
+    const result = await graphqlRequest<{ deletePractitionerPhoto: { profilePhotoUrl: string | null } }>(deletePhotoMutation, { organisationId: await selectedOrganisationId() });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.deletePractitionerPhoto };
+    return { ok: true as const, profilePhotoUrl: result.deletePractitionerPhoto.profilePhotoUrl };
   } catch {
     return { ok: false as const, error: "The profile photo could not be deleted." };
   }
