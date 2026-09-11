@@ -17,6 +17,7 @@ alter table public.services enable row level security;
 grant select on public.services to authenticated;
 grant all on public.services to service_role;
 
+drop policy if exists "Authenticated users can read active services" on public.services;
 create policy "Authenticated users can read active services"
 on public.services for select to authenticated
 using (active = true);
@@ -53,6 +54,7 @@ create index if not exists programme_services_service_idx on public.programme_se
 alter table public.programme_services enable row level security;
 grant select on public.programme_services to authenticated;
 grant all on public.programme_services to service_role;
+drop policy if exists "Authorised users can read programme services" on public.programme_services;
 create policy "Authorised users can read programme services"
 on public.programme_services for select to authenticated
 using (
