@@ -68,7 +68,7 @@ export const screeningResolvers = {
       const { user } = requireAuthenticatedUser(context);
       return (await new ScreeningService(context.adminSupabase).listAssignmentOptions(user.id)).map((row) => ({
         id: row.id, organisationName: row.organisations?.name ?? "Organisation unavailable",
-        activationName: row.activations?.title ?? null, serviceName: row.services?.name ?? row.service_name, location: row.location,
+        activationName: row.activations?.title ?? null, serviceName: row.service_name, location: row.location,
         startsAt: row.starts_at, status: row.status,
       }));
     },
