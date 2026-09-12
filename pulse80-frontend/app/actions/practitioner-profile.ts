@@ -49,9 +49,9 @@ const updateMutation = /* GraphQL */ `mutation UpdatePractitionerProfile($input:
   updatePractitionerProfile(input: $input) { ${fields} }
 }`;
 const photoMutation = /* GraphQL */ `mutation UploadPractitionerPhoto($file: PractitionerFileInput!) {
-  uploadPractitionerPhoto(file: $file) { ${fields} }
+  uploadPractitionerPhoto(file: $file) { profilePhotoUrl }
 }`;
-const deletePhotoMutation = /* GraphQL */ `mutation DeletePractitionerPhoto { deletePractitionerPhoto { ${fields} } }`;
+const deletePhotoMutation = /* GraphQL */ `mutation DeletePractitionerPhoto { deletePractitionerPhoto { profilePhotoUrl } }`;
 const documentMutation = /* GraphQL */ `mutation UploadPractitionerDocument($documentType: String!, $expiryDate: String, $file: PractitionerFileInput!) {
   uploadPractitionerDocument(documentType: $documentType, expiryDate: $expiryDate, file: $file) {
     id documentType fileName expiryDate verificationStatus uploadedAt downloadUrl
@@ -60,6 +60,12 @@ const documentMutation = /* GraphQL */ `mutation UploadPractitionerDocument($doc
 
 async function selectedOrganisationId() {
   return (await cookies()).get(ORGANISATION_COOKIE)?.value ?? null;
+}
+
+function freshPhotoUrl(url: string | null) {
+  if (!url) return null;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${Date.now()}`;
 }
 
 const updateSchema = z.object({
@@ -79,7 +85,7 @@ export async function loadPractitionerProfile() {
   const result = await graphqlRequest<{ practitionerProfile: PractitionerProfile }>(query, {
     organisationId: await selectedOrganisationId(),
   });
-  return result.practitionerProfile;
+  return { ...result.practitionerProfile, profilePhotoUrl: freshPhotoUrl(result.practitionerProfile.profilePhotoUrl) };
 }
 
 export async function loadPractitionerAssignments() {
@@ -97,7 +103,7 @@ export async function updatePractitionerProfile(input: unknown) {
       organisationId: await selectedOrganisationId(), variables: { input: parsed.data },
     });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.updatePractitionerProfile };
+    return { ok: true as const, profile: { ...result.updatePractitionerProfile, profilePhotoUrl: freshPhotoUrl(result.updatePractitionerProfile.profilePhotoUrl) } };
   } catch {
     return { ok: false as const, error: "Your profile could not be saved. Please try again." };
   }
@@ -105,11 +111,11 @@ export async function updatePractitionerProfile(input: unknown) {
 
 export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl: string }) {
   try {
-    const result = await graphqlRequest<{ uploadPractitionerPhoto: PractitionerProfile }>(photoMutation, {
+    const result = await graphqlRequest<{ uploadPractitionerPhoto: { profilePhotoUrl: string | null } }>(photoMutation, {
       organisationId: await selectedOrganisationId(), variables: { file },
     });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.uploadPractitionerPhoto };
+    return { ok: true as const, profilePhotoUrl: freshPhotoUrl(result.uploadPractitionerPhoto.profilePhotoUrl) };
   } catch {
     return { ok: false as const, error: "The profile photo could not be uploaded." };
   }
@@ -117,9 +123,9 @@ export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl:
 
 export async function deletePractitionerPhoto() {
   try {
-    const result = await graphqlRequest<{ deletePractitionerPhoto: PractitionerProfile }>(deletePhotoMutation, { organisationId: await selectedOrganisationId() });
+    const result = await graphqlRequest<{ deletePractitionerPhoto: { profilePhotoUrl: string | null } }>(deletePhotoMutation, { organisationId: await selectedOrganisationId() });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.deletePractitionerPhoto };
+    return { ok: true as const, profilePhotoUrl: result.deletePractitionerPhoto.profilePhotoUrl };
   } catch {
     return { ok: false as const, error: "The profile photo could not be deleted." };
   }
