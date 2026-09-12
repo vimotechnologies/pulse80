@@ -29,7 +29,7 @@ export interface Screening {
   submittedAt: string | null;
   reviewedAt: string | null;
   reviewNote: string | null;
-  result: ScreeningResult;
+  result: ScreeningResult | null;
 }
 
 export interface ScreeningAssignmentOption {
