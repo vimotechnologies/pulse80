@@ -62,6 +62,12 @@ async function selectedOrganisationId() {
   return (await cookies()).get(ORGANISATION_COOKIE)?.value ?? null;
 }
 
+function freshPhotoUrl(url: string | null) {
+  if (!url) return null;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${Date.now()}`;
+}
+
 const updateSchema = z.object({
   fullName: z.string().trim().min(2).max(160),
   professionalEmail: z.email().trim().toLowerCase(),
@@ -79,7 +85,7 @@ export async function loadPractitionerProfile() {
   const result = await graphqlRequest<{ practitionerProfile: PractitionerProfile }>(query, {
     organisationId: await selectedOrganisationId(),
   });
-  return result.practitionerProfile;
+  return { ...result.practitionerProfile, profilePhotoUrl: freshPhotoUrl(result.practitionerProfile.profilePhotoUrl) };
 }
 
 export async function loadPractitionerAssignments() {
@@ -97,7 +103,7 @@ export async function updatePractitionerProfile(input: unknown) {
       organisationId: await selectedOrganisationId(), variables: { input: parsed.data },
     });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profile: result.updatePractitionerProfile };
+    return { ok: true as const, profile: { ...result.updatePractitionerProfile, profilePhotoUrl: freshPhotoUrl(result.updatePractitionerProfile.profilePhotoUrl) } };
   } catch {
     return { ok: false as const, error: "Your profile could not be saved. Please try again." };
   }
@@ -109,7 +115,7 @@ export async function uploadPractitionerPhoto(file: { fileName: string; dataUrl:
       organisationId: await selectedOrganisationId(), variables: { file },
     });
     revalidatePath("/practitioner/profile");
-    return { ok: true as const, profilePhotoUrl: result.uploadPractitionerPhoto.profilePhotoUrl };
+    return { ok: true as const, profilePhotoUrl: freshPhotoUrl(result.uploadPractitionerPhoto.profilePhotoUrl) };
   } catch {
     return { ok: false as const, error: "The profile photo could not be uploaded." };
   }
