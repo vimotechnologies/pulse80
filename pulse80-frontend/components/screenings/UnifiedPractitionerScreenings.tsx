@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { ToastMessage } from "@/components/ui/ToastMessage";
 import { DynamicScreeningCapture } from "@/components/screenings/DynamicScreeningCapture";
-import { PractitionerScreeningOperations } from "@/components/screenings/ScreeningOperations";
+import { PractitionerScreeningWorkspace } from "@/components/screenings/PractitionerScreeningWorkspace";
 import type { Screening, ScreeningAssignmentOption } from "@/types/screening";
 
 export function UnifiedPractitionerScreenings({ screenings, assignments }: { screenings: Screening[]; assignments: ScreeningAssignmentOption[] }) {
@@ -20,21 +20,17 @@ export function UnifiedPractitionerScreenings({ screenings, assignments }: { scr
         title="Screenings"
         description="Capture and manage anonymized employee wellness screening records linked to your assigned programmes."
         actions={
-          <button
-            type="button"
-            onClick={() => setCaptureOpen(true)}
-            className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white"
-          >
+          <button type="button" onClick={() => setCaptureOpen(true)} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">
             Capture screening
           </button>
         }
       />
       <ToastMessage message={message} />
 
-      {/* ScreeningOperations still owns the records/import workspace. Its legacy header and
-          legacy fixed-measurement capture button are hidden while capture is consolidated. */}
+      {/* Keep the existing records, filters, pagination and bulk import workspace. Its old
+          fixed-measurement capture header is hidden because capture now has one service-aware flow. */}
       <div className="[&>div>div:first-child]:hidden">
-        <PractitionerScreeningOperations screenings={screenings} assignments={assignments} />
+        <PractitionerScreeningWorkspace screenings={screenings} assignments={assignments} />
       </div>
 
       {captureOpen ? (
