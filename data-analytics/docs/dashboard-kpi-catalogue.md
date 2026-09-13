@@ -2,83 +2,95 @@
 
 ## Purpose
 
-This catalogue converts the completed EDA into explicit analytics definitions. A KPI marked READY is supported by the current dataset structure and can move to query/API implementation, subject to tenant/security controls and final join validation. CONDITIONAL means the metric is useful but its denominator, business rule, or data-quality issue must be resolved first.
+This catalogue converts the completed EDA and approved Product decisions into explicit analytics definitions. KPI formulas must be implemented once in the analytics/backend layer; the frontend displays the approved result and must not invent a different formula.
 
-## KPI catalogue
+## Approved KPI catalogue
 
-| KPI | Definition | Source / join path | Calculation | Status |
-|---|---|---|---|---|
-| Registered Employees | Employees represented in scope | Employees | `COUNT(DISTINCT employee_id)` | READY |
-| Active Employees | Employees whose current status is active | Employees | distinct employees where `status = 'active'` | READY |
-| Programme Participants | Unique employees with a participation record in a programme | Participations | `COUNT(DISTINCT employee_id)` grouped/filterable by `programme_id` | READY |
-| Attended Participants | Unique employees whose participation says attended | Participations | distinct `employee_id` where `attendance_status = 'attended'` | READY |
-| Participation Rate | Share of the eligible/target population that participated | Employees + Participations | participants / approved eligible employee denominator * 100 | CONDITIONAL: eligibility denominator must be agreed |
-| Screening Events | Number of screening service/station events | Screenings | `COUNT(DISTINCT screening_id)` | READY |
-| Completed Screening Events | Screening events with completed status | Screenings | distinct `screening_id` where `status = 'completed'` | READY |
-| Participants Screened | Unique participants with at least one qualifying screening | Screenings | `COUNT(DISTINCT participation_id)` after approved screening-status filter | READY after final status rule confirmation |
-| Screening Completion Rate | Completion of expected programme-service screenings | Participations + Programme Services + Screenings | completed qualifying screening events / expected participation-service events * 100 | CONDITIONAL: expected denominator and status rule must be agreed |
-| Service Delivery Volume | Screening volume by service | Screenings -> Programme Services -> Services | screening count grouped by service | READY after join-key validation |
-| Practitioner Screening Activity | Screening events delivered by practitioner | Screenings -> Practitioners | screening count grouped by `practitioner_id` | READY after join-key validation |
-| Measurement Coverage | Number/share of screenings with expected measurements captured | Screenings -> Measurements | distinct screenings with valid measurement(s), by metric/service | CONDITIONAL: expected metrics per service must be defined |
-| Measurement Distribution | Distribution of captured numeric health measurements | Measurements | aggregate valid `numeric_value` by `metric_code` and unit | READY for descriptive aggregate analytics |
-| Risk Assessments | Number of risk assessments produced | Risk Assessments | `COUNT(DISTINCT risk_assessment_id)` | READY |
-| Risk Level Distribution | Share/count of assessments by risk level | Risk Assessments | count and percentage grouped by `risk_level` | READY |
-| Referral Required Count | Assessments where the rules engine says referral is required | Risk Assessments | count where `requires_referral = true` | READY |
-| Referral Records Created | Number of referral records actually created | Referrals | `COUNT(DISTINCT referral_id)` | READY |
-| Referral Creation Coverage | Required referrals that have a referral record | Risk Assessments -> Referrals | referrals linked to `requires_referral=true` assessments / all assessments requiring referral * 100 | READY, but current result exposes a data-quality gap |
-| Missing Required Referrals | Required-referral assessments with no referral record | Risk Assessments LEFT JOIN Referrals | count required assessments with no matching referral | READY as a data-quality KPI |
-| Referral Status Funnel | Referral volume by issued/scheduled/completed status | Referrals | count grouped by `status` | READY |
-| Referral SLA Window | Time allowed between referral issue and due date | Referrals | `due_date - referred_at`, grouped by urgency | READY |
-| Referral SLA Compliance | Referrals completed by due date | Referrals + Follow Ups | completed/closed timestamp compared with due date | CONDITIONAL: authoritative completion timestamp/rule must be confirmed |
-| Follow-up Coverage | Referrals with at least one follow-up | Referrals -> Follow Ups | referrals with follow-up / applicable referrals * 100 | READY after applicable-status rule is agreed |
-| Branch Breakdown | Any approved aggregate KPI segmented by branch | KPI path -> Participation -> Employee -> Branch | group approved KPI by `branch_id` | READY after join-key validation |
-| Department Breakdown | Any approved aggregate KPI segmented by department | KPI path -> Participation -> Employee -> Department | group approved KPI by `department_id` | READY after join-key validation |
-| Organisation Breakdown | Any approved aggregate KPI segmented by organisation | KPI path -> Participation -> Employee/Programme -> Organisation | group approved KPI by `organisation_id` | READY after tenant-safe join validation |
+| KPI | Approved definition | Production calculation / source | Status |
+|---|---|---|---|
+| Registered Employees | Distinct employees registered under the organisation | `COUNT(DISTINCT employees.id)` | APPROVED |
+| Active Employees | Distinct organisation employees whose current status is active | distinct `employees.id` where `status = 'active'` | APPROVED |
+| Programme Participants | Distinct employees registered for a programme | distinct `employee_id` in `programme_participants` with an applicable registration state | APPROVED; schema support added |
+| Attended Participants | Distinct eligible programme participants who actually attended | distinct `employee_id` where `eligibility_status = 'Eligible'` and `attendance_status = 'Attended'` | APPROVED; schema support added |
+| Participation Rate | Percentage of employees eligible for a specific programme who actually attended | attended eligible participants / eligible programme participants * 100 | APPROVED; schema support added |
+| Screening Events | Individual screening/service records | `COUNT(DISTINCT screenings.id)` | APPROVED |
+| Completed Screening Events | Screening/service records that successfully passed the Pulse80 review workflow | distinct `screenings.id` where `status = 'Approved'` | APPROVED |
+| Participants Screened | Unique participants with at least one successfully completed screening service | `COUNT(DISTINCT participant_reference)` where screening `status = 'Approved'`, scoped to organisation/activation | APPROVED |
+| Screening Completion Rate | Completed required participant-service screenings as a percentage of expected required participant-service screenings | approved required screening events / expected required participant-service events * 100 | APPROVED; implementation must establish required participant-service combinations |
+| Service Delivery Volume | Screening activity grouped by canonical service | approved/all screening count grouped by `service_id`, depending on reporting context | APPROVED |
+| Practitioner Screening Activity | Screening events delivered by practitioner | screening count grouped by `practitioner_user_id` | APPROVED |
+| Measurement Coverage | Share of expected service result fields captured for screening services | expected active/required `service_result_fields` compared with captured `screening_result_values` | APPROVED |
+| Measurement Distribution | Aggregate distribution of captured health measurements | aggregate validated result values by service/result field | APPROVED for aggregate analytics |
+| Risk Level Distribution | Count/share of screening outcomes by approved reporting risk category | group `screening_outcomes.reporting_risk_category`; legacy `screening_results.risk_level` must not create a competing definition | APPROVED |
+| Referral Required Count | Screening outcomes where Pulse80 says referral is required | count `screening_outcomes` where `referral_required = true` | APPROVED |
+| Referral Records Created | Required screening outcomes that have a referral record | count matching `referrals.id` | APPROVED; schema support added |
+| Missing Required Referrals | Required screening outcomes without a referral record | `screening_outcomes LEFT JOIN referrals` and count required outcomes with no referral | APPROVED |
+| Referral Creation Coverage | Share of required screening outcomes for which a referral was created | created required referrals / referral-required outcomes * 100 | APPROVED |
+| Referral Status Funnel | Referral volume by workflow status | count referrals grouped by `status` | APPROVED |
+| Referral SLA Compliance | Applicable referrals completed by their due time | completed applicable referrals with `completed_at <= due_at` / applicable due referrals * 100 | APPROVED; urgency/due-time policy must populate `due_at` consistently |
+| Follow-up Coverage | Referrals that have reached the stage where follow-up is required and have at least one qualifying follow-up | distinct applicable referrals with follow-up / applicable referrals * 100 | APPROVED; follow-up applicability must follow the referral workflow |
 
-## Current baseline values that are directly supported by EDA outputs
+## Product decisions approved on 14 September 2026
 
-These are validation baselines for the current sample, not long-term business KPIs:
+### Participation
 
-- Registered employee rows: **28**.
-- Participation rows: **28**.
-- Screening events: **144**.
-- Measurement observations: **264**.
-- Risk assessments: **144**.
-- Risk assessments requiring referral: **37**.
-- Risk assessments not requiring referral: **107**.
-- Referral records: **12**.
-- Missing required referrals: **25** (`37 - 12`).
-- Referral creation coverage: **32.43%** (`12 / 37 * 100`) in the current sample.
-- Referral status: **8 completed, 2 scheduled, 2 issued**.
-- Follow-up records: **8**; all eight completed referrals have a follow-up in the current EDA, while the four issued/scheduled referrals do not yet have one.
+- `Eligible Employees` means employees who qualify for the specific programme, not the organisation's entire workforce and not simply the programme target number.
+- `Target Participants` is a planning target and is not the denominator for Participation Rate.
+- `Attended Participants` means eligible programme participants whose attendance is recorded as attended.
+- Participation Rate = Attended Eligible Participants / Eligible Programme Participants * 100.
 
-## Recommended first implementation set
+### Screening
 
-Implement these first because their definitions are simple, useful, and supported by the current structure:
+The production screening workflow uses `Draft`, `Submitted`, `Under Review`, `Approved`, and `Needs Correction`.
 
-1. `registered_employees`
-2. `programme_participants`
-3. `screening_events`
-4. `completed_screening_events`
-5. `participants_screened`
-6. `risk_level_distribution`
-7. `referral_required_count`
-8. `referral_creation_coverage`
-9. `missing_required_referrals`
-10. `referral_status_funnel`
+Only `Approved` means successfully completed for KPI purposes.
 
-The first end-to-end dashboard proof should be `participants_screened`, with `screening_events` shown separately so the platform never confuses people with service-level screening events.
+- Draft: not completed.
+- Submitted: not completed.
+- Under Review: not completed.
+- Needs Correction: not completed.
+- Approved: completed.
 
-## Rules for implementation
+A participant is counted once in `Participants Screened` when they have at least one Approved screening service. Multiple services for the same participant increase Screening Events, not Participants Screened.
 
-- Every metric must have one canonical definition; frontend code must not invent calculations independently.
-- Counts of people should use distinct person/participation identifiers as defined above, not raw screening row counts.
-- Use the validated relationship map for joins and fail tests when expected foreign-key coverage breaks.
-- Health/risk metrics should use stored `risk_level`, `risk_code`, `requires_referral`, and `rules_version` rather than duplicating clinical rules in dashboard code.
-- Filter by organisation/tenant before aggregation and expose only authorised aggregate results.
-- Dashboard totals must be reconciled to analytics-query outputs in automated tests.
-- Known data-quality failures such as missing required referrals should be surfaced as data-quality/operational exceptions, not silently excluded.
+### Screening completion
+
+Screening Completion Rate measures completion of required participant-service combinations. It must not blindly multiply every participant by every available service where a service is not required for that participant.
+
+### Referral and follow-up
+
+- Referral Required comes from `screening_outcomes.referral_required`.
+- Referral Created requires an actual referral record; referral-required does not by itself mean a referral was created.
+- Missing Required Referrals must remain visible as an operational/data-quality exception.
+- A referral can have multiple follow-ups over time.
+
+## Production schema findings
+
+The live Supabase model differs from the CSV/EDA relationship model. Production uses UUID keys and includes direct organisation, activation, assignment, practitioner and service links on `screenings`. The production screening status workflow is also different from the EDA CSV terminology.
+
+The approved analytics layer must therefore map to production entities rather than copy CSV table names literally.
+
+A migration on the `analytics` branch adds:
+
+- `programme_participants` for programme eligibility, registration and attendance;
+- `referrals` for actual referral records;
+- `referral_follow_ups` for one-to-many follow-up history.
+
+## Implementation rules
+
+- Every metric has one canonical definition.
+- Frontend code must not recalculate canonical KPIs.
+- Person counts use distinct participant/person identifiers, never raw screening-row counts.
+- Tenant/organisation scope is applied before aggregation.
+- Client-facing health analytics are aggregate unless an authorised workflow specifically requires an individual record.
+- Risk analytics use the canonical stored reporting outcome; clinical rules are not duplicated in dashboard code.
+- Source data, analytics query, API response and dashboard value must reconcile in tests.
+- Data-quality exceptions are surfaced rather than silently removed.
 
 ## Next handoff
 
-Data engineering should now turn the first implementation set into reusable SQL/views or an analytics query layer. Backend engineering should expose those approved aggregates through GraphQL/API. Product/dashboard work should consume the API values without recalculating them in the frontend.
+1. Review the KPI-support migration before applying it to Supabase.
+2. Map/update the analytics SQL views to the live production schema.
+3. Implement the first end-to-end KPI: `participants_screened`.
+4. Expose the canonical analytics through GraphQL.
+5. Reconcile database -> analytics -> API -> dashboard.
