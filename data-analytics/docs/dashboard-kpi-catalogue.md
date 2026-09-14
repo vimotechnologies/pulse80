@@ -90,7 +90,8 @@ A migration on the `analytics` branch adds:
 ## Next handoff
 
 1. Review the KPI-support migration before applying it to Supabase.
-2. Map/update the analytics SQL views to the live production schema.
+2. Review the completed source mapping and SQL in [production-database-mapping.md](production-database-mapping.md); run [analytics-testing.md](analytics-testing.md). Unsupported identity, required-service and applicability rules are explicitly listed there.
 3. Implement the first end-to-end KPI: `participants_screened`.
 4. Expose the canonical analytics through GraphQL.
 5. Reconcile database -> analytics -> API -> dashboard.
+
