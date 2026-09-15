@@ -1,5 +1,7 @@
 # Pulse80 Analytics Reconciliation Tests
 
+> Production implementation update: use [production-database-mapping.md](production-database-mapping.md) and [analytics-testing.md](analytics-testing.md). CSV-era table names, counts and query paths below remain EDA/reference material; they do not override the approved KPI catalogue or the mapped production SQL. The internal views use the `analytics` schema. API/dashboard integration is still a separate acceptance gate.
+
 ## Purpose
 
 These tests prove that dashboard numbers mean what Pulse80 says they mean. They are the final gate from source data to dashboard analytics.
@@ -126,3 +128,4 @@ The first analytics slice is done when:
 `Source data -> validated joins -> analytics query -> GraphQL -> dashboard`
 
 returns the same approved metric for the same scope, with tenant isolation and no hidden data-quality exceptions.
+

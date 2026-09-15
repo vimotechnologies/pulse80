@@ -1,5 +1,7 @@
 # Pulse80 Analytics API Contract
 
+> Production implementation update: use [production-database-mapping.md](production-database-mapping.md) and [analytics-testing.md](analytics-testing.md). CSV-era table names, counts and query paths below remain EDA/reference material; they do not override the approved KPI catalogue or the mapped production SQL. The internal views use the `analytics` schema. API/dashboard integration is still a separate acceptance gate.
+
 ## Purpose
 
 This contract defines how approved analytics should move from the database/query layer into GraphQL and the dashboard. It prevents the frontend from creating its own definitions.
@@ -110,3 +112,4 @@ That mixes service-level screening events with people. Under the analytics contr
 - Data engineering owns KPI definitions and analytics query correctness.
 - Backend engineering owns authorisation, API contract and reliable query execution.
 - Frontend/product owns presentation and filtering UX, not metric formulas.
+

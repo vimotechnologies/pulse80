@@ -1,5 +1,7 @@
 # Pulse80 Join Validation Contract
 
+> Production implementation update: use [production-database-mapping.md](production-database-mapping.md) and [analytics-testing.md](analytics-testing.md). CSV-era table names, counts and query paths below remain EDA/reference material; they do not override the approved KPI catalogue or the mapped production SQL. The internal views use the `analytics` schema. API/dashboard integration is still a separate acceptance gate.
+
 ## Purpose
 
 This is the implementation gate between EDA and dashboard analytics. It defines which joins are allowed, what cardinality is expected, and what must fail validation before a KPI is trusted.
@@ -88,3 +90,4 @@ A dashboard KPI is production-ready only when:
 - the metric definition is in `dashboard-kpi-catalogue.md`;
 - known exceptions are explicitly reported;
 - tenant/RLS controls are applied before aggregate data leaves the database/backend.
+

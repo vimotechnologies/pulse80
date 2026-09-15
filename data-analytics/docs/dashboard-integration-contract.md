@@ -1,5 +1,7 @@
 # Pulse80 Dashboard Integration Contract
 
+> Production implementation update: use [production-database-mapping.md](production-database-mapping.md) and [analytics-testing.md](analytics-testing.md). CSV-era table names, counts and query paths below remain EDA/reference material; they do not override the approved KPI catalogue or the mapped production SQL. The internal views use the `analytics` schema. API/dashboard integration is still a separate acceptance gate.
+
 ## Purpose
 
 This is the handoff from analytics/backend to the Pulse80 dashboard. It defines what the UI may display and how each number must be interpreted.
@@ -61,3 +63,4 @@ A dashboard metric is accepted when:
 - zero-data and error states are different;
 - source-to-dashboard reconciliation passes;
 - no employee-level health detail is leaked into aggregate client views.
+
