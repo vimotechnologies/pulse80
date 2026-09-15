@@ -9,6 +9,7 @@ export type ClientDashboardStats = {
   wellnessRiskScore: number;
   wellnessRisk: string;
   approvedScreenings: number;
+  participantsScreened: number;
   screeningParticipation: number;
   upcomingActivations: number;
 };
@@ -20,6 +21,7 @@ const clientDashboardStatsQuery = /* GraphQL */ `
       wellnessRiskScore
       wellnessRisk
       approvedScreenings
+      participantsScreened
       screeningParticipation
       upcomingActivations
     }
