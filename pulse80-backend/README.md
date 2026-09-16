@@ -33,3 +33,7 @@ query {
 - `npm run start` runs the compiled backend.
 - `npm run supabase:types` regenerates TypeScript types from the linked Supabase
   project.
+
+### Previewing the client dashboard with development data
+
+For a development Supabase project only, run `supabase/seed-client-dashboard.sql` in the Supabase SQL editor after applying migrations. It uses existing organisations and practitioner assignments, creates a scheduled activation, and inserts approved screening records with department and date values. The dashboard then reads those records through the normal GraphQL path.
