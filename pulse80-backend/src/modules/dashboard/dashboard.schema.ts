@@ -6,7 +6,18 @@ export const dashboardTypeDefs = /* GraphQL */ `
     upcomingAssignments: Int!
   }
 
+  type ClientUpcomingActivity {
+    id: ID!
+    title: String!
+    startsAt: String!
+    location: String!
+    status: String!
+  }
+
   type OrganisationDashboardStats {
+    organisationName: String!
+    refreshedAt: String!
+    upcomingActivities: [ClientUpcomingActivity!]!
     workforceSize: Int!
     wellnessRiskScore: Int!
     wellnessRisk: String!

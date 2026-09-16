@@ -85,11 +85,11 @@ export class DashboardService {
 
   async getOrganisationStats(organisationId: string) {
     const now = new Date().toISOString();
-    const [organisation, approvedScreenings, screeningCount, upcomingActivations, participantsScreened] =
+    const [organisation, approvedScreenings, upcomingActivations, participantsScreened, activities] =
       await Promise.all([
         this.supabase
           .from("organisations")
-          .select("workforce_size, wellness_risk_score")
+          .select("name, workforce_size, wellness_risk_score")
           .eq("id", organisationId)
           .single(),
         this.supabase
@@ -98,25 +98,33 @@ export class DashboardService {
           .eq("organisation_id", organisationId)
           .eq("status", "Approved"),
         this.supabase
-          .from("screenings")
-          .select("*", { count: "exact", head: true })
-          .eq("organisation_id", organisationId),
-        this.supabase
           .from("activations")
           .select("*", { count: "exact", head: true })
           .eq("organisation_id", organisationId)
           .gte("starts_at", now)
           .in("status", ["Scheduled", "Planning"]),
         this.countParticipantsScreened(organisationId),
+        this.supabase.from("activations")
+          .select("id, title, starts_at, location, status")
+          .eq("organisation_id", organisationId)
+          .gte("starts_at", now)
+          .in("status", ["Scheduled", "Planning"])
+          .order("starts_at").order("id").limit(5),
       ]);
 
     if (organisation.error) throw new Error(organisation.error.message);
 
     const workforceSize = organisation.data.workforce_size ?? 0;
     const wellnessRiskScore = organisation.data.wellness_risk_score;
-    const totalScreenings = requireCount(screeningCount);
+    if (activities.error) throw new Error(activities.error.message);
 
     return {
+      organisationName: organisation.data.name,
+      refreshedAt: now,
+      upcomingActivities: (activities.data ?? []).map(activity => ({
+        id: activity.id, title: activity.title, startsAt: activity.starts_at,
+        location: activity.location, status: activity.status,
+      })),
       workforceSize,
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
@@ -124,7 +132,7 @@ export class DashboardService {
       participantsScreened,
       screeningParticipation:
         workforceSize > 0
-          ? Math.min(100, Math.round((totalScreenings / workforceSize) * 100))
+          ? Math.min(100, Math.round((participantsScreened / workforceSize) * 100))
           : 0,
       upcomingActivations: requireCount(upcomingActivations),
     };

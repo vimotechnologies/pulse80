@@ -5,6 +5,9 @@ import { graphqlRequest } from "@/lib/graphql/client";
 import { ORGANISATION_COOKIE } from "@/lib/auth/session";
 
 export type ClientDashboardStats = {
+  organisationName: string;
+  refreshedAt: string;
+  upcomingActivities: { id: string; title: string; startsAt: string; location: string; status: string }[];
   workforceSize: number;
   wellnessRiskScore: number;
   wellnessRisk: string;
@@ -17,6 +20,9 @@ export type ClientDashboardStats = {
 const clientDashboardStatsQuery = /* GraphQL */ `
   query OrganisationDashboardStats {
     organisationDashboardStats {
+      organisationName
+      refreshedAt
+      upcomingActivities { id title startsAt location status }
       workforceSize
       wellnessRiskScore
       wellnessRisk
