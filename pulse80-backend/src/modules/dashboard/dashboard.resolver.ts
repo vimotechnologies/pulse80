@@ -1,3 +1,4 @@
+import type { DashboardPeriod } from "./participation.js";
 import type { GraphQLContext } from "../../graphql/context.js";
 import {
   requirePermission,
@@ -18,13 +19,14 @@ export const dashboardResolvers = {
     },
     organisationDashboardStats: async (
       _parent: unknown,
-      _arguments: unknown,
+      args: { period?: DashboardPeriod | null },
       context: GraphQLContext,
     ) => {
       const { organisationId } = requirePermission(context, "analytics:read");
 
       return new DashboardService(context.adminSupabase).getOrganisationStats(
         organisationId,
+        args.period ?? "ALL_TIME",
       );
     },
   },

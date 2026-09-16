@@ -14,7 +14,23 @@ export const dashboardTypeDefs = /* GraphQL */ `
     status: String!
   }
 
+  enum DashboardPeriod {
+    ALL_TIME
+    THIS_YEAR
+    THIS_QUARTER
+  }
+  type MonthlyParticipation {
+    month: String!
+    participants: Int!
+  }
+  type DepartmentParticipation {
+    department: String!
+    participants: Int!
+    months: [MonthlyParticipation!]!
+  }
   type OrganisationDashboardStats {
+    monthlyParticipation: [MonthlyParticipation!]!
+    departmentParticipation: [DepartmentParticipation!]!
     organisationName: String!
     refreshedAt: String!
     upcomingActivities: [ClientUpcomingActivity!]!
@@ -29,6 +45,8 @@ export const dashboardTypeDefs = /* GraphQL */ `
 
   extend type Query {
     adminDashboardStats: AdminDashboardStats!
-    organisationDashboardStats: OrganisationDashboardStats!
+    organisationDashboardStats(
+      period: DashboardPeriod = ALL_TIME
+    ): OrganisationDashboardStats!
   }
 `;
