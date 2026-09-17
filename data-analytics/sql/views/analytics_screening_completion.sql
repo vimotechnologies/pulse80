@@ -1,3 +1,4 @@
+
 CREATE OR REPLACE VIEW analytics_screening_completion AS
 WITH required_screenings AS (
     SELECT DISTINCT
