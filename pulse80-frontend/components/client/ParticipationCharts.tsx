@@ -23,7 +23,19 @@ const monthLabel = (month: string) =>
     timeZone: "UTC",
   }).format(new Date(`${month}-01T00:00:00Z`));
 const panel =
-  "min-w-0 rounded-2xl border border-card-border bg-white p-5 shadow-sm sm:p-6";
+  "min-w-0 rounded-xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6";
+
+const chartTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-xl">
+      <p className="font-medium text-slate-900">{label}</p>
+      <p className="mt-1 text-slate-500">
+        {Number(payload[0].value).toLocaleString()} employees screened
+      </p>
+    </div>
+  );
+};
 
 export function ParticipationCharts({
   monthlyParticipation,
@@ -52,7 +64,7 @@ export function ParticipationCharts({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Participation at a glance</h2>
+          <h2 className="text-base font-semibold tracking-tight text-slate-950">\n            Participation at a glance\n          </h2>
           <p className="mt-1 text-xs text-black/60">
             Explore approved screening participation. No individual health
             results.
@@ -60,7 +72,7 @@ export function ParticipationCharts({
         </div>
         <div
           aria-label="Visualisation display"
-          className="flex rounded-lg border border-card-border bg-white p-1"
+          className="flex rounded-lg border border-slate-200 bg-slate-50/80 p-1"
         >
           {(["chart", "table"] as const).map((mode) => (
             <button
@@ -68,7 +80,7 @@ export function ParticipationCharts({
               type="button"
               aria-pressed={view === mode}
               onClick={() => setView(mode)}
-              className={`rounded-md px-4 py-2 text-xs font-medium ${view === mode ? "bg-navy text-white" : "text-black hover:bg-slate-50"}`}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${view === mode ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
             >
               {mode === "chart" ? "Charts" : "View data"}
             </button>
@@ -77,7 +89,7 @@ export function ParticipationCharts({
       </div>
       {!hasData ? (
         <section className={panel}>
-          <h3 className="text-sm font-semibold">
+          <h3 className="text-sm font-semibold tracking-tight text-slate-950">
             No approved screenings in this period
           </h3>
           <p className="mt-2 text-xs leading-6 text-black/65">
@@ -96,7 +108,7 @@ export function ParticipationCharts({
                 <div>
                   <h3
                     id="department-chart-title"
-                    className="text-sm font-semibold"
+                    className="text-sm font-semibold tracking-tight text-slate-950"
                   >
                     Employees screened by department
                   </h3>
@@ -109,7 +121,7 @@ export function ParticipationCharts({
                   <select
                     value={sort}
                     onChange={(event) => setSort(event.target.value)}
-                    className="ml-2 rounded-lg border border-card-border bg-white p-2"
+                    className="ml-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-300"
                   >
                     <option value="most">Most screened</option>
                     <option value="least">Fewest screened</option>
@@ -133,11 +145,11 @@ export function ParticipationCharts({
                         margin={{ left: 0, right: 28, top: 4, bottom: 4 }}
                         accessibilityLayer
                       >
-                        <CartesianGrid horizontal={false} stroke="#edf0f4" />
+                        <CartesianGrid horizontal={false} stroke="#eef2f7" />
                         <XAxis
                           type="number"
                           allowDecimals={false}
-                          tick={{ fontSize: 11, fill: "#111" }}
+                          tick={{ fontSize: 11, fill: "#64748b" }}
                           axisLine={false}
                           tickLine={false}
                         />
@@ -145,7 +157,7 @@ export function ParticipationCharts({
                           type="category"
                           dataKey="department"
                           width={110}
-                          tick={{ fontSize: 11, fill: "#111" }}
+                          tick={{ fontSize: 11, fill: "#64748b" }}
                           tickFormatter={(value) =>
                             String(value).length > 16
                               ? `${String(value).slice(0, 15)}…`
@@ -224,7 +236,7 @@ export function ParticipationCharts({
                 multiple departments can appear in each.
               </p>
             </section>
-            <aside className={`${panel} border-t-4 border-t-primary`}>
+            <aside className={`${panel} border-t-2 border-t-slate-900`}>
               <p className="text-xs font-semibold uppercase tracking-wider text-black/50">
                 Explore a department
               </p>
@@ -236,7 +248,7 @@ export function ParticipationCharts({
               </label>
               <select
                 id="department-filter"
-                className="mt-2 w-full rounded-lg border border-card-border bg-white p-3 text-sm"
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white p-2.5 text-sm shadow-sm outline-none focus:ring-2 focus:ring-slate-300"
                 value={department}
                 onChange={(event) => setDepartment(event.target.value)}
               >
@@ -251,7 +263,7 @@ export function ParticipationCharts({
                 {selected?.department ?? "Organisation overview"}
               </h3>
               {selected ? (
-                <p className="mt-3 text-3xl font-semibold">
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                   {selected.participants.toLocaleString()}
                   <span className="mt-1 block text-xs font-normal text-black/60">
                     unique participants in this period
@@ -284,7 +296,7 @@ export function ParticipationCharts({
           <section className={panel} aria-labelledby="monthly-chart-title">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 id="monthly-chart-title" className="text-sm font-semibold">
+                <h3 id="monthly-chart-title" className="text-sm font-semibold tracking-tight text-slate-950">
                   Screening participation over time
                 </h3>
                 <p className="mt-1 text-xs text-black/60">
@@ -310,16 +322,16 @@ export function ParticipationCharts({
                       margin={{ left: -20, right: 10, top: 10, bottom: 8 }}
                       accessibilityLayer
                     >
-                      <CartesianGrid vertical={false} stroke="#edf0f4" />
+                      <CartesianGrid vertical={false} stroke="#eef2f7" />
                       <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 11, fill: "#111" }}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
                         allowDecimals={false}
-                        tick={{ fontSize: 11, fill: "#111" }}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
                         axisLine={false}
                         tickLine={false}
                       />
