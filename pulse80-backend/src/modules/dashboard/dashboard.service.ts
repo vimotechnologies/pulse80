@@ -55,9 +55,37 @@ export class DashboardService {
     };
   }
 
+  private async countParticipantsScreened(organisationId: string) {
+    const participants = new Set<string>();
+    let afterId: string | undefined;
+
+    // Page by the unique ID so the Data API row limit cannot truncate the count.
+    for (;;) {
+      let query = this.supabase
+        .from("screenings")
+        .select("id, participant_reference")
+        .eq("organisation_id", organisationId)
+        .eq("status", "Approved")
+        .order("id")
+        .limit(1000);
+      if (afterId) query = query.gt("id", afterId);
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (!data?.length) break;
+
+      for (const screening of data) {
+        participants.add(screening.participant_reference);
+        afterId = screening.id;
+      }
+    }
+
+    return participants.size;
+  }
+
   async getOrganisationStats(organisationId: string) {
     const now = new Date().toISOString();
-    const [organisation, approvedScreenings, screeningCount, upcomingActivations] =
+    const [organisation, approvedScreenings, screeningCount, upcomingActivations, participantsScreened] =
       await Promise.all([
         this.supabase
           .from("organisations")
@@ -79,6 +107,7 @@ export class DashboardService {
           .eq("organisation_id", organisationId)
           .gte("starts_at", now)
           .in("status", ["Scheduled", "Planning"]),
+        this.countParticipantsScreened(organisationId),
       ]);
 
     if (organisation.error) throw new Error(organisation.error.message);
@@ -92,6 +121,7 @@ export class DashboardService {
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
       approvedScreenings: requireCount(approvedScreenings),
+      participantsScreened,
       screeningParticipation:
         workforceSize > 0
           ? Math.min(100, Math.round((totalScreenings / workforceSize) * 100))
