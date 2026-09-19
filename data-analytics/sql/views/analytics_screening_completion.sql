@@ -29,7 +29,8 @@
 -- ============================================================
 
 
-CREATE OR REPLACE VIEW public.analytics_screening_completion AS
+CREATE OR REPLACE VIEW public.analytics_screening_completion
+WITH (security_invoker = true) AS
 
 
 WITH required_screenings AS (
