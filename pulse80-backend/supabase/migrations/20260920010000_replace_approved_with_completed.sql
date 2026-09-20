@@ -10,6 +10,13 @@ update public.screenings
 set status = 'Completed'
 where status = 'Approved';
 
+-- Migrate screenings submitted under the legacy workflow.
+-- These records were submitted but never reviewed, so they belong
+-- in the current Under Review state rather than Completed.
+update public.screenings
+set status = 'Under Review'
+where status = 'Submitted';
+
 alter table public.screenings
   add constraint screenings_status_check
   check (
