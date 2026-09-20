@@ -88,7 +88,7 @@ export async function captureScreeningBatch(forms: ScreeningCaptureForm[]) {
 
 export async function reviewScreening(
   id: string,
-  status: "Approved" | "Needs Correction",
+  status: "Completed" | "Needs Correction",
   reviewNote: string,
   errors: Array<{ field: string; message: string }> = [],
 ) {

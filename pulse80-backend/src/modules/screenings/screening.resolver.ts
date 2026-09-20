@@ -18,7 +18,7 @@ const captureSchema = z.object({
 });
 const correctionSchema = captureSchema.omit({ assignmentId: true });
 const reviewSchema = z.object({
-  status: z.enum(["Approved", "Needs Correction"]),
+  status: z.enum(["Completed", "Needs Correction"]),
   reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null),
   errors: z.array(z.object({
     field: z.string().trim().min(1).max(120),

@@ -24,7 +24,7 @@ export class PractitionerDashboardService {
 
   async getDashboard(userId: string) {
     const now = new Date().toISOString();
-    const completedStatuses = ["Under Review", "Approved"];
+    const completedStatuses = ["Completed"];
     const [assignmentsResult, assignmentCountResult, completedCountResult, screeningCountResult,
       pendingCountResult, correctionsResult, alertsResult] = await Promise.all([
       this.supabase

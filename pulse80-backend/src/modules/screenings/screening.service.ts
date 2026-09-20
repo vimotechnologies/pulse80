@@ -141,7 +141,7 @@ export class ScreeningService {
   async review(
     id: string,
     reviewerId: string,
-    status: "Approved" | "Needs Correction",
+    status: "Completed" | "Needs Correction",
     reviewNote: string | null,
     errors: Array<{ field: string; message: string }>,
   ) {
