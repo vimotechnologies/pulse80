@@ -1,0 +1,130 @@
+# Analytics View Documentation: `screening_participation_rate`
+
+## 1. Overview & Purpose
+
+The `screening_participation_rate` view calculates organisation-level participation metrics for health screening programmes. It measures the percentage of eligible programme participants who successfully completed an approved screening, incorporating station-level deduplication, multi-table schema fallbacks, and zero-denominator safety logic.
+
+---
+
+## 2. SQL View Definition
+
+```sql
+CREATE OR REPLACE VIEW screening_participation_rate AS
+
+WITH eligible_participations AS (
+    SELECT DISTINCT
+        p.participation_id,
+        COALESCE(e.organisation_id, pr.organisation_id) AS organisation_id
+    FROM participations p
+    LEFT JOIN employees e
+        ON e.employee_id = p.employee_id
+    LEFT JOIN programmes pr
+        ON pr.programme_id = p.programme_id
+    WHERE 
+        LOWER(TRIM(p.attendance_status)) = 'attended'
+        AND COALESCE(e.organisation_id, pr.organisation_id) IS NOT NULL
+),
+
+approved_screenings AS (
+    SELECT DISTINCT
+        s.participation_id
+    FROM screenings s
+    INNER JOIN eligible_participations ep
+        ON ep.participation_id = s.participation_id
+    WHERE
+        LOWER(TRIM(s.status)) IN ('completed', 'approved')
+)
+
+SELECT
+    ep.organisation_id,
+    
+    -- Denominator: Total distinct eligible participants
+    COUNT(DISTINCT ep.participation_id) AS eligible_participant_count,
+    
+    -- Numerator: Total distinct eligible participants with an approved/completed screening
+    COUNT(DISTINCT aps.participation_id) AS screened_participant_count,
+    
+    -- Participation Rate Percentage
+    ROUND(
+        (
+            COUNT(DISTINCT aps.participation_id)::NUMERIC 
+            / NULLIF(COUNT(DISTINCT ep.participation_id), 0)
+        ) * 100.0,
+        2
+    ) AS screening_participation_rate_pct
+
+FROM eligible_participations ep
+LEFT JOIN approved_screenings aps
+    ON aps.participation_id = ep.participation_id
+GROUP BY
+    ep.organisation_id;
+```
+
+---
+
+## 3. Key Calculations & Formulas
+
+### Core Calculation
+
+$$
+\text{Participation Rate (\%)} = \left( \frac{\text{Screened Eligible Participants}}{\text{Total Eligible Participants}} \right) \times 100
+$$
+
+### Mathematical Definitions
+
+1. **Total Eligible Participants (Denominator):**
+   $$
+   \text{Denominator} = \vert{} \{ p \in \text{Participations} \mid \text{attendance\_status}(p) = \text{'attended'} \land \text{org}(p) = o \} \vert{}
+   $$
+
+2. **Screened Participants (Numerator):**
+   $$
+   \text{Numerator} = \vert{} \{ p \in \text{Participations}_{\text{eligible}} \mid \exists s \in \text{Screenings}(s.\text{participation\_id} = p.\text{participation\_id} \land \text{status}(s) \in \{\text{'completed'}, \text{'approved'}\}) \} \vert{}
+   $$
+
+---
+
+## 4. Robustness & Production Safeguards
+
+### A. Multi-Station Deduplication (6x Inflation Prevention)
+
+* **Context:** A single screening visit produces up to 6 station-level records (`PS-001` through `PS-006`) in the `screenings` table.
+* **Safeguard:** Using `COUNT(DISTINCT participation_id)` in both CTEs and the outer aggregation guarantees that multiple station check-ins for one visit count as exactly one screened participant.
+
+### B. Forward-Compatible Status Matching
+
+* **Context:** Ticket requirements specify `status = 'approved'`, whereas current production extracts record screenings as `'completed'`.
+* **Safeguard:** Evaluates status case-insensitively using `LOWER(TRIM(s.status)) IN ('completed', 'approved')`. This supports existing production data while seamlessly accommodating future status schema transitions.
+
+### C. Dynamic Organisation Resolution
+
+* **Context:** Potential migration of organisation ownership between `employees` and `programmes` tables.
+* **Safeguard:** Employs `COALESCE(e.organisation_id, pr.organisation_id)` to resolve the organization ID dynamically from either relationship.
+
+### D. Zero-Denominator Handling
+
+* **Context:** Divisions by zero occur when an organisation has no eligible participants.
+* **Safeguard:** Implements `NULLIF(COUNT(...), 0)` so that zero-denominator cohorts evaluate to `NULL` rather than `0.00%`. This preserves the analytical distinction between zero attendance and an absent population.
+
+---
+
+## 5. Schema & Field Assumptions
+
+| Table | Field | Type | Rule / Purpose |
+| :--- | :--- | :--- | :--- |
+| `participations` | `participation_id` | `VARCHAR` / `UUID` | Unique identifier for a participant's visit. |
+| `participations` | `employee_id` | `VARCHAR` / `UUID` | Links participation to the employee record. |
+| `participations` | `programme_id` | `VARCHAR` / `UUID` | Links participation to the health programme. |
+| `participations` | `attendance_status` | `VARCHAR` | Checked for `'attended'` to determine eligibility. |
+| `employees` | `organisation_id` | `VARCHAR` / `UUID` | Primary source for organization context. |
+| `programmes` | `organisation_id` | `VARCHAR` / `UUID` | Secondary fallback source for organization context. |
+| `screenings` | `participation_id` | `VARCHAR` / `UUID` | Foreign key linking station records to participations. |
+| `screenings` | `status` | `VARCHAR` | Checked for `'completed'` or `'approved'`. |
+
+---
+
+## 6. Review & Validation Checklist (@Thato)
+
+* [ ] Confirm if `status = 'completed'` in `screenings` is the exact business equivalent of an approved screening across all reporting views.
+* [ ] Confirm whether `attendance_status = 'attended'` strictly defines participant eligibility across the platform.
+* [ ] Verify primary organization assignment between `employees` and `programmes`.
