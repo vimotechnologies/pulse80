@@ -16,7 +16,19 @@ const captureSchema = z.object({
   glucoseMmolL: nullableNumber(0.5, 50), cholesterolMmolL: nullableNumber(0.5, 30),
   heightCm: nullableNumber(50, 260), weightKg: nullableNumber(2, 500),
 });
-const reviewSchema = z.object({ status: z.enum(["Approved", "Needs Correction"]), reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null) });
+const correctionSchema = captureSchema.omit({ assignmentId: true });
+const reviewSchema = z.object({
+  status: z.enum(["Completed", "Needs Correction"]),
+  reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null),
+  errors: z.array(z.object({
+    field: z.string().trim().min(1).max(120),
+    message: z.string().trim().min(2).max(500),
+  })).max(30).optional().default([]),
+}).superRefine((value, context) => {
+  if (value.status === "Needs Correction" && value.errors.length === 0) {
+    context.addIssue({ code: "custom", message: "At least one correction error is required." });
+  }
+});
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const parsed = schema.safeParse(value);
@@ -66,10 +78,20 @@ export const screeningResolvers = {
       const { user } = requireAuthenticatedUser(context);
       return shape(await new ScreeningService(context.adminSupabase).capture(user.id, parse(captureSchema, arguments_.input) as ScreeningCaptureInput));
     },
+    resubmitScreening: async (_parent: unknown, arguments_: { id: string; input: unknown }, context: GraphQLContext) => {
+      const { user } = requireAuthenticatedUser(context);
+      return shape(await new ScreeningService(context.adminSupabase).resubmit(
+        z.uuid().parse(arguments_.id),
+        user.id,
+        parse(correctionSchema, arguments_.input),
+      ));
+    },
     reviewScreening: async (_parent: unknown, arguments_: { id: string; input: unknown }, context: GraphQLContext) => {
       const { user } = requirePlatformPermission(context, "screening:review");
       const input = parse(reviewSchema, arguments_.input);
-      return shape(await new ScreeningService(context.adminSupabase).review(z.uuid().parse(arguments_.id), user.id, input.status, input.reviewNote));
+      return shape(await new ScreeningService(context.adminSupabase).review(
+        z.uuid().parse(arguments_.id), user.id, input.status, input.reviewNote, input.errors,
+      ));
     },
   },
 };

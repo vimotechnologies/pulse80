@@ -71,7 +71,9 @@ export async function graphqlRequest<T>(
   const payload = (await response.json()) as GraphQLResponse<T>;
 
   if (!response.ok || payload.errors?.length || !payload.data) {
-    throw new Error(payload.errors?.[0]?.extensions?.code ?? "GRAPHQL_REQUEST_FAILED");
+    const graphQLError = payload.errors?.[0];
+    const errorCode = graphQLError?.extensions?.code ?? "GRAPHQL_REQUEST_FAILED";
+    throw new Error(errorCode === "BAD_USER_INPUT" && graphQLError?.message ? graphQLError.message : errorCode);
   }
 
   return payload.data;

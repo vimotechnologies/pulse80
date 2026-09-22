@@ -12,6 +12,7 @@ import { ActionButton } from "@/components/portal/ActionButton";
 import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { FormInput } from "@/components/portal/FormInput";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 
 export function PractitionerSettingsPage({ initialProfile }: { initialProfile: PractitionerProfile }) {
   const [profile, setProfile] = useState(initialProfile);
@@ -125,11 +126,7 @@ export function PractitionerSettingsPage({ initialProfile }: { initialProfile: P
         </div>
       </DashboardWidget>
 
-      {message ? (
-        <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-card-border bg-white px-4 py-3 text-sm font-semibold text-navy shadow-xl">
-          {message}
-        </div>
-      ) : null}
+      <ToastMessage message={message} />
     </div>
   );
 }

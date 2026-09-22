@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "TMPDIR=/tmp tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/modules/practitioners/practitioner-dashboard.service.test.js",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "supabase:types": "npx supabase@2.115.0 gen types typescript --linked > src/generated/database.types.ts"
