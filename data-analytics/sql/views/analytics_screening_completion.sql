@@ -18,9 +18,9 @@
 -- 3. Only services specifically required for a participant
 --    are included in the expected screening count.
 -- 4. A required screening is completed only when there is
---    at least one matching screening with status = 'Approved'.
+--    at least one matching screening with status = 'Completed'.
 -- 5. Draft, Submitted, Under Review, Needs Correction, and
---    other non-Approved records do not count as completed.
+--    other non-Completed records do not count as completed.
 -- 6. Multiple screening records for the same participant and
 --    required service can contribute at most one completion.
 -- 7. Screenings for services that were not required for the
@@ -95,7 +95,7 @@ screening_status AS (
 
         -- EXISTS is used instead of counting screening records.
         --
-        -- This means that even if several Approved records exist
+        -- This means that even if several Completed records exist
         -- for the same participant and service, the requirement
         -- can contribute only one completion.
         CASE
@@ -115,8 +115,8 @@ screening_status AS (
                   -- The screening must be for the required service.
                   AND s.service_id = rs.service_id
 
-                  -- Only Approved means successfully completed.
-                  AND s.status = 'Approved'
+                  -- Only Completed means successfully completed.
+                  AND s.status = 'Completed'
             )
             THEN 1
             ELSE 0
@@ -136,7 +136,7 @@ SELECT
     -- Total number of required participant-service combinations.
     COUNT(*) AS expected_required_screenings,
 
-    -- Number of those requirements that have an Approved screening.
+    -- Number of those requirements that have an Completed screening.
     SUM(is_completed) AS completed_required_screenings,
 
     -- Completion percentage rounded to two decimal places.
@@ -160,4 +160,4 @@ GROUP BY organisation_id;
 -- Store the important business rules with the database view so
 -- future developers can understand what this KPI represents.
 COMMENT ON VIEW public.analytics_screening_completion IS
-'Calculates screening completion by organisation. Expected screenings are required services assigned to Eligible and Registered programme participants. A requirement is completed when at least one matching screening has Approved status. Multiple screening records for the same participant-service requirement count as one completion.';
+'Calculates screening completion by organisation. Expected screenings are required services assigned to Eligible and Registered programme participants. A requirement is completed when at least one matching screening has Completed status. Multiple screening records for the same participant-service requirement count as one completion.';

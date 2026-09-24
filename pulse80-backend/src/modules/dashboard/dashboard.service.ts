@@ -65,7 +65,7 @@ export class DashboardService {
         .from("screenings")
         .select("id, participant_reference")
         .eq("organisation_id", organisationId)
-        .eq("status", "Approved")
+        .eq("status", "Completed")
         .order("id")
         .limit(1000);
       if (afterId) query = query.gt("id", afterId);
