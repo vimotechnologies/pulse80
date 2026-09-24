@@ -3,39 +3,6 @@ Automated tests for the "Participants Screened" calculation.
 
 Grounded in Participations_EDA.ipynb and Screenings_EDA.ipynb
 ---------------------------------------------------------------
-These EDAs ran against real Screenings/Participations/Measurements/
-Practitioners/Programmes extracts and confirmed the following, which this
-test file relies on directly:
-
-- screening_id is a clean, unique primary key (Screenings_EDA, Section 1).
-- (participation_id, programme_service_id) is a unique natural key on
-  Screenings, no duplicate service captures (Screenings_EDA, Section 9).
-- (employee_id, programme_id) is a unique natural key on Participations,
-  an employee is never registered twice for the same programme
-  (Participations_EDA, Section 2).
-- Every participation in the sample carries exactly 6 screening rows (one
-  per programme_service_id station PS-001..PS-006) confirming the "several
-  screening services, counted once" scenario is a real, common shape, not
-  an edge case (Screenings_EDA, Section 3).
-- screenings.status is 100% 'completed' in the sampled extract, there is
-  no 'approved' value in the real data (Screenings_EDA, Section 5). This
-  test file therefore filters on status = 'completed', matching
-  002_participants_screened_calculation.sql. See the ACCEPTED STATUS
-  ASSUMPTION note in that file.
-- Because the sampled extract has zero variance on status, organisation
-  and consent fields, the "exclusion" and "multi-org isolation" scenarios
-  below are NECESSARILY SYNTHETIC (fabricated fixtures with a 'pending'/
-  'rejected' status and a second organisation), the EDA explicitly flags
-  these paths as "untestable against this data alone". They validate the
-  query LOGIC, not a real observed data pattern; re-validate against real
-  multi-status, multi-org data once it exists.
-- A known data-quality defect exists in screened_at: 18/144 rows (6/24
-  visits) are exactly -60 minutes off due to an inferred hour-rollover bug
-  (Screenings_EDA, Section 8). test_hour_rollover_defect_does_not_break_the_count
-  below reproduces that defect on a fixture and confirms it does not change
-  who gets counted, only that period filters drawn tightly around the
-  affected hour are a known risk (documented, not "fixed", here).
-
 Why SQLite instead of a live Supabase/Postgres connection
 -----------------------------------------------------------
 This sandbox has no network access and no running Postgres instance, so
