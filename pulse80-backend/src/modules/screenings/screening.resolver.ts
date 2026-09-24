@@ -9,11 +9,24 @@ import { FlexibleScreeningService } from "./flexible-screening.service.js";
 const nullableNumber = (minimum: number, maximum: number) => z.number().min(minimum).max(maximum).nullish().transform((value) => value ?? null);
 const captureSchema = z.object({ assignmentId: z.uuid(), participantReference: z.string().trim().min(2).max(80), department: z.string().trim().max(120).nullish().transform((v)=>v||null), consentConfirmed: z.literal(true), practitionerNote: z.string().trim().max(1000).nullish().transform((v)=>v||null), systolicMmhg: nullableNumber(40,300), diastolicMmhg: nullableNumber(20,200), glucoseMmolL: nullableNumber(.5,50), cholesterolMmolL: nullableNumber(.5,30), heightCm: nullableNumber(50,260), weightKg: nullableNumber(2,500) });
 const correctionSchema = captureSchema.omit({ assignmentId: true });
-const valueSchema = z.object({ fieldId: z.uuid(), valueNumber: z.number().finite().nullish(), valueText: z.string().max(2000).nullish(), valueBoolean: z.boolean().nullish(), valueCode: z.string().max(200).nullish() });
-const flexibleSchema = z.object({ assignmentId: z.uuid(), serviceId: z.uuid(), participantReference: z.string().trim().min(2).max(80), department: z.string().trim().max(120).nullish(), consentConfirmed: z.literal(true), practitionerNote: z.string().trim().max(1000).nullish(), values: z.array(valueSchema).min(1).max(100), outcomeSummary: z.string().trim().max(1000).nullish(), referralRequired: z.boolean().optional(), escalationRequired: z.boolean().optional(), reportingRiskCategory: z.string().trim().max(100).nullish() });
-const reviewSchema = z.object({ status: z.enum(["Approved","Needs Correction"]), reviewNote: z.string().trim().max(1000).nullish().transform((v)=>v||null), errors: z.array(z.object({field:z.string().trim().min(1).max(120),message:z.string().trim().min(2).max(500)})).max(30).optional().default([]) }).superRefine((v,c)=>{ if(v.status==="Needs Correction"&&!v.errors.length)c.addIssue({code:"custom",message:"At least one correction error is required."}); });
-function parse<T>(schema:z.ZodType<T>,value:unknown):T { const parsed=schema.safeParse(value); if(!parsed.success) throw new GraphQLError(parsed.error.issues[0]?.message??"Invalid screening details.",{extensions:{code:"BAD_USER_INPUT"}}); return parsed.data; }
-const flexible = (context: GraphQLContext) => new FlexibleScreeningService(context.adminSupabase as unknown as SupabaseClient<any>);
+const reviewSchema = z.object({
+  status: z.enum(["Completed", "Needs Correction"]),
+  reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null),
+  errors: z.array(z.object({
+    field: z.string().trim().min(1).max(120),
+    message: z.string().trim().min(2).max(500),
+  })).max(30).optional().default([]),
+}).superRefine((value, context) => {
+  if (value.status === "Needs Correction" && value.errors.length === 0) {
+    context.addIssue({ code: "custom", message: "At least one correction error is required." });
+  }
+});
+
+function parse<T>(schema: z.ZodType<T>, value: unknown): T {
+  const parsed = schema.safeParse(value);
+  if (!parsed.success) throw new GraphQLError(parsed.error.issues[0]?.message ?? "Invalid screening details.", { extensions: { code: "BAD_USER_INPUT" } });
+  return parsed.data;
+}
 
 type ScreeningRow = Awaited<ReturnType<ScreeningService["listAll"]>>[number];
 function shape(row: ScreeningRow) {

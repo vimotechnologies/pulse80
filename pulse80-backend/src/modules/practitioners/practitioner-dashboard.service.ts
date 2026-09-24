@@ -4,12 +4,40 @@ import type { Database } from "../../generated/database.types.js";
 
 type TypedSupabase = SupabaseClient<Database>;
 
-export function calculateDashboardStats(completedCount: number, screeningCount: number, pendingCount: number) {
+export function calculateDashboardStats(completedCount: number, screeningCount: number, pendingCount: number, participantsScreened: number) {
   return {
-    participantsScreened: screeningCount,
+    participantsScreened,
     screeningCompletionRate: screeningCount ? Math.round((completedCount / screeningCount) * 100) : 0,
     pendingCorrections: pendingCount,
   };
+}
+
+// Participant references are unique within an organisation/activation, not globally.
+// Read every page so the API row limit cannot silently truncate this all-time KPI.
+export async function countCompletedParticipants(supabase: TypedSupabase, userId: string) {
+  const participants = new Set<string>();
+  const pageSize = 500;
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase.from("screenings")
+      .select("id, organisation_id, activation_id, participant_reference")
+      .eq("practitioner_user_id", userId)
+      .eq("status", "Completed")
+      .order("id")
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error(error.message);
+    if (!data?.length) break;
+
+    for (const screening of data) {
+      participants.add(JSON.stringify([
+        screening.organisation_id, screening.activation_id, screening.participant_reference,
+      ]));
+    }
+    offset += data.length;
+  }
+
+  return participants.size;
 }
 
 export function isUrgentWithdrawal(response: string, startsAt: string, now = new Date()) {
@@ -24,9 +52,9 @@ export class PractitionerDashboardService {
 
   async getDashboard(userId: string) {
     const now = new Date().toISOString();
-    const completedStatuses = ["Under Review", "Approved"];
+    const completedStatuses = ["Completed"];
     const [assignmentsResult, assignmentCountResult, completedCountResult, screeningCountResult,
-      pendingCountResult, correctionsResult, alertsResult] = await Promise.all([
+      pendingCountResult, correctionsResult, alertsResult, participantsScreened] = await Promise.all([
       this.supabase
         .from("practitioner_assignments")
         .select(`
@@ -66,6 +94,7 @@ export class PractitionerDashboardService {
         .order("urgent", { ascending: false })
         .order("changed_at", { ascending: false })
         .limit(1),
+      countCompletedParticipants(this.supabase, userId),
     ]);
 
     if (assignmentsResult.error) throw new Error(assignmentsResult.error.message);
@@ -79,7 +108,7 @@ export class PractitionerDashboardService {
     const completedCount = completedCountResult.count ?? 0;
     const screeningCount = screeningCountResult.count ?? 0;
     const screeningStats = calculateDashboardStats(
-      completedCount, screeningCount, pendingCountResult.count ?? 0,
+      completedCount, screeningCount, pendingCountResult.count ?? 0, participantsScreened,
     );
 
     return {

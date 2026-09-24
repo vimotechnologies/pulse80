@@ -53,7 +53,7 @@ function applyDashboardStats(metrics: ClientMetric[], stats: ClientDashboardStat
       return { ...metric, value: `${stats.screeningParticipation}%` };
     }
     if (metric.label === "Employees Screened") {
-      return { ...metric, value: stats.participantsScreened.toLocaleString("en-BW"), detail: "Unique participants with approved screenings" };
+      return { ...metric, value: stats.completedScreenings.toLocaleString("en-BW") };
     }
     if (metric.label === "Next Action") {
       return { ...metric, value: nextAction };
