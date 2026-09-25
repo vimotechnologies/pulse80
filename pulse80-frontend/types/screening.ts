@@ -1,4 +1,4 @@
-export type ScreeningStatus = "Draft" | "Submitted" | "Approved" | "Needs Correction";
+export type ScreeningStatus = "Draft" | "Under Review" | "Completed" | "Needs Correction";
 
 export interface ScreeningResult {
   systolicMmhg: number | null;
@@ -55,3 +55,5 @@ export interface ScreeningCaptureForm {
   heightCm: string;
   weightKg: string;
 }
+
+export type ScreeningCorrectionForm = Omit<ScreeningCaptureForm, "assignmentId">;

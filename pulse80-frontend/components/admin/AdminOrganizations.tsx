@@ -35,6 +35,7 @@ import {
   UnifiedTableViewport,
 } from "@/components/ui/UnifiedDataTable";
 import { UnifiedMetricCard } from "@/components/ui/UnifiedMetricCard";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 import {
   UnifiedFilterCard,
   UnifiedFilterClear,
@@ -531,11 +532,7 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
         />
       ) : null}
 
-      {toast ? (
-        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-2xl border border-success/20 bg-white px-4 py-3 text-[12px] font-semibold text-black shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-          {toast}
-        </div>
-      ) : null}
+      <ToastMessage message={toast} />
     </div>
   );
 }
@@ -725,11 +722,7 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
         />
       ) : null}
 
-      {toast ? (
-        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-2xl border border-success/20 bg-white px-4 py-3 text-[12px] font-semibold text-black shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-          {toast}
-        </div>
-      ) : null}
+      <ToastMessage message={toast} />
     </div>
   );
 }
