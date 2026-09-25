@@ -8,6 +8,7 @@ import { CalendarCheck, ClipboardCheck, ShieldCheck, Stethoscope } from "@/compo
 import { ListSummaryMetric } from "@/components/portal/DataListPage";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 import type { AdminPractitioner, AdminPractitionerAssignment, PractitionerAssignmentForm } from "@/types/admin-practitioner";
 
 type PractitionerOption = Pick<AdminPractitioner, "userId" | "fullName" | "profession" | "verificationStatus" | "practitionerStatus" | "capabilities">;
@@ -45,7 +46,7 @@ export function AdminPractitionerAssignments({ assignments, practitioners, organ
 
   return <div className="space-y-6">
     <PortalPageHeader eyebrow="Admin Operations" title="Practitioner Assignments" description="Match verified practitioners to wellness work, monitor coverage, and prevent scheduling conflicts." actions={<button type="button" onClick={() => setEditing(null)} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white shadow-sm">Create assignment</button>} />
-    {message ? <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-navy">{message}</div> : null}
+    <ToastMessage message={message} />
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <ListSummaryMetric metric={{ label: "Upcoming", value: String(assignments.filter((item) => new Date(item.startsAt).getTime() >= now && item.status !== "Cancelled").length), detail: "Future assignments", tone: "primary", icon: CalendarCheck }} />
       <ListSummaryMetric metric={{ label: "Confirmed", value: String(assignments.filter((item) => item.status === "Confirmed").length), detail: "Ready for delivery", tone: "success", icon: ShieldCheck }} />

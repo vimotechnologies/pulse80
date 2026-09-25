@@ -364,10 +364,14 @@ export type Database = {
           organisation_id: string | null
           practitioner_user_id: string
           programme_name: string
+          responded_at: string | null
+          response_reason: string | null
+          role_name: string | null
           service_name: string
           starts_at: string
           status: string
           updated_at: string
+          withdrawal_urgent: boolean
         }
         Insert: {
           activation_id?: string | null
@@ -379,10 +383,14 @@ export type Database = {
           organisation_id?: string | null
           practitioner_user_id: string
           programme_name: string
+          responded_at?: string | null
+          response_reason?: string | null
+          role_name?: string | null
           service_name: string
           starts_at: string
           status?: string
           updated_at?: string
+          withdrawal_urgent?: boolean
         }
         Update: {
           activation_id?: string | null
@@ -394,10 +402,14 @@ export type Database = {
           organisation_id?: string | null
           practitioner_user_id?: string
           programme_name?: string
+          responded_at?: string | null
+          response_reason?: string | null
+          role_name?: string | null
           service_name?: string
           starts_at?: string
           status?: string
           updated_at?: string
+          withdrawal_urgent?: boolean
         }
         Relationships: [
           {
@@ -420,6 +432,134 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "practitioner_profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          changed_at: string
+          change_type: string
+          id: string
+          message: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          urgent: boolean
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          changed_at?: string
+          change_type: string
+          id?: string
+          message: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          urgent?: boolean
+        }
+        Update: {
+          acknowledged_at?: string | null
+          changed_at?: string
+          change_type?: string
+          id?: string
+          message?: string
+          practitioner_assignment_id?: string
+          practitioner_user_id?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_alerts_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_assignment_alerts_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_responses: {
+        Row: {
+          id: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          previous_status: string
+          reason: string | null
+          responded_at: string
+          response_status: string
+          urgent: boolean
+        }
+        Insert: {
+          id?: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          previous_status: string
+          reason?: string | null
+          responded_at?: string
+          response_status: string
+          urgent?: boolean
+        }
+        Update: {
+          id?: string
+          practitioner_assignment_id?: string
+          practitioner_user_id?: string
+          previous_status?: string
+          reason?: string | null
+          responded_at?: string
+          response_status?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_responses_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_assignment_responses_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_services: {
+        Row: {
+          created_at: string
+          id: string
+          practitioner_assignment_id: string
+          service_code: string | null
+          service_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          practitioner_assignment_id: string
+          service_code?: string | null
+          service_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          practitioner_assignment_id?: string
+          service_code?: string | null
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_services_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -854,16 +994,130 @@ export type Database = {
           },
         ]
       }
+      screening_correction_errors: {
+        Row: {
+          field_name: string
+          id: string
+          message: string
+          resolved_at: string | null
+          returned_at: string
+          screening_id: string
+        }
+        Insert: {
+          field_name: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          returned_at?: string
+          screening_id: string
+        }
+        Update: {
+          field_name?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          returned_at?: string
+          screening_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_correction_errors_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "screenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      capture_screening_with_result: {
+        Args: {
+          p_assignment_id: string
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
       is_organisation_member: {
         Args: { target_organisation_id: string }
         Returns: boolean
       }
       is_platform_staff: { Args: never; Returns: boolean }
+      respond_to_practitioner_assignment: {
+        Args: {
+          p_assignment_id: string
+          p_practitioner_user_id: string
+          p_reason: string | null
+          p_responded_at: string
+          p_response: string
+          p_urgent: boolean
+        }
+        Returns: string
+      }
+      resubmit_screening_with_result: {
+        Args: {
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_screening_id: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
+      review_screening_with_errors: {
+        Args: {
+          p_errors: Json
+          p_review_note: string | null
+          p_reviewed_at: string
+          p_reviewer_id: string
+          p_screening_id: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_practitioner_assignment: {
+        Args: {
+          p_activity_name: string
+          p_assignment_id: string | null
+          p_ends_at: string | null
+          p_location: string
+          p_organisation_id: string
+          p_practitioner_user_id: string
+          p_programme_name: string
+          p_role_name: string
+          p_service_name: string
+          p_service_names: string[]
+          p_starts_at: string
+          p_status: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
