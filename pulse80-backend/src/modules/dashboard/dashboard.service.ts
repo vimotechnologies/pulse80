@@ -85,7 +85,7 @@ export class DashboardService {
 
   async getOrganisationStats(organisationId: string) {
     const now = new Date().toISOString();
-    const [organisation, completedScreenings, screeningCount, upcomingActivations] =
+    const [organisation, completedScreenings, upcomingActivations, participantsScreened] =
       await Promise.all([
         this.supabase
           .from("organisations")
@@ -97,10 +97,6 @@ export class DashboardService {
           .select("*", { count: "exact", head: true })
           .eq("organisation_id", organisationId)
           .eq("status", "Completed"),
-        this.supabase
-          .from("screenings")
-          .select("*", { count: "exact", head: true })
-          .eq("organisation_id", organisationId),
         this.supabase
           .from("activations")
           .select("*", { count: "exact", head: true })
@@ -114,16 +110,15 @@ export class DashboardService {
 
     const workforceSize = organisation.data.workforce_size ?? 0;
     const wellnessRiskScore = organisation.data.wellness_risk_score;
-    const totalScreenings = requireCount(screeningCount);
-
     return {
       workforceSize,
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
       completedScreenings: requireCount(completedScreenings),
+      participantsScreened,
       screeningParticipation:
         workforceSize > 0
-          ? Math.min(100, Math.round((totalScreenings / workforceSize) * 100))
+          ? Math.min(100, Math.round((participantsScreened / workforceSize) * 100))
           : 0,
       upcomingActivations: requireCount(upcomingActivations),
     };

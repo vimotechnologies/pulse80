@@ -11,6 +11,7 @@ export const dashboardTypeDefs = /* GraphQL */ `
     wellnessRiskScore: Int!
     wellnessRisk: String!
     completedScreenings: Int!
+    participantsScreened: Int!
     screeningParticipation: Int!
     upcomingActivations: Int!
   }

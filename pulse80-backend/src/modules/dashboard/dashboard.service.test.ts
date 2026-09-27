@@ -27,7 +27,7 @@ function service(rows: Screening[], fail = false) {
         if (init?.method === "HEAD") {
           return new Response(null, { headers: { "content-range": `*/${matching.length}` } });
         }
-        assert.equal(status, "Approved");
+        assert.equal(status, "Completed");
         assert.equal(url.searchParams.get("select"), "id,participant_reference");
         if (fail) return Response.json({ message: "Query failed" }, { status: 400 });
         const afterId = url.searchParams.get("id")?.slice(3);
@@ -41,23 +41,25 @@ function service(rows: Screening[], fail = false) {
   return new DashboardService(client);
 }
 
-const row = (id: string, participant: string, status = "Approved", org = "org-a"): Screening =>
+const row = (id: string, participant: string, status = "Completed", org = "org-a"): Screening =>
   ({ id, participant_reference: participant, status, organisation_id: org });
 
-test("counts people once across services and pages, excluding other organisations and unapproved records", async () => {
+test("counts completed screenings and unique participants, excluding other organisations and incomplete records", async () => {
   const stats = await service([
     row("01", "person-a"), row("02", "person-a"), row("03", "person-a"),
     row("04", "person-b"), row("05", "person-c", "Submitted"),
     row("06", "person-d", "Needs Correction"), row("07", "person-e", "Under Review"),
-    row("08", "person-f", "Draft"), row("09", "person-g", "Approved", "org-b"),
+    row("08", "person-f", "Draft"), row("09", "person-g", "Completed", "org-b"),
   ]).getOrganisationStats("org-a");
   assert.equal(stats.participantsScreened, 2);
-  assert.equal(stats.approvedScreenings, 4);
+  assert.equal(stats.completedScreenings, 4);
+  assert.equal(stats.screeningParticipation, 20);
 });
 
 test("no qualifying screenings returns zero", async () => {
   const stats = await service([row("01", "person-a", "Submitted")]).getOrganisationStats("org-a");
   assert.equal(stats.participantsScreened, 0);
+  assert.equal(stats.screeningParticipation, 0);
 });
 
 test("query failure is an error rather than a zero count", async () => {
