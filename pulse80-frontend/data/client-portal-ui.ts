@@ -467,7 +467,7 @@ export const clientPageConfigs: Record<ClientPageConfig["id"], ClientPageConfig>
       { label: "Absenteeism Risk", value: "Medium", detail: "Two departments need attention", tone: "warning", icon: Activity },
       { label: "Presenteeism Index", value: "68", detail: "Improving against baseline", tone: "primary", icon: BarChart3 },
       { label: "Screening Participation", value: "74%", detail: "1,428 employees screened", tone: "primary", icon: ClipboardCheck },
-      { label: "Employees Screened", value: "1,428", detail: "Across 4 locations", tone: "primary", icon: UsersRound },
+      { label: "Screening Completion", value: "Not available", detail: "No required screenings recorded", tone: "primary", icon: ClipboardCheck },
       { label: "Reports Available", value: "12", detail: "3 new executive summaries", tone: "primary", icon: FileText },
       { label: "ROI / Impact", value: "1.8x", detail: "Estimated productivity value", tone: "success", icon: FileBarChart },
       { label: "Next Action", value: "BP follow-up", detail: "Operations cohort", tone: "danger", icon: Lightbulb },

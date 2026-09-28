@@ -34,3 +34,41 @@ The backend must not calculate this percentage from workforce size or raw screen
 ## Security
 
 The view uses `security_invoker = true`. The organisation id comes from the authenticated server-side permission check; it is not accepted from an unrestricted client argument.
+
+
+## Anonymous codes and live rollout
+
+The participant reference is an anonymous screening code. Operations must supply
+an approved programme roster. Store each code in
+`programme_participants.screening_reference`; it is unique within its programme.
+Do not infer this mapping from employee numbers, names or past screening activity.
+
+Before applying `20260928035527_link_screenings_by_programme_code.sql` in live:
+
+1. Prepare the approved participants, anonymous codes, eligibility and registration
+   status, and required programme services.
+2. Plan a short capture pause: the migration adds the code column and immediately
+   enables validation. Populate approved codes before capture resumes.
+3. Populate `programme_participant_services` from approved requirements. Screenings
+   must never create their own requirements, since that changes the denominator.
+4. Confirm each assignment has an activation in the correct programme. Legacy
+   assignments need a single canonical service; flexible capture supplies its service.
+5. Confirm deployed capture RPCs exist for any legacy forms still in use.
+6. Check a known case in the test project, comparing SQL, the API and the dashboard.
+
+The database trigger links both flexible inserts and legacy RPC inserts.
+Corrections that change the anonymous code resolve the participant again.
+Unknown codes, inconsistent explicit links and cross-organisation assignments fail.
+Existing screenings are not automatically backfilled. Use an approved mapping;
+review ambiguous records with operations.
+
+The dashboard shows “Not available” when the denominator is zero. A measured 0%
+requires a nonzero denominator and no completed results.
+
+## Automated integration check
+
+Run `npm test` in `pulse80-backend`. The screening-flow test uses PGlite (an isolated
+PostgreSQL engine) and the actual migration SQL. It checks linking, corrections,
+duplicates, unknown codes, organisation boundaries, empty results and GraphQL values.
+Only the HTTP transport between the backend and database is simulated. This does
+not replace a signed-in check against the deployed API and dashboard.

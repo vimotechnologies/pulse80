@@ -10,6 +10,11 @@ export type ClientDashboardStats = {
   wellnessRisk: string;
   completedScreenings: number;
   screeningParticipation: number;
+  eligibleParticipants: number;
+  participantsScreened: number;
+  expectedRequiredScreenings: number;
+  completedRequiredScreenings: number;
+  screeningCompletionRate: number;
   upcomingActivations: number;
 };
 
@@ -21,6 +26,11 @@ const clientDashboardStatsQuery = /* GraphQL */ `
       wellnessRisk
       completedScreenings
       screeningParticipation
+      eligibleParticipants
+      participantsScreened
+      expectedRequiredScreenings
+      completedRequiredScreenings
+      screeningCompletionRate
       upcomingActivations
     }
   }
