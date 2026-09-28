@@ -3,11 +3,41 @@ import { readFile } from "node:fs/promises";
 import process from "node:process";
 
 const applications = [
-  { name: "frontend", directory: "pulse80-frontend" },
   { name: "backend", directory: "pulse80-backend" },
+  { name: "frontend", directory: "pulse80-frontend" },
 ];
 
 const children = [];
+
+const stopChildren = (signal) => {
+  for (const child of children) {
+    child.kill(signal);
+  }
+};
+
+process.on("SIGINT", () => stopChildren("SIGINT"));
+process.on("SIGTERM", () => stopChildren("SIGTERM"));
+
+async function waitForBackend(child) {
+  const graphqlUrl = process.env.BACKEND_GRAPHQL_URL ?? "http://localhost:4000/graphql";
+  const healthUrl = new URL("/health", graphqlUrl);
+  const deadline = Date.now() + 30_000;
+
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) {
+      throw new Error("Backend exited before its health check passed.");
+    }
+
+    try {
+      const response = await fetch(healthUrl);
+      if (response.ok) return;
+    } catch {}
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  throw new Error(`Backend did not become healthy at ${healthUrl} within 30 seconds.`);
+}
 
 for (const application of applications) {
   const packageJson = JSON.parse(
@@ -32,23 +62,6 @@ for (const application of applications) {
   });
 
   children.push(child);
-}
-
-if (children.length === 0) {
-  console.error("[pulse80] No application has a dev command configured.");
-  process.exitCode = 1;
-}
-
-const stopChildren = (signal) => {
-  for (const child of children) {
-    child.kill(signal);
-  }
-};
-
-process.on("SIGINT", () => stopChildren("SIGINT"));
-process.on("SIGTERM", () => stopChildren("SIGTERM"));
-
-for (const child of children) {
   child.on("exit", (code, signal) => {
     if (signal) return;
     if (code && code !== 0) {
@@ -56,4 +69,21 @@ for (const child of children) {
       stopChildren("SIGTERM");
     }
   });
+
+  if (application.name === "backend") {
+    try {
+      await waitForBackend(child);
+      console.log("[pulse80] Backend health check passed.");
+    } catch (error) {
+      console.error(`[pulse80] ${error.message}`);
+      process.exitCode = 1;
+      stopChildren("SIGTERM");
+      break;
+    }
+  }
+}
+
+if (children.length === 0) {
+  console.error("[pulse80] No application has a dev command configured.");
+  process.exitCode = 1;
 }

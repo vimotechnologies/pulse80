@@ -79,7 +79,7 @@ const reportRoi: ClientRecord = {
   ],
   details: [
     { label: "Executive summary", value: "Participation, follow-up attendance, and reduced risk concentration indicate positive business impact." },
-    { label: "Download", value: "Available as a placeholder action." },
+    { label: "Download", value: "Available as a PDF." },
   ],
   progress: 92,
   highlight: "Featured latest report",

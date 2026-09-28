@@ -43,6 +43,7 @@ import {
   UnifiedFilterSelect,
   UnifiedFilterSort,
 } from "@/components/ui/UnifiedFilterCard";
+import { downloadPdf } from "@/lib/pdf/download";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -263,6 +264,7 @@ const initialForm: OrganizationForm = {
 };
 
 export function AdminOrganizations({ initialOrganizations }: { initialOrganizations: Organization[] }) {
+  const [exporting, setExporting] = useState(false);
   const [organizations, setOrganizations] = useState(initialOrganizations);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -388,6 +390,21 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  await downloadPdf({ title: "Organizations", sections: filteredOrganizations.map((item) => ({
+                    title: item.name,
+                    client: { name: item.name, logoUrl: item.logoUrl ?? item.logo },
+                    lines: [`Code: ${item.code}`, `Industry: ${item.industry}`, `Location: ${item.primaryLocation}, ${item.country}`,
+                      `Branches: ${item.branches.length}`, `Employees: ${item.employees}`, `Package: ${item.package}`,
+                      `Contract: ${item.contractStart} to ${item.contractEnd}`, `Wellness risk: ${item.risk}`, `Status: ${item.status}`],
+                  })) });
+                  setToast("PDF download started.");
+                } catch { setToast("Could not generate the PDF. Please try again."); }
+                finally { setExporting(false); }
+              }}
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
@@ -1079,7 +1096,24 @@ function ActivationsTab({ organization }: { organization: Organization }) {
 }
 
 function ReportsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate, "Preview · Download"])} />;
+  const [downloading, setDownloading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  return <>
+    <ToastMessage message={message} />
+    <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate,
+      <button key="download" type="button" disabled={downloading} className="font-semibold text-primary disabled:opacity-50" aria-label={`Download ${item.title} as PDF`} onClick={async () => {
+        setDownloading(true);
+        setMessage(null);
+        try {
+          await downloadPdf({ title: item.title, client: { name: organization.name, logoUrl: organization.logoUrl ?? organization.logo }, sections: [{ title: "Report details", lines: [
+            `Type: ${item.type}`, `Period: ${item.period}`, `Status: ${item.status}`, `Published: ${item.publishedDate || "Not published"}`,
+          ] }] });
+          setMessage("PDF download started.");
+        } catch { setMessage("Could not generate the PDF. Please try again."); }
+        finally { setDownloading(false); }
+      }}>Download PDF</button>,
+    ])} />
+  </>;
 }
 
 function OperationsTab({ organization }: { organization: Organization }) {
@@ -1169,15 +1203,15 @@ function DetailTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
+function MiniTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-card-border">
       <div className="grid gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
-      {rows.map((row) => (
-        <div key={row.join("-")} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-          {row.map((cell) => <span key={cell} className="min-w-0 truncate">{cell}</span>)}
+      {rows.map((row, rowIndex) => (
+        <div key={rowIndex} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+          {row.map((cell, cellIndex) => <span key={cellIndex} className="min-w-0 truncate">{cell}</span>)}
         </div>
       ))}
     </div>

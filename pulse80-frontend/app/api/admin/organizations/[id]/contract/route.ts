@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 import { loadAdminOrganisation } from "@/app/actions/admin-organisations";
@@ -36,10 +37,17 @@ export async function GET(
   const muted = rgb(71 / 255, 84 / 255, 103 / 255);
 
   page.drawImage(logo, { x: 42, y: 730, width: 210, height: 87.5 });
+  if (organisation.logoUrl) {
+    const response = await fetch(organisation.logoUrl, { signal: AbortSignal.timeout(15_000) });
+    if (!response.ok) return Response.json({ error: "Could not load the client logo. Please try again." }, { status: 502 });
+    const clientLogo = await document.embedPng(await sharp(Buffer.from(await response.arrayBuffer())).png().toBuffer());
+    const size = clientLogo.scaleToFit(150, 80);
+    page.drawImage(clientLogo, { x: 553 - size.width, y: 735 + (80 - size.height) / 2, ...size });
+  }
   page.drawText("ORGANISATION SERVICE CONTRACT", { x: 42, y: 690, size: 18, font: bold, color: navy });
   page.drawRectangle({ x: 42, y: 676, width: 511, height: 3, color: red });
 
-  page.drawText(organisation.name, { x: 42, y: 638, size: 20, font: bold, color: navy });
+  page.drawText(organisation.name, { x: 42, y: 638, size: Math.min(20, 20 * 511 / Math.max(1, bold.widthOfTextAtSize(organisation.name, 20))), font: bold, color: navy });
   page.drawText(`Reference: ${organisation.code}`, { x: 42, y: 617, size: 10, font: regular, color: muted });
 
   const rows = [
