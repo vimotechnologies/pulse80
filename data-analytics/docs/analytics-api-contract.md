@@ -92,11 +92,9 @@ The example uses current EDA validation baselines where supported. It is not a p
 
 ## Important existing-backend correction
 
-The current organisation dashboard service calculates screening participation using:
+Screening participation comes from `public.analytics_screening_participation`. The view counts eligible, registered programme-participant records and counts each record once when it has at least one `Completed` screening. The backend filters the view by the organisation already authorised for the request. It must not calculate the rate from workforce size or raw screening rows.
 
-`total screening rows / workforce size`
-
-That mixes service-level screening events with people. Under the analytics contract, participation must use a distinct participant/person grain and an approved denominator. Until the denominator is agreed, the existing `screeningParticipation` value should not be treated as the canonical programme participation KPI.
+Screening completion comes from `public.analytics_screening_completion`. It counts required participant-service pairs and only treats `Completed` screenings as complete. The backend returns the view's counts and rate without recalculating them.
 
 ## Error behaviour
 

@@ -1,4 +1,55 @@
--- PUL-313 / PUL-316: production-mapped completion view.
+-- PUL-316: connect the screening participation and completion analytics.
+-- Both views return one aggregate row per organisation. The backend reads
+-- these results; it does not recalculate the metrics.
+
+begin;
+
+create or replace view public.analytics_screening_participation
+with (security_invoker = true)
+as
+with eligible_participants as (
+    select distinct
+        pp.id as programme_participant_id,
+        p.organisation_id
+    from public.programme_participants pp
+    join public.programmes p
+        on p.id = pp.programme_id
+    where pp.eligibility_status = 'Eligible'
+      and pp.registration_status = 'Registered'
+),
+screened_participants as (
+    select distinct
+        ep.organisation_id,
+        ep.programme_participant_id
+    from eligible_participants ep
+    join public.screenings s
+        on s.programme_participant_id = ep.programme_participant_id
+       and s.organisation_id = ep.organisation_id
+       and s.status = 'Completed'
+)
+select
+    o.id as organisation_id,
+    count(distinct ep.programme_participant_id) as eligible_participant_count,
+    count(distinct sp.programme_participant_id) as screened_participant_count,
+    case
+        when count(distinct ep.programme_participant_id) = 0 then 0::numeric
+        else round(
+            count(distinct sp.programme_participant_id)::numeric
+            / count(distinct ep.programme_participant_id)::numeric
+            * 100,
+            2
+        )
+    end as screening_participation_rate_pct
+from public.organisations o
+left join eligible_participants ep
+    on ep.organisation_id = o.id
+left join screened_participants sp
+    on sp.organisation_id = ep.organisation_id
+   and sp.programme_participant_id = ep.programme_participant_id
+group by o.id;
+
+comment on view public.analytics_screening_participation is
+'Organisation-level screening participation among Eligible and Registered programme participants. A participant is screened once when at least one linked screening has Completed status.';
 
 create or replace view public.analytics_screening_completion
 with (security_invoker = true)
@@ -61,3 +112,8 @@ left join organisation_totals t
 
 comment on view public.analytics_screening_completion is
 'Organisation-level completion of required screenings. Requirements are participant-service pairs for Eligible and Registered programme participants. A pair is completed when at least one matching screening has Completed status.';
+
+grant select on public.analytics_screening_participation to service_role;
+grant select on public.analytics_screening_completion to service_role;
+
+commit;

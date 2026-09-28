@@ -12,7 +12,11 @@ export const dashboardTypeDefs = /* GraphQL */ `
     wellnessRisk: String!
     completedScreenings: Int!
     participantsScreened: Int!
-    screeningParticipation: Int!
+    eligibleParticipants: Int!
+    screeningParticipation: Float!
+    expectedRequiredScreenings: Int!
+    completedRequiredScreenings: Int!
+    screeningCompletionRate: Float!
     upcomingActivations: Int!
   }
 

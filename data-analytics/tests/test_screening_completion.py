@@ -17,10 +17,10 @@ Business rules:
 1. Only Eligible participants are included.
 2. Only Registered participants are included.
 3. Expected screenings come from participant-specific required services.
-4. Only Approved screenings count as completed.
+4. Only Completed screenings count as completed.
 5. Draft, Submitted and Needs Correction do not count as completed.
-6. Multiple Approved records for the same requirement count once.
-7. Approved screenings for non-required services do not count.
+6. Multiple Completed records for the same requirement count once.
+7. Completed screenings for non-required services do not count.
 8. Results are separated by organisation.
 """
 
@@ -113,7 +113,7 @@ def test_screening_completion_rate(
     Main controlled scenario:
 
         Required = 5
-        Approved = 3
+        Completed = 3
 
         3 / 5 * 100 = 60.00%
     """
@@ -211,7 +211,7 @@ def test_required_screenings_are_identified_correctly(
 
 
 # ============================================================
-# Approved status
+# Completed status
 # ============================================================
 
 def test_only_approved_screenings_count_as_completed(
@@ -221,11 +221,11 @@ def test_only_approved_screenings_count_as_completed(
     """
     Controlled screening statuses:
 
-        Approved         -> count
-        Approved         -> count
+        Completed         -> count
+        Completed         -> count
         Draft            -> do not count
         Needs Correction -> do not count
-        Approved         -> count
+        Completed         -> count
 
     Therefore completed = 3.
     """
@@ -252,7 +252,7 @@ def test_draft_screening_does_not_count_as_completed(
     """
     Participant A's Glucose requirement is Draft.
 
-    Change it to Approved.
+    Change it to Completed.
 
     Completion should move:
 
@@ -279,7 +279,7 @@ def test_draft_screening_does_not_count_as_completed(
             UPDATE public.screenings
 
             SET
-                status = 'Approved',
+                status = 'Completed',
                 consent_confirmed = TRUE,
                 reviewed_at = now()
 
@@ -327,7 +327,7 @@ def test_needs_correction_does_not_count_as_completed(
     """
     Participant B's BP screening is Needs Correction.
 
-    Change it to Approved.
+    Change it to Completed.
 
     Completion should move:
 
@@ -350,7 +350,7 @@ def test_needs_correction_does_not_count_as_completed(
             UPDATE public.screenings
 
             SET
-                status = 'Approved',
+                status = 'Completed',
                 consent_confirmed = TRUE,
                 reviewed_at = now()
 
@@ -391,7 +391,7 @@ def test_non_required_service_does_not_affect_completion(
     screening_completion_data,
 ):
     """
-    Participant A has an Approved Dental screening.
+    Participant A has an Completed Dental screening.
 
     Dental belongs to the programme but is NOT required for
     Participant A.
@@ -415,7 +415,7 @@ def test_non_required_service_does_not_affect_completion(
             FROM public.screenings
             WHERE programme_participant_id = %s
               AND service_id = %s
-              AND status = 'Approved'
+              AND status = 'Completed'
             """,
             (
                 participant_id,
@@ -425,7 +425,7 @@ def test_non_required_service_does_not_affect_completion(
 
         dental_result = cursor.fetchone()
 
-    # Prove that the Approved Dental screening really exists.
+    # Prove that the Completed Dental screening really exists.
     assert dental_result["count"] == 1
 
     result = get_completion_result(
@@ -451,7 +451,7 @@ def test_non_required_service_does_not_affect_completion(
 
 
 # ============================================================
-# Duplicate Approved screening
+# Duplicate Completed screening
 # ============================================================
 
 def test_duplicate_approved_screening_counts_once(
@@ -459,7 +459,7 @@ def test_duplicate_approved_screening_counts_once(
     screening_completion_data,
 ):
     """
-    Participant A has two Approved BP screening records.
+    Participant A has two Completed BP screening records.
 
     BP is only one requirement.
 
@@ -482,7 +482,7 @@ def test_duplicate_approved_screening_counts_once(
             FROM public.screenings
             WHERE programme_participant_id = %s
               AND service_id = %s
-              AND status = 'Approved'
+              AND status = 'Completed'
             """,
             (
                 participant_id,
@@ -492,7 +492,7 @@ def test_duplicate_approved_screening_counts_once(
 
         duplicate_result = cursor.fetchone()
 
-    # Prove that there really are two Approved BP records.
+    # Prove that there really are two Completed BP records.
     assert duplicate_result["count"] == 2
 
     result = get_completion_result(
@@ -601,7 +601,7 @@ def test_not_eligible_participant_is_excluded(
         == 3
     )
 
-    # Participant A has BP and BMI Approved.
+    # Participant A has BP and BMI Completed.
     # Glucose is Draft.
     assert (
         result["completed_required_screenings"]

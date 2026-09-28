@@ -42,7 +42,7 @@ every service offered by the programme.
 A requirement is completed only when at least one matching
 screening has:
 
-`status = 'Approved'`
+`status = 'Completed'`
 
 The screening must match:
 
@@ -50,12 +50,12 @@ The screening must match:
 - programme participant; and
 - required service.
 
-Draft, Submitted, Needs Correction and other non-Approved
+Draft, Submitted, Needs Correction and other non-Completed
 records do not count as completed.
 
 ## Duplicate screenings
 
-Several Approved screening records may exist for the same
+Several Completed screening records may exist for the same
 participant and required service.
 
 The requirement still counts as one completed screening.
@@ -69,7 +69,7 @@ A participant may receive a screening that was not part of their
 required services.
 
 That screening does not affect either the numerator or denominator,
-even when its status is Approved.
+even when its status is Completed.
 
 ## Organisation scope
 
@@ -81,8 +81,8 @@ Each organisation therefore receives its own:
 - completed required screening count; and
 - completion percentage.
 
-An organisation with no qualifying required screenings currently
-does not produce a row in the view.
+Every organisation produces a row. When no required screenings exist,
+the view returns zero counts and a zero rate.
 
 ## Database relationships
 
@@ -132,9 +132,9 @@ Expected required screenings:
 
 Completed:
 
-- Participant A Blood Pressure — Approved
-- Participant A BMI — Approved
-- Participant B BMI — Approved
+- Participant A Blood Pressure — Completed
+- Participant A BMI — Completed
+- Participant B BMI — Completed
 
 Not completed:
 
@@ -147,8 +147,8 @@ Therefore:
 
 The tests also verify:
 
-- duplicate Approved screenings count once;
-- non-required Approved services are ignored;
+- duplicate Completed screenings count once;
+- non-required Completed services are ignored;
 - Not Eligible participants are excluded;
 - non-Registered participants are excluded;
 - multiple required services are supported;

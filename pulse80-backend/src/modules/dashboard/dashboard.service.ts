@@ -9,6 +9,18 @@ type CountResult = {
   error: { message: string } | null;
 };
 
+type ParticipationViewRow = {
+  eligible_participant_count: number | null;
+  screened_participant_count: number | null;
+  screening_participation_rate_pct: number | null;
+};
+
+type CompletionViewRow = {
+  expected_required_screenings: number | null;
+  completed_required_screenings: number | null;
+  screening_completion_rate: number | null;
+};
+
 function requireCount(result: CountResult) {
   if (result.error) {
     throw new Error(result.error.message);
@@ -55,37 +67,15 @@ export class DashboardService {
     };
   }
 
-  private async countParticipantsScreened(organisationId: string) {
-    const participants = new Set<string>();
-    let afterId: string | undefined;
-
-    // Page by the unique ID so the Data API row limit cannot truncate the count.
-    for (;;) {
-      let query = this.supabase
-        .from("screenings")
-        .select("id, participant_reference")
-        .eq("organisation_id", organisationId)
-        .eq("status", "Completed")
-        .order("id")
-        .limit(1000);
-      if (afterId) query = query.gt("id", afterId);
-
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      if (!data?.length) break;
-
-      for (const screening of data) {
-        participants.add(screening.participant_reference);
-        afterId = screening.id;
-      }
-    }
-
-    return participants.size;
-  }
-
   async getOrganisationStats(organisationId: string) {
     const now = new Date().toISOString();
-    const [organisation, completedScreenings, upcomingActivations, participantsScreened] =
+    const [
+      organisation,
+      completedScreenings,
+      upcomingActivations,
+      participation,
+      completion,
+    ] =
       await Promise.all([
         this.supabase
           .from("organisations")
@@ -103,23 +93,43 @@ export class DashboardService {
           .eq("organisation_id", organisationId)
           .gte("starts_at", now)
           .in("status", ["Scheduled", "Planning"]),
-        this.countParticipantsScreened(organisationId),
+        this.supabase
+          .from("analytics_screening_participation")
+          .select(
+            "eligible_participant_count, screened_participant_count, screening_participation_rate_pct",
+          )
+          .eq("organisation_id", organisationId)
+          .maybeSingle(),
+        this.supabase
+          .from("analytics_screening_completion")
+          .select(
+            "expected_required_screenings, completed_required_screenings, screening_completion_rate",
+          )
+          .eq("organisation_id", organisationId)
+          .maybeSingle(),
       ]);
 
     if (organisation.error) throw new Error(organisation.error.message);
+    if (participation.error) throw new Error(participation.error.message);
+    if (completion.error) throw new Error(completion.error.message);
 
-    const workforceSize = organisation.data.workforce_size ?? 0;
+    const participationRow = participation.data as ParticipationViewRow | null;
+    const completionRow = completion.data as CompletionViewRow | null;
     const wellnessRiskScore = organisation.data.wellness_risk_score;
     return {
-      workforceSize,
+      workforceSize: organisation.data.workforce_size ?? 0,
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
       completedScreenings: requireCount(completedScreenings),
-      participantsScreened,
+      participantsScreened: participationRow?.screened_participant_count ?? 0,
+      eligibleParticipants: participationRow?.eligible_participant_count ?? 0,
       screeningParticipation:
-        workforceSize > 0
-          ? Math.min(100, Math.round((participantsScreened / workforceSize) * 100))
-          : 0,
+        participationRow?.screening_participation_rate_pct ?? 0,
+      expectedRequiredScreenings:
+        completionRow?.expected_required_screenings ?? 0,
+      completedRequiredScreenings:
+        completionRow?.completed_required_screenings ?? 0,
+      screeningCompletionRate: completionRow?.screening_completion_rate ?? 0,
       upcomingActivations: requireCount(upcomingActivations),
     };
   }
