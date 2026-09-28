@@ -1,4 +1,9 @@
 export const organisationTypeDefs = /* GraphQL */ `
+  type OrganisationBranding {
+    name: String!
+    logoUrl: String
+  }
+
   type OrganisationContact {
     id: ID!
     name: String!
@@ -79,6 +84,8 @@ export const organisationTypeDefs = /* GraphQL */ `
   }
 
   extend type Query {
+    organisationBranding: OrganisationBranding!
+    adminOrganisationBranding: [OrganisationBranding!]!
     organisation: Organisation!
     adminOrganisations: [Organisation!]!
     adminOrganisation(id: ID!): Organisation!

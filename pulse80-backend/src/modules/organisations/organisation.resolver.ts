@@ -139,8 +139,26 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   return parsed.data;
 }
 
+function toBranding(row: { name: string; logo_path: string | null }) {
+  return {
+    name: row.name,
+    logoUrl: row.logo_path
+      ? `${env.SUPABASE_URL}/storage/v1/object/public/organisation-logos/${row.logo_path}`
+      : null,
+  };
+}
+
 export const organisationResolvers = {
   Query: {
+    organisationBranding: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "organisation:read");
+      return toBranding(await new OrganisationService(context.supabase!).getBrandingById(organisationId));
+    },
+    adminOrganisationBranding: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "organisation:read");
+      const rows = await new OrganisationService(context.adminSupabase).listBranding();
+      return rows.map(toBranding);
+    },
     organisation: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       const { organisationId } = requirePermission(context, "organisation:read");
       return toOrganisation(await new OrganisationService(context.supabase!).getById(organisationId));

@@ -65,6 +65,27 @@ function initials(value: string) {
 export class OrganisationService {
   constructor(private readonly supabase: TypedSupabase) {}
 
+  // Branding must not join contacts: client roles can read their organisation
+  // but do not have table-level access to organisation_contacts.
+  async getBrandingById(organisationId: string) {
+    const { data, error } = await this.supabase
+      .from("organisations")
+      .select("name, logo_path")
+      .eq("id", organisationId)
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async listBranding() {
+    const { data, error } = await this.supabase
+      .from("organisations")
+      .select("name, logo_path")
+      .order("name");
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async list() {
     const { data, error } = await this.supabase
       .from("organisations")
