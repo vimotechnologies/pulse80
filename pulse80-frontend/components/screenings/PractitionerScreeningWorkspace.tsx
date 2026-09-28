@@ -210,7 +210,7 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
       <UnifiedFilterCard>
         <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
           <UnifiedFilterSearch value={query} onChange={(value) => { setQuery(value); setCurrentPage(1); }} placeholder="Search screenings" />
-          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Under Review", "Needs Correction", "Approved"]} onChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} />
+          <UnifiedFilterSelect label="Status" value={statusFilter} options={["All", "Under Review", "Needs Correction", "Completed"]} onChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterSelect label="Risk" value={riskFilter} options={["All", "Low", "Medium", "High"]} onChange={(value) => { setRiskFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterSelect label="Organisation" value={organisationFilter} options={organisationOptions} onChange={(value) => { setOrganisationFilter(value); setCurrentPage(1); }} />
           <UnifiedFilterClear onClick={clearFilters} />
@@ -393,7 +393,7 @@ function previewRisk(row: ImportRow) {
 }
 
 function statusTone(status: string): "success" | "warning" | "danger" | "info" | "neutral" {
-  if (status === "Approved") return "success";
+  if (status === "Completed") return "success";
   if (status === "Needs Correction") return "danger";
   if (status === "Under Review") return "warning";
   return "info";

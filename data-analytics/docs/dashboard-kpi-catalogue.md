@@ -14,10 +14,10 @@ This catalogue converts the completed EDA and approved Product decisions into ex
 | Attended Participants | Distinct eligible programme participants who actually attended | distinct `employee_id` where `eligibility_status = 'Eligible'` and `attendance_status = 'Attended'` | APPROVED; schema support added |
 | Participation Rate | Percentage of employees eligible for a specific programme who actually attended | attended eligible participants / eligible programme participants * 100 | APPROVED; schema support added |
 | Screening Events | Individual screening/service records | `COUNT(DISTINCT screenings.id)` | APPROVED |
-| Completed Screening Events | Screening/service records that successfully passed the Pulse80 review workflow | distinct `screenings.id` where `status = 'Approved'` | APPROVED |
-| Participants Screened | Unique participants with at least one successfully completed screening service | `COUNT(DISTINCT participant_reference)` where screening `status = 'Approved'`, scoped to organisation/activation | APPROVED |
-| Screening Completion Rate | Completed required participant-service screenings as a percentage of expected required participant-service screenings | approved required screening events / expected required participant-service events * 100 | APPROVED; implementation must establish required participant-service combinations |
-| Service Delivery Volume | Screening activity grouped by canonical service | approved/all screening count grouped by `service_id`, depending on reporting context | APPROVED |
+| Completed Screening Events | Screening/service records that successfully passed the Pulse80 review workflow | distinct `screenings.id` where `status = 'Completed'` | APPROVED |
+| Participants Screened | Unique participants with at least one successfully completed screening service | `COUNT(DISTINCT participant_reference)` where screening `status = 'Completed'`, scoped to organisation/activation | APPROVED |
+| Screening Completion Rate | Completed required participant-service screenings as a percentage of expected required participant-service screenings | Completed required screening events / expected required participant-service events * 100 | APPROVED; implementation must establish required participant-service combinations |
+| Service Delivery Volume | Screening activity grouped by canonical service | Completed/all screening count grouped by `service_id`, depending on reporting context | APPROVED |
 | Practitioner Screening Activity | Screening events delivered by practitioner | screening count grouped by `practitioner_user_id` | APPROVED |
 | Measurement Coverage | Share of expected service result fields captured for screening services | expected active/required `service_result_fields` compared with captured `screening_result_values` | APPROVED |
 | Measurement Distribution | Aggregate distribution of captured health measurements | aggregate validated result values by service/result field | APPROVED for aggregate analytics |
@@ -41,17 +41,16 @@ This catalogue converts the completed EDA and approved Product decisions into ex
 
 ### Screening
 
-The production screening workflow uses `Draft`, `Submitted`, `Under Review`, `Approved`, and `Needs Correction`.
+The production screening workflow uses `Draft`, `Under Review`, `Completed`, and `Needs Correction`.
 
-Only `Approved` means successfully completed for KPI purposes.
+Only `Completed` means successfully completed for KPI purposes.
 
 - Draft: not completed.
-- Submitted: not completed.
 - Under Review: not completed.
 - Needs Correction: not completed.
-- Approved: completed.
+- Completed: completed.
 
-A participant is counted once in `Participants Screened` when they have at least one Approved screening service. Multiple services for the same participant increase Screening Events, not Participants Screened.
+A participant is counted once in `Participants Screened` when they have at least one Completed screening service. Multiple services for the same participant increase Screening Events, not Participants Screened.
 
 ### Screening completion
 

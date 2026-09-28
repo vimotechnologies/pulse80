@@ -50,10 +50,10 @@ function applyDashboardStats(metrics: ClientMetric[], stats: ClientDashboardStat
       return { ...metric, value: stats.wellnessRisk };
     }
     if (metric.label === "Screening Participation") {
-      return { ...metric, value: `${stats.screeningParticipation}%` };
+      return { ...metric, value: stats.eligibleParticipants ? `${stats.screeningParticipation}%` : "Not available", detail: stats.eligibleParticipants ? `${stats.participantsScreened} of ${stats.eligibleParticipants} eligible registrations screened` : "No eligible participant registrations" };
     }
-    if (metric.label === "Employees Screened") {
-      return { ...metric, value: stats.participantsScreened.toLocaleString("en-BW"), detail: "Unique participants with approved screenings" };
+    if (metric.label === "Screening Completion") {
+      return { ...metric, value: stats.expectedRequiredScreenings ? `${stats.screeningCompletionRate}%` : "Not available", detail: stats.expectedRequiredScreenings ? `${stats.completedRequiredScreenings} of ${stats.expectedRequiredScreenings} required screenings completed` : "No required screenings recorded" };
     }
     if (metric.label === "Next Action") {
       return { ...metric, value: nextAction };

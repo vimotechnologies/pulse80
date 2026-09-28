@@ -1031,7 +1031,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      analytics_screening_participation: {
+        Row: {
+          eligible_participant_count: number | null
+          organisation_id: string | null
+          screened_participant_count: number | null
+          screening_participation_rate_pct: number | null
+        }
+        Relationships: []
+      }
+      analytics_screening_completion: {
+        Row: {
+          completed_required_screenings: number | null
+          expected_required_screenings: number | null
+          organisation_id: string | null
+          screening_completion_rate: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       capture_screening_with_result: {

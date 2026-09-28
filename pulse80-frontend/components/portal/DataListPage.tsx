@@ -37,6 +37,8 @@ import {
   UnifiedFilterSort,
 } from "@/components/ui/UnifiedFilterCard";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
+import { loadPdfBranding } from "@/app/actions/pdf-branding";
+import { downloadPdf } from "@/lib/pdf/download";
 import { cn } from "@/lib/utils/cn";
 
 type RecordTone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -150,6 +152,7 @@ export function DataListPage<RecordType extends DataRecord>({
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState(columns[0]?.key ?? "title");
@@ -201,6 +204,56 @@ export function DataListPage<RecordType extends DataRecord>({
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 2400);
+  }
+
+  const isDownloadAction = (label: string) => /^(download|export)\b/i.test(label);
+
+  async function downloadRecords(items: RecordType[], title = config.title, includeSummary = false) {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const branding = await loadPdfBranding();
+      const recordClient = (record: RecordType) => {
+        if (branding.client) return branding.client;
+        const name = record.filters.organization || record.filters.organisation
+          || field(record, "Organization") || field(record, "Organisation")
+          || detail(record, "Organization") || detail(record, "Organisation")
+          || (config.id === "billing" ? record.subtitle.split(" · ")[0] : "");
+        const matchingClient = branding.clients.find((client) => name
+          ? client.name.toLowerCase() === name.toLowerCase()
+          : record.subtitle.startsWith(`${client.name} · `) || record.title === client.name);
+        return matchingClient ?? (name ? { name } : undefined);
+      };
+      const clients = items.map(recordClient);
+      const client = clients.length && clients.every((item) => item?.name === clients[0]?.name) ? clients[0] : branding.client;
+      await downloadPdf({
+        title,
+        client,
+        subtitle: config.description,
+        sections: [
+          ...(includeSummary ? [{ title: "Summary", lines: metrics.map((metric) => `${metric.label}: ${metric.value} - ${metric.detail}`) }] : []),
+          ...items.map((record) => ({
+            title: record.title,
+            client: recordClient(record),
+            lines: [record.subtitle, record.meta, `Status: ${record.status}`,
+              ...record.fields.map((item) => `${item.label}: ${item.value}`),
+              ...record.details.map((item) => `${item.label}: ${item.value}`),
+              ...(record.progress === undefined ? [] : [`Progress: ${record.progress}%`]),
+              ...(record.checklist ?? []).map((item) => `${item.done ? "Completed" : "Pending"}: ${item.label}`),
+              ...(record.warning ? [`Warning: ${record.warning}`] : []),
+            ].filter(Boolean),
+          })),
+        ],
+      });
+      showToast("PDF download started.");
+    } catch (error) {
+      console.error("[pdf-download] Failed to generate PDF", error);
+      showToast(error instanceof Error && error.message === "Could not load the client logo."
+        ? "The client logo could not be loaded. Please check the uploaded logo and try again."
+        : "Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function updateRecord(id: string, patch: Partial<RecordType>) {
@@ -322,8 +375,8 @@ export function DataListPage<RecordType extends DataRecord>({
               <Refresh className="mr-2 h-5 w-5" aria-hidden="true" />
               Refresh
             </ActionButton>
-            <ActionButton onClick={() => setModalMode("create")}>
-              <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />
+            <ActionButton loading={isDownloadAction(config.primaryAction) && downloading} onClick={() => isDownloadAction(config.primaryAction) ? void downloadRecords(sortedRecords, `${config.title} summary`, true) : setModalMode("create")}>
+              {isDownloadAction(config.primaryAction) ? <Download className="mr-2 h-5 w-5" aria-hidden="true" /> : <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />}
               {config.primaryAction}
             </ActionButton>
           </div>
@@ -355,7 +408,7 @@ export function DataListPage<RecordType extends DataRecord>({
                 <Eye className="mr-2 h-5 w-5" aria-hidden="true" />
                 Preview
               </ActionButton>
-              <ActionButton onClick={() => showToast("Download prepared as a placeholder.")}>
+              <ActionButton loading={downloading} onClick={() => config.featured && void downloadRecords([config.featured], config.featured.title)}>
                 <Download className="mr-2 h-5 w-5" aria-hidden="true" />
                 Download
               </ActionButton>
@@ -391,7 +444,7 @@ export function DataListPage<RecordType extends DataRecord>({
           setPage(1);
         }}
         onClear={resetFilters}
-        onExport={() => showToast("Export prepared as a placeholder.")}
+        onExport={() => void downloadRecords(sortedRecords)}
       />
 
       {selectedIds.length > 0 ? (
@@ -445,7 +498,7 @@ export function DataListPage<RecordType extends DataRecord>({
                   setSelected(record);
                   setModalMode("archive");
                 }}
-                onDownload={rowActions?.download === false ? undefined : () => showToast("Download prepared as a placeholder.")}
+                onDownload={rowActions?.download === false ? undefined : () => void downloadRecords([record], record.title)}
                 onCycleStatus={rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
                 onRoleChange={
                   onRoleChange
@@ -470,7 +523,7 @@ export function DataListPage<RecordType extends DataRecord>({
           onClose={() => setSelected(null)}
           onEdit={rowActions?.edit === false ? undefined : () => setModalMode("edit")}
           onArchive={rowActions?.archive === false ? undefined : () => setModalMode("archive")}
-          onAction={() => showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
+          onAction={() => isDownloadAction(config.secondaryAction ?? "") ? void downloadRecords(sortedRecords) : showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
           actionLabel={config.secondaryAction ?? "Run action"}
         />
       ) : null}

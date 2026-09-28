@@ -4,62 +4,105 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../generated/database.types.js";
 import { DashboardService } from "./dashboard.service.js";
 
-type Screening = { id: string; participant_reference: string; organisation_id: string; status: string };
+type Participation = {
+  eligible_participant_count: number;
+  screened_participant_count: number;
+  screening_participation_rate_pct: number;
+  organisation_id: string;
+};
 
-function service(rows: Screening[], fail = false) {
+type Completion = {
+  expected_required_screenings: number;
+  completed_required_screenings: number;
+  screening_completion_rate: number;
+  organisation_id: string;
+};
+
+function service(options?: {
+  participation?: Participation | null;
+  completion?: Completion | null;
+  failView?: string;
+}) {
   const client = createClient<Database>("https://test.supabase.co", "test-key", {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
-      fetch: async (input, init) => {
+      fetch: async (input) => {
         const url = new URL(String(input));
-        const table = url.pathname.split("/").pop();
-        if (table === "organisations") {
+        const resource = url.pathname.split("/").pop();
+        const organisationId = url.searchParams.get("organisation_id");
+
+        if (resource === "organisations") {
           return Response.json({ workforce_size: 10, wellness_risk_score: 20 });
         }
-        if (table === "activations") {
+        if (resource === "activations") {
           return new Response(null, { headers: { "content-range": "*/0" } });
         }
-        assert.equal(table, "screenings");
-        assert.equal(url.searchParams.get("organisation_id"), "eq.org-a");
-        let matching = rows.filter(row => row.organisation_id === "org-a");
-        const status = url.searchParams.get("status")?.slice(3);
-        if (status) matching = matching.filter(row => row.status === status);
-        if (init?.method === "HEAD") {
-          return new Response(null, { headers: { "content-range": `*/${matching.length}` } });
+        if (resource === "screenings") {
+          return new Response(null, { headers: { "content-range": "*/4" } });
         }
-        assert.equal(status, "Approved");
-        assert.equal(url.searchParams.get("select"), "id,participant_reference");
-        if (fail) return Response.json({ message: "Query failed" }, { status: 400 });
-        const afterId = url.searchParams.get("id")?.slice(3);
-        matching = matching.sort((a, b) => a.id.localeCompare(b.id))
-          .filter(row => !afterId || row.id > afterId);
-        // Simulate a server row cap lower than the requested page size.
-        return Response.json(matching.slice(0, 2).map(({ id, participant_reference }) => ({ id, participant_reference })));
+        if (resource === "analytics_screening_participation") {
+          assert.equal(organisationId, "eq.org-a");
+          if (options?.failView === resource) {
+            return Response.json({ message: "Participation view failed" }, { status: 400 });
+          }
+          return Response.json(options?.participation ? [options.participation] : []);
+        }
+        if (resource === "analytics_screening_completion") {
+          assert.equal(organisationId, "eq.org-a");
+          if (options?.failView === resource) {
+            return Response.json({ message: "Completion view failed" }, { status: 400 });
+          }
+          return Response.json(options?.completion ? [options.completion] : []);
+        }
+
+        assert.fail(`Unexpected Supabase resource: ${resource}`);
       },
     },
   });
+
   return new DashboardService(client);
 }
 
-const row = (id: string, participant: string, status = "Approved", org = "org-a"): Screening =>
-  ({ id, participant_reference: participant, status, organisation_id: org });
+const participation: Participation = {
+  organisation_id: "org-a",
+  eligible_participant_count: 10,
+  screened_participant_count: 6,
+  screening_participation_rate_pct: 60.25,
+};
 
-test("counts people once across services and pages, excluding other organisations and unapproved records", async () => {
-  const stats = await service([
-    row("01", "person-a"), row("02", "person-a"), row("03", "person-a"),
-    row("04", "person-b"), row("05", "person-c", "Submitted"),
-    row("06", "person-d", "Needs Correction"), row("07", "person-e", "Under Review"),
-    row("08", "person-f", "Draft"), row("09", "person-g", "Approved", "org-b"),
-  ]).getOrganisationStats("org-a");
-  assert.equal(stats.participantsScreened, 2);
-  assert.equal(stats.approvedScreenings, 4);
+const completion: Completion = {
+  organisation_id: "org-a",
+  expected_required_screenings: 12,
+  completed_required_screenings: 9,
+  screening_completion_rate: 75,
+};
+
+test("uses the organisation's analytics view results", async () => {
+  const stats = await service({ participation, completion }).getOrganisationStats("org-a");
+
+  assert.equal(stats.participantsScreened, 6);
+  assert.equal(stats.eligibleParticipants, 10);
+  assert.equal(stats.screeningParticipation, 60.25);
+  assert.equal(stats.expectedRequiredScreenings, 12);
+  assert.equal(stats.completedRequiredScreenings, 9);
+  assert.equal(stats.screeningCompletionRate, 75);
+  assert.equal(stats.completedScreenings, 4);
 });
 
-test("no qualifying screenings returns zero", async () => {
-  const stats = await service([row("01", "person-a", "Submitted")]).getOrganisationStats("org-a");
+test("returns zero values when a view has no row for the organisation", async () => {
+  const stats = await service().getOrganisationStats("org-a");
+
   assert.equal(stats.participantsScreened, 0);
+  assert.equal(stats.eligibleParticipants, 0);
+  assert.equal(stats.screeningParticipation, 0);
+  assert.equal(stats.expectedRequiredScreenings, 0);
+  assert.equal(stats.completedRequiredScreenings, 0);
+  assert.equal(stats.screeningCompletionRate, 0);
 });
 
-test("query failure is an error rather than a zero count", async () => {
-  await assert.rejects(service([], true).getOrganisationStats("org-a"), /Query failed/);
+test("a view query failure is returned as an error, not as zero", async () => {
+  await assert.rejects(
+    service({ failView: "analytics_screening_participation" }).getOrganisationStats("org-a"),
+    /Participation view failed/,
+  );
 });

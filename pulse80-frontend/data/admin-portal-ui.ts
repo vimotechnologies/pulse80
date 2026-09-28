@@ -448,7 +448,7 @@ export const adminPageConfigs: Record<AdminPageConfig["id"], AdminPageConfig> = 
       { label: "Ready for QA", value: "312", detail: "11 activations", tone: "primary", icon: ClipboardCheck },
       { label: "Incomplete", value: "17", detail: "Missing fields", tone: "warning", icon: AlertIcon },
       { label: "Escalations", value: "14", detail: "Clinician review", tone: "danger", icon: HeartPulse },
-      { label: "Approved", value: "91%", detail: "This month", tone: "success", icon: ShieldCheck },
+      { label: "Completed", value: "91%", detail: "This month", tone: "success", icon: ShieldCheck },
     ],
     records: screeningRecords(),
     formTitle: "Result QA item",
