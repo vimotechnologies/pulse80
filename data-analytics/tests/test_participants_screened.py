@@ -1,418 +1,315 @@
-"""
-Automated tests for the "Participants Screened" calculation.
+"""Tests for sql/002_participants_screened_calculation.sql.
 
-Grounded in Participations_EDA.ipynb and Screenings_EDA.ipynb
----------------------------------------------------------------
-These EDAs ran against real Screenings/Participations/Measurements/
-Practitioners/Programmes extracts and confirmed the following, which this
-test file relies on directly:
+Default: synthetic fixtures on SQLite, with only parameter syntax and casts
+adapted. PostgreSQL mode uses the same fixtures and the production SQL unchanged
+in an isolated PGlite process, plus UUID and timezone tests. Neither mode reads
+live data or validates Supabase RLS policies.
 
-- screening_id is a clean, unique primary key (Screenings_EDA, Section 1).
-- (participation_id, programme_service_id) is a unique natural key on
-  Screenings, no duplicate service captures (Screenings_EDA, Section 9).
-- (employee_id, programme_id) is a unique natural key on Participations,
-  an employee is never registered twice for the same programme
-  (Participations_EDA, Section 2).
-- Every participation in the sample carries exactly 6 screening rows (one
-  per programme_service_id station PS-001..PS-006) confirming the "several
-  screening services, counted once" scenario is a real, common shape, not
-  an edge case (Screenings_EDA, Section 3).
-- screenings.status is 100% 'completed' in the sampled extract, there is
-  no 'approved' value in the real data (Screenings_EDA, Section 5). This
-  test file therefore filters on status = 'completed', matching
-  002_participants_screened_calculation.sql. See the ACCEPTED STATUS
-  ASSUMPTION note in that file.
-- Because the sampled extract has zero variance on status, organisation
-  and consent fields, the "exclusion" and "multi-org isolation" scenarios
-  below are NECESSARILY SYNTHETIC (fabricated fixtures with a 'pending'/
-  'rejected' status and a second organisation), the EDA explicitly flags
-  these paths as "untestable against this data alone". They validate the
-  query LOGIC, not a real observed data pattern; re-validate against real
-  multi-status, multi-org data once it exists.
-- A known data-quality defect exists in screened_at: 18/144 rows (6/24
-  visits) are exactly -60 minutes off due to an inferred hour-rollover bug
-  (Screenings_EDA, Section 8). test_hour_rollover_defect_does_not_break_the_count
-  below reproduces that defect on a fixture and confirms it does not change
-  who gets counted, only that period filters drawn tightly around the
-  affected hour are a known risk (documented, not "fixed", here).
+Run from the repository root:
+    python3 data-analytics/tests/test_participants_screened.py
+    PARTICIPANTS_TEST_ENGINE=postgres python3 data-analytics/tests/test_participants_screened.py
 
-Why SQLite instead of a live Supabase/Postgres connection
------------------------------------------------------------
-This sandbox has no network access and no running Postgres instance, so
-these tests build an in-memory SQLite database with the same grain
-(screenings -> participations -> employees) and the same query logic as
-002_participants_screened_calculation.sql (query A). SQLite 3.25+ supports
-the FILTER clause used in the production SQL, so the query text below is a
-faithful, directly-portable translation -- only the parameter placeholder
-style differs (:named here vs $1..$4 in the pg client). Before merging,
-re-run the same fixtures/assertions against a real Postgres/Supabase
-instance (e.g. with psycopg2 or a CI Postgres service) as a final check.
-
-Run with:  python3 test_participants_screened.py
+PostgreSQL mode requires Node.js and the declared backend dependencies:
+    npm ci --prefix pulse80-backend
 """
 
+from pathlib import Path
+import atexit
+import os
+import re
 import sqlite3
 import unittest
+from uuid import UUID
+
+
+TEST_ENGINE = os.environ.get("PARTICIPANTS_TEST_ENGINE", "sqlite")
+if TEST_ENGINE not in ("sqlite", "postgres"):
+    raise ValueError("PARTICIPANTS_TEST_ENGINE must be sqlite or postgres")
+
+
+_postgres_db = None
+
+
+SQL_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "sql"
+    / "002_participants_screened_calculation.sql"
+)
+PRODUCTION_QUERY = SQL_PATH.read_text(encoding="utf-8")
+# SQLite named parameters retain the production query's repeated $1..$4 bindings.
+PARTICIPANTS_SCREENED_QUERY = re.sub(
+    r"\$(\d+)(?:::(?:uuid|timestamptz))?",
+    r":p\1",
+    PRODUCTION_QUERY,
+)
 
 SCHEMA = """
-create table employees (
-    employee_id      text primary key,
-    organisation_id  text not null,
-    branch_id        text,
-    department_id    text
+CREATE TABLE public.activations (
+    id TEXT PRIMARY KEY,
+    organisation_id TEXT NOT NULL,
+    programme_id TEXT NOT NULL
 );
-
-create table participations (
-    participation_id text primary key,
-    employee_id       text not null,
-    programme_id      text not null
+CREATE TABLE public.screenings (
+    id TEXT PRIMARY KEY,
+    organisation_id TEXT NOT NULL,
+    activation_id TEXT REFERENCES activations(id),
+    participant_reference TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (
+        status IN ('Draft', 'Under Review', 'Completed', 'Needs Correction')
+    ),
+    captured_at TEXT NOT NULL
 );
-
-create table screenings (
-    screening_id         text primary key,
-    participation_id     text not null,
-    programme_service_id text,
-    practitioner_id      text,
-    status               text not null,
-    screened_at          text not null
-);
-
-create view analytics_screening_facts as
-select
-    s.screening_id,
-    s.participation_id,
-    s.programme_service_id,
-    s.practitioner_id,
-    s.status as screening_status,
-    s.screened_at,
-    p.employee_id,
-    p.programme_id,
-    e.organisation_id,
-    e.branch_id,
-    e.department_id
-from screenings s
-join participations p
-  on p.participation_id = s.participation_id
-join employees e
-  on e.employee_id = p.employee_id;
 """
 
-# Same logic as 002_participants_screened_calculation.sql, query A.
-# ACCEPTED STATUS ASSUMPTION: 'completed' is the only status value the
-# Screenings EDA confirmed present in the real data (100% of 144 rows).
-# Postgres $1/$2/$3/$4 positional params -> SQLite :org/:programme/:period_start/:period_end
-PARTICIPANTS_SCREENED_QUERY = """
-select count(distinct f.employee_id) as participants_screened
-from analytics_screening_facts f
-where f.organisation_id = :org
-  and (:programme is null or f.programme_id = :programme)
-  and lower(f.screening_status) in ('completed')
-  and (:period_start is null or f.screened_at >= :period_start)
-  and (:period_end   is null or f.screened_at <  :period_end)
-"""
+ORG_A, ORG_B, UNKNOWN_ORG = (str(UUID(int=n)) for n in (1, 2, 3))
+PROGRAMME_A, PROGRAMME_B, PROGRAMME_C, UNKNOWN_PROGRAMME = (
+    str(UUID(int=n)) for n in (11, 12, 13, 14)
+)
+ACTIVATION_A, ACTIVATION_REPEAT, ACTIVATION_B, ACTIVATION_C = (
+    str(UUID(int=n)) for n in (21, 22, 23, 24)
+)
 
 
 def participants_screened(conn, organisation_id, programme_id=None,
-                           period_start=None, period_end=None):
-    cur = conn.execute(
+                          period_start=None, period_end=None):
+    if TEST_ENGINE == "postgres":
+        # Retain PostgreSQL's $1..$4 parameters and uuid/timestamptz casts.
+        return int(conn.query(PRODUCTION_QUERY, [
+            organisation_id, programme_id, period_start, period_end,
+        ]).fetchone()[0])
+    return conn.execute(
         PARTICIPANTS_SCREENED_QUERY,
-        {
-            "org": organisation_id,
-            "programme": programme_id,
-            "period_start": period_start,
-            "period_end": period_end,
-        },
-    )
-    return cur.fetchone()[0]
+        {"p1": organisation_id, "p2": programme_id,
+         "p3": period_start, "p4": period_end},
+    ).fetchone()[0]
 
 
 def build_db():
+    if TEST_ENGINE == "postgres":
+        global _postgres_db
+        if _postgres_db is None:
+            from helpers.participants_postgres import PostgresDatabase
+            _postgres_db = PostgresDatabase()
+            atexit.register(_postgres_db.close)
+        # This engine exists only in this test process and has no live data.
+        _postgres_db.executescript(
+            "DROP TABLE IF EXISTS public.screenings;"
+            "DROP TABLE IF EXISTS public.activations;"
+            + (Path(__file__).parent / "sql" / "participants_screened_test_schema.sql").read_text(encoding="utf-8")
+        )
+        return _postgres_db
     conn = sqlite3.connect(":memory:")
+    conn.execute("PRAGMA foreign_keys = ON")
+    # Preserve the public.* table names used by the production SQL.
+    conn.execute("ATTACH DATABASE ':memory:' AS public")
     conn.executescript(SCHEMA)
     return conn
 
 
-def seed(conn, employees, participations, screenings):
-    conn.executemany("insert into employees values (?, ?, ?, ?)", employees)
-    conn.executemany("insert into participations values (?, ?, ?)", participations)
-    conn.executemany(
-        "insert into screenings values (?, ?, ?, ?, ?, ?)", screenings
-    )
-    conn.commit()
-
-
-class GrainAssumptionTests(unittest.TestCase):
-    """
-    Replays the grain-integrity checks the EDAs already ran against the real
-    extracts, on the fixture data used below, so a broken fixture (one that
-    violates a confirmed real-world constraint) fails loudly here instead of
-    silently invalidating the metric tests that build on top of it.
-    """
-
+class ParticipantFixture(unittest.TestCase):
     def setUp(self):
         self.conn = build_db()
-        # Reuses the same base fixture as ParticipantsScreenedTests.setUp.
-        employees = [
-            ("EMP-001", "org-1", "branch-1", "dept-1"),
-            ("EMP-002", "org-1", "branch-1", "dept-1"),
-            ("EMP-003", "org-1", "branch-1", "dept-1"),
-            ("EMP-004", "org-1", "branch-1", "dept-1"),
-            ("EMP-005", "org-2", "branch-9", "dept-9"),
-        ]
-        participations = [
-            ("PAR-001", "EMP-001", "PRG-001"),
-            ("PAR-002", "EMP-002", "PRG-001"),
-            ("PAR-003", "EMP-003", "PRG-001"),
-            ("PAR-004", "EMP-004", "PRG-002"),
-            ("PAR-005", "EMP-005", "PRG-001"),
-        ]
-        screenings = [
-            ("SCR-0001", "PAR-001", "PS-001", "PRA-001", "completed", "2026-06-18T07:09:00"),
-            ("SCR-0002", "PAR-001", "PS-002", "PRA-001", "completed", "2026-06-18T07:13:00"),
-            ("SCR-0003", "PAR-002", "PS-001", "PRA-001", "pending",  "2026-06-18T07:18:00"),
-            ("SCR-0004", "PAR-003", "PS-001", "PRA-001", "rejected", "2026-06-18T07:22:00"),
-            ("SCR-0005", "PAR-003", "PS-002", "PRA-001", "completed", "2026-06-18T07:26:00"),
-            ("SCR-0006", "PAR-004", "PS-001", "PRA-002", "completed", "2026-06-18T07:30:00"),
-            ("SCR-0007", "PAR-005", "PS-001", "PRA-003", "completed", "2026-06-18T07:30:00"),
-        ]
-        seed(self.conn, employees, participations, screenings)
-
-    def tearDown(self):
-        self.conn.close()
-
-    def test_screening_id_is_unique(self):
-        # Mirrors Screenings_EDA.ipynb Section 1.
-        rows = self.conn.execute("select screening_id from screenings").fetchall()
-        ids = [r[0] for r in rows]
-        self.assertEqual(len(ids), len(set(ids)))
-
-    def test_participation_programme_service_is_unique(self):
-        # Mirrors Screenings_EDA.ipynb Section 9 (composite natural key).
-        rows = self.conn.execute(
-            "select participation_id, programme_service_id, count(*) c "
-            "from screenings group by 1, 2 having count(*) > 1"
-        ).fetchall()
-        self.assertEqual(rows, [])
-
-    def test_employee_programme_is_unique(self):
-        # Mirrors Participations_EDA.ipynb Section 2 (no re-enrolment).
-        rows = self.conn.execute(
-            "select employee_id, programme_id, count(*) c "
-            "from participations group by 1, 2 having count(*) > 1"
-        ).fetchall()
-        self.assertEqual(rows, [])
-
-
-class ParticipantsScreenedTests(unittest.TestCase):
-    """
-    Fixture set (all tests share this data unless noted):
-
-    Org "org-1", programme "PRG-001" (real IDs from the EDA sample):
-      EMP-001 -> PAR-001 -> screening completed 2026-06-18T07:09, service PS-001
-                          -> screening completed 2026-06-18T07:13, service PS-002
-                (same person, two completed services from the confirmed
-                6-station panel -> should count ONCE)
-      EMP-002 -> PAR-002 -> screening "pending"  2026-06-18T07:18
-                (SYNTHETIC — the real extract has no non-'completed' status;
-                only an unapproved/incomplete screening -> should NOT count)
-      EMP-003 -> PAR-003 -> screening "rejected" 2026-06-18T07:22
-                          -> screening "completed" 2026-06-18T07:26
-                (SYNTHETIC — one bad + one completed -> should count ONCE,
-                via the good one)
-
-    Org "org-1", programme "PRG-002":
-      EMP-004 -> PAR-004 -> screening completed 2026-06-18T07:30
-                (different programme, same org -> excluded when filtering PRG-001)
-
-    Org "org-2", programme "PRG-001" (same programme id reused in a
-    different org — SYNTHETIC, the sample extract only has one organisation):
-      EMP-005 -> PAR-005 -> screening completed 2026-06-18T07:30
-                (different organisation -> must never appear in org-1 results)
-    """
-
-    def setUp(self):
-        self.conn = build_db()
-        employees = [
-            ("EMP-001", "org-1", "branch-1", "dept-1"),
-            ("EMP-002", "org-1", "branch-1", "dept-1"),
-            ("EMP-003", "org-1", "branch-1", "dept-1"),
-            ("EMP-004", "org-1", "branch-1", "dept-1"),
-            ("EMP-005", "org-2", "branch-9", "dept-9"),
-        ]
-        participations = [
-            ("PAR-001", "EMP-001", "PRG-001"),
-            ("PAR-002", "EMP-002", "PRG-001"),
-            ("PAR-003", "EMP-003", "PRG-001"),
-            ("PAR-004", "EMP-004", "PRG-002"),
-            ("PAR-005", "EMP-005", "PRG-001"),
-        ]
-        screenings = [
-            ("SCR-0001", "PAR-001", "PS-001", "PRA-001", "completed", "2026-06-18T07:09:00"),
-            ("SCR-0002", "PAR-001", "PS-002", "PRA-001", "completed", "2026-06-18T07:13:00"),
-            ("SCR-0003", "PAR-002", "PS-001", "PRA-001", "pending",  "2026-06-18T07:18:00"),
-            ("SCR-0004", "PAR-003", "PS-001", "PRA-001", "rejected", "2026-06-18T07:22:00"),
-            ("SCR-0005", "PAR-003", "PS-002", "PRA-001", "completed", "2026-06-18T07:26:00"),
-            ("SCR-0006", "PAR-004", "PS-001", "PRA-002", "completed", "2026-06-18T07:30:00"),
-            ("SCR-0007", "PAR-005", "PS-001", "PRA-003", "completed", "2026-06-18T07:30:00"),
-        ]
-        seed(self.conn, employees, participations, screenings)
-
-    def tearDown(self):
-        self.conn.close()
-
-    def test_person_with_multiple_completed_services_counted_once(self):
-        # EMP-001 has two completed screenings (PS-001, PS-002) in PRG-001,
-        # matching the confirmed 6-station panel pattern from the EDA.
-        # EMP-003 also contributes one completed screening (via PS-002).
-        # Whole-period count for org-1/PRG-001 = EMP-001, EMP-003 = 2
-        result = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T00:00:00", "2026-06-19T00:00:00",
+        if TEST_ENGINE == "sqlite":
+            self.addCleanup(self.conn.close)
+        self.conn.executemany(
+            "INSERT INTO public.activations VALUES (?, ?, ?)",
+            [
+                (ACTIVATION_A, ORG_A, PROGRAMME_A),
+                (ACTIVATION_REPEAT, ORG_A, PROGRAMME_A),
+                (ACTIVATION_B, ORG_A, PROGRAMME_B),
+                (ACTIVATION_C, ORG_B, PROGRAMME_C),
+            ],
         )
-        self.assertEqual(result, 2)
+        self.screening_number = 0
+        # A has two completed records. B is incomplete. C has a correction
+        # and a completion. D belongs to a different programme.
+        self.add_screening("REF-A", at="2026-06-18T07:09:00Z")
+        self.add_screening("REF-A", at="2026-06-18T07:13:00Z")
+        self.add_screening("REF-B", status="Under Review", at="2026-06-18T07:18:00Z")
+        self.add_screening("REF-C", status="Needs Correction", at="2026-06-18T07:22:00Z")
+        self.add_screening("REF-C", at="2026-06-18T07:26:00Z")
+        self.add_screening("REF-D", activation=ACTIVATION_B)
+        # Another organization deliberately uses the same participant reference.
+        self.add_screening("REF-A", organisation=ORG_B, activation=ACTIVATION_C)
+        self.add_screening("REF-OTHER", organisation=ORG_B, activation=ACTIVATION_C)
 
-    def test_unapproved_screenings_are_excluded(self):
-        # EMP-002's only screening is "pending" -> must not be counted even
-        # though a participation/screening row exists for them.
-        result = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T07:15:00", "2026-06-18T07:20:00",
+    def add_screening(self, reference, *, organisation=ORG_A,
+                      activation=ACTIVATION_A, status="Completed",
+                      at="2026-06-18T07:30:00Z"):
+        self.screening_number += 1
+        self.conn.execute(
+            "INSERT INTO public.screenings VALUES (?, ?, ?, ?, ?, ?)",
+            (str(UUID(int=100 + self.screening_number)), organisation,
+             activation, reference, status, at),
         )
-        self.assertEqual(result, 0)
 
-    def test_rejected_screening_does_not_block_the_completed_one(self):
-        # EMP-003 has one rejected + one completed screening. The rejected
-        # screening must not exclude them once the completed one exists.
-        result = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T07:24:00", "2026-06-18T07:28:00",
-        )
-        self.assertEqual(result, 1)
+class ParticipantsScreenedTests(ParticipantFixture):
+    def test_multiple_completed_records_count_one_participant(self):
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 2)
 
-    def test_no_matching_records_returns_zero_not_null(self):
-        # Valid org/programme, but a period with no screenings at all.
-        result = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2099-01-01T00:00:00", "2099-02-01T00:00:00",
-        )
-        self.assertEqual(result, 0)
-        self.assertIsNotNone(result)
+    def test_all_incomplete_statuses_are_excluded(self):
+        for status in ("Draft", "Under Review", "Needs Correction"):
+            with self.subTest(status=status):
+                self.add_screening("ONLY-" + status, status=status)
+                self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 2)
 
-    def test_unknown_organisation_returns_zero(self):
-        result = participants_screened(self.conn, "org-does-not-exist", "PRG-001")
-        self.assertEqual(result, 0)
+    def test_correction_does_not_disqualify_a_completed_participant(self):
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T07:22:00Z", "2026-06-18T07:27:00Z",
+        ), 1)
 
-    def test_organisations_do_not_mix(self):
-        # org-2 reuses the programme id "PRG-001" on purpose (synthetic;
-        # the real extract only has one org). Its completed screening
-        # (EMP-005) must never leak into org-1's count.
-        org1_result = participants_screened(self.conn, "org-1", "PRG-001")
-        org2_result = participants_screened(self.conn, "org-2", "PRG-001")
-        self.assertEqual(org1_result, 2)   # EMP-001, EMP-003
-        self.assertEqual(org2_result, 1)   # EMP-005 only
+    def test_reference_is_deduplicated_across_activations(self):
+        self.add_screening("REF-A", activation=ACTIVATION_REPEAT)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 2)
+
+    def test_distinct_reference_in_another_activation_is_included(self):
+        self.add_screening("REF-NEW", activation=ACTIVATION_REPEAT)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 3)
 
     def test_programme_filter_is_respected(self):
-        # EMP-004 is completed but under PRG-002; must not appear under
-        # PRG-001, and must appear under PRG-002.
-        prog_1_result = participants_screened(self.conn, "org-1", "PRG-001")
-        prog_2_result = participants_screened(self.conn, "org-1", "PRG-002")
-        self.assertEqual(prog_2_result, 1)  # EMP-004 only
-        self.assertNotIn("EMP-004", self._debug_members("org-1", "PRG-001"))
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 2)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_B), 1)
 
-    def test_null_programme_means_all_programmes(self):
-        # Passing programme_id = None should include both PRG-001 and
-        # PRG-002 completed participants for org-1: EMP-001, EMP-003, EMP-004 = 3
-        result = participants_screened(self.conn, "org-1", None)
-        self.assertEqual(result, 3)
+    def test_no_programme_filter_includes_all_programmes(self):
+        self.assertEqual(participants_screened(self.conn, ORG_A), 3)
 
-    def test_period_start_is_inclusive_period_end_is_exclusive(self):
-        # SCR-0001 is exactly at 2026-06-18T07:09:00. Window narrowed to
-        # 07:09-07:15 so EMP-003's later completed screening (07:26) can't
-        # leak into this boundary check.
-        inclusive = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T07:09:00", "2026-06-18T07:15:00",
-        )
-        self.assertEqual(inclusive, 1)  # EMP-001 included at the lower bound
+    def test_reference_is_deduplicated_across_programmes(self):
+        self.add_screening("REF-A", activation=ACTIVATION_B)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_B), 2)
+        self.assertEqual(participants_screened(self.conn, ORG_A), 3)
 
-        exclusive = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T00:00:00", "2026-06-18T07:09:00",
-        )
-        self.assertEqual(exclusive, 0)  # EMP-001 excluded at the upper bound
+    def test_organisations_are_isolated_even_with_shared_references(self):
+        self.assertEqual(participants_screened(self.conn, ORG_A), 3)
+        self.assertEqual(participants_screened(self.conn, ORG_B), 2)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_C), 0)
 
-    def test_no_period_bounds_means_all_time(self):
-        result = participants_screened(self.conn, "org-1", "PRG-001")
-        self.assertEqual(result, 2)
+    def test_activation_organisation_must_match_screening_organisation(self):
+        # Deliberately inconsistent data: the activation FK exists, but it
+        # belongs to another organization. The join must reject this record.
+        self.add_screening("REF-MISMATCH", activation=ACTIVATION_C)
+        self.assertEqual(participants_screened(self.conn, ORG_A), 3)
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_C), 0)
 
-    # -- helper used only inside tests, not part of the production query --
-    def _debug_members(self, organisation_id, programme_id):
-        cur = self.conn.execute(
-            """
-            select distinct f.employee_id
-            from analytics_screening_facts f
-            where f.organisation_id = :org
-              and f.programme_id = :programme
-              and lower(f.screening_status) in ('completed')
-            """,
-            {"org": organisation_id, "programme": programme_id},
-        )
-        return {row[0] for row in cur.fetchall()}
+    def test_screening_without_activation_is_excluded_by_inner_join(self):
+        self.add_screening("REF-UNLINKED", activation=None)
+        self.assertEqual(participants_screened(self.conn, ORG_A), 3)
 
+    def test_period_start_is_inclusive(self):
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T07:09:00Z", "2026-06-18T07:10:00Z",
+        ), 1)
 
-class KnownDataQualityDefectTests(unittest.TestCase):
-    """
-    Reproduces the hour-rollover defect found in Screenings_EDA.ipynb
-    Section 8 (screened_at exactly -60 minutes off for later stations in
-    ~25% of visits) on a small fixture, to document its actual effect on
-    this metric rather than leave it as an untested assumption.
-    """
+    def test_period_end_is_exclusive(self):
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T00:00:00Z", "2026-06-18T07:09:00Z",
+        ), 0)
 
-    def setUp(self):
-        self.conn = build_db()
-        employees = [("EMP-006", "org-1", "branch-1", "dept-1")]
-        participations = [("PAR-006", "EMP-006", "PRG-001")]
-        # Mirrors the real PAR-006 example from the EDA: PS-001 at 07:54,
-        # then PS-003/PS-004 land an hour "early" (07:02, 07:06) instead of
-        # the expected 08:02/08:06 due to the source-system bug.
-        screenings = [
-            ("SCR-0100", "PAR-006", "PS-001", "PRA-001", "completed", "2026-06-18T07:54:00"),
-            ("SCR-0101", "PAR-006", "PS-003", "PRA-001", "completed", "2026-06-18T07:02:00"),  # defect: should be ~08:02
-            ("SCR-0102", "PAR-006", "PS-004", "PRA-001", "completed", "2026-06-18T07:06:00"),  # defect: should be ~08:06
-        ]
-        seed(self.conn, employees, participations, screenings)
+    def test_start_only_period(self):
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A, period_start="2026-06-18T07:14:00Z",
+        ), 1)
 
-    def tearDown(self):
-        self.conn.close()
+    def test_end_only_period(self):
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A, period_end="2026-06-18T07:14:00Z",
+        ), 1)
 
-    def test_person_is_still_counted_despite_the_timestamp_defect(self):
-        # Whichever of the 3 timestamps you use, EMP-006 has an approved/
-        # completed screening somewhere in this visit -> counted once.
+    def test_no_period_bounds_includes_all_time(self):
+        self.add_screening("REF-OLDER", at="2025-06-18T07:00:00Z")
+        self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A), 3)
+
+    def test_empty_or_reversed_period_returns_zero(self):
+        for start, end in (("07:09:00", "07:09:00"), ("08:00:00", "07:00:00")):
+            with self.subTest(start=start, end=end):
+                self.assertEqual(participants_screened(
+                    self.conn, ORG_A, PROGRAMME_A,
+                    f"2026-06-18T{start}Z", f"2026-06-18T{end}Z",
+                ), 0)
+
+    def test_period_with_no_records_returns_integer_zero(self):
         result = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T00:00:00", "2026-06-19T00:00:00",
+            self.conn, ORG_A, PROGRAMME_A,
+            "2099-01-01T00:00:00Z", "2099-02-01T00:00:00Z",
         )
-        self.assertEqual(result, 1)
+        self.assertEqual(result, 0)
+        self.assertIsInstance(result, int)
 
-    def test_narrow_period_window_can_miss_the_defective_row(self):
-        # Documents the real risk: a caller who (reasonably) assumes the
-        # visit runs 08:00-08:10 based on the un-corrupted PS-001 time plus
-        # expected cadence will miss the two mis-timestamped rows if they
-        # query only that narrow window and PS-001 is excluded. This is a
-        # known limitation of the source data, not of this query — recorded
-        # here so a future fix to the ingestion bug has a regression test to
-        # flip from "documents the risk" to "confirms the fix".
-        window_missing_defect_rows = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T08:00:00", "2026-06-18T08:10:00",
-        )
-        self.assertEqual(window_missing_defect_rows, 0)
+    def test_unknown_organisation_returns_zero(self):
+        self.assertEqual(participants_screened(self.conn, UNKNOWN_ORG), 0)
 
-        window_including_ps001 = participants_screened(
-            self.conn, "org-1", "PRG-001",
-            "2026-06-18T07:00:00", "2026-06-18T08:10:00",
-        )
-        self.assertEqual(window_including_ps001, 1)
+    def test_unknown_programme_returns_zero(self):
+        self.assertEqual(participants_screened(self.conn, ORG_A, UNKNOWN_PROGRAMME), 0)
+
+    def test_empty_screenings_table_returns_zero(self):
+        self.conn.execute("DELETE FROM public.screenings")
+        self.assertEqual(participants_screened(self.conn, ORG_A), 0)
+
+
+@unittest.skipUnless(TEST_ENGINE == "postgres", "Requires PostgreSQL types and timezone semantics")
+class PostgresTypeTests(ParticipantFixture):
+    def test_equivalent_period_offsets_produce_same_count(self):
+        for start, end in (
+            ("2026-06-18T07:09:00Z", "2026-06-18T07:14:00Z"),
+            ("2026-06-18T09:09:00+02:00", "2026-06-18T09:14:00+02:00"),
+            ("2026-06-18T02:09:00-05:00", "2026-06-18T02:14:00-05:00"),
+        ):
+            with self.subTest(start=start):
+                self.assertEqual(participants_screened(self.conn, ORG_A, PROGRAMME_A, start, end), 1)
+
+    def test_captured_timestamp_offsets_are_normalized(self):
+        self.add_screening("REF-OFFSET", at="2026-06-18T09:10:00+02:00")
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T07:10:00Z", "2026-06-18T07:11:00Z",
+        ), 1)
+
+    def test_exclusive_end_applies_across_offsets(self):
+        self.add_screening("REF-END", at="2026-06-18T09:10:00+02:00")
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T07:09:30Z", "2026-06-18T07:10:00Z",
+        ), 0)
+
+    def test_local_midnight_window_crosses_utc_date(self):
+        self.add_screening("REF-MIDNIGHT", at="2026-06-18T00:00:00+02:00")
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-17T22:00:00Z", "2026-06-17T22:01:00Z",
+        ), 1)
+
+    def test_explicit_offsets_do_not_depend_on_session_timezone(self):
+        for timezone in ("UTC", "Africa/Gaborone", "America/New_York"):
+            with self.subTest(timezone=timezone):
+                self.conn.query("SELECT set_config('TimeZone', $1, false)", [timezone])
+                self.assertEqual(participants_screened(
+                    self.conn, ORG_A, PROGRAMME_A,
+                    "2026-06-18T09:09:00+02:00", "2026-06-18T09:14:00+02:00",
+                ), 1)
+
+    def test_microseconds_respect_exclusive_end(self):
+        self.add_screening("REF-BEFORE", at="2026-06-18T08:00:00.999999Z")
+        self.add_screening("REF-AT-END", at="2026-06-18T08:00:01Z")
+        self.assertEqual(participants_screened(
+            self.conn, ORG_A, PROGRAMME_A,
+            "2026-06-18T08:00:00Z", "2026-06-18T08:00:01Z",
+        ), 1)
+
+    def test_invalid_uuid_parameters_are_rejected(self):
+        from helpers.participants_postgres import PostgresError
+        for organisation, programme in (("not-a-uuid", None), (ORG_A, "not-a-uuid")):
+            with self.subTest(organisation=organisation, programme=programme):
+                with self.assertRaises(PostgresError) as error:
+                    participants_screened(self.conn, organisation, programme)
+                self.assertEqual(error.exception.code, "22P02")
+
+    def test_invalid_timestamp_parameter_is_rejected(self):
+        from helpers.participants_postgres import PostgresError
+        with self.assertRaises(PostgresError) as error:
+            participants_screened(self.conn, ORG_A, period_start="not-a-timestamp")
+        self.assertEqual(error.exception.code, "22007")
 
 
 if __name__ == "__main__":
