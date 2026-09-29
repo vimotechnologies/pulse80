@@ -23,6 +23,9 @@
 --   5. Period filtering uses captured_at.
 --   6. period_start is inclusive.
 --   7. period_end is exclusive.
+--   8. Screenings without a linked activation are excluded,
+--      including organisation-wide totals. The activation must
+--      belong to the same organisation as the screening.
 --
 -- Parameters:
 --   $1 = organisation_id UUID
