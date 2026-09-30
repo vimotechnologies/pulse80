@@ -4,8 +4,6 @@ import {
   BarChart3,
   CalendarCheck,
   ClipboardCheck,
-  FileBarChart,
-  FileText,
   HeartPulse,
   Lightbulb,
   Settings,
@@ -62,106 +60,6 @@ export type ClientPageConfig = {
 };
 
 const eyebrow = "Client Organization";
-
-const reportRoi: ClientRecord = {
-  id: "report-roi",
-  title: "ROI and Impact Report",
-  subtitle: "Q3 2026 · Published · Finance and leadership",
-  meta: "Estimated 1.8x productivity impact from participation and follow-up programs.",
-  status: "Published",
-  statusTone: "success",
-  search: "roi impact report q3 2026 finance leadership published",
-  filters: { area: "Reports", type: "ROI and Impact Report", period: "Q3 2026", status: "Published" },
-  fields: [
-    { label: "Impact indicator", value: "1.8x" },
-    { label: "Audience", value: "Finance" },
-    { label: "Period", value: "Q3 2026" },
-  ],
-  details: [
-    { label: "Executive summary", value: "Participation, follow-up attendance, and reduced risk concentration indicate positive business impact." },
-    { label: "Download", value: "Available as a placeholder action." },
-  ],
-  progress: 92,
-  highlight: "Featured latest report",
-};
-
-const reportScreening: ClientRecord = {
-  id: "report-screening",
-  title: "Onsite Screening Summary",
-  subtitle: "July 2026 · New · Wellness coordinators",
-  meta: "Participation, service uptake, and site-level completion summary.",
-  status: "New",
-  statusTone: "info",
-  search: "onsite screening summary july 2026 new",
-  filters: { type: "Onsite Screening Summary", period: "July 2026", status: "New" },
-  fields: [
-    { label: "Employees screened", value: "428" },
-    { label: "Sites", value: "2" },
-    { label: "Completion", value: "78%" },
-  ],
-  details: [
-    { label: "Report focus", value: "Screening reach, services used, participation gaps, and follow-up next steps." },
-    { label: "Sensitive data", value: "Aggregated only. No personal health records shown.", tone: "success" },
-  ],
-  progress: 78,
-};
-
-const reportRisk: ClientRecord = {
-  id: "report-risk",
-  title: "Department Risk Report",
-  subtitle: "Q3 2026 · Review · HR leadership",
-  meta: "Department comparison with risk and participation trends.",
-  status: "Review",
-  statusTone: "warning",
-  search: "department risk report q3 review hr leadership",
-  filters: { area: "Reports", type: "Department Risk Report", period: "Q3 2026", status: "Review" },
-  fields: [
-    { label: "Watch areas", value: "2" },
-    { label: "Highest risk", value: "Operations" },
-    { label: "Trend", value: "+4%" },
-  ],
-  details: [
-    { label: "Report focus", value: "Aggregated department risk, participation gaps, and recommended interventions." },
-    { label: "Review note", value: "Awaiting final executive note.", tone: "warning" },
-  ],
-  progress: 68,
-};
-
-const reportAbsenteeism: ClientRecord = {
-  id: "report-absence",
-  title: "Absenteeism and Presenteeism Report",
-  subtitle: "Q2 2026 · Published · HR and finance",
-  meta: "Risk indicators connected to absence patterns and productivity impact.",
-  status: "Published",
-  statusTone: "success",
-  search: "absenteeism presenteeism report q2 published",
-  filters: { type: "Absenteeism and Presenteeism Report", period: "Q2 2026", status: "Published" },
-  fields: [
-    { label: "Absenteeism risk", value: "Medium" },
-    { label: "Presenteeism", value: "68" },
-    { label: "Actions", value: "3" },
-  ],
-  details: [{ label: "Report focus", value: "Business impact and trend movement by department." }],
-  progress: 84,
-};
-
-const reportExecutive: ClientRecord = {
-  id: "report-executive",
-  title: "Executive Wellness Report",
-  subtitle: "Q3 2026 · Published · Executive committee",
-  meta: "High-level scorecard, risk narrative, ROI, and next action summary.",
-  status: "Published",
-  statusTone: "success",
-  search: "executive wellness report q3 published executive committee",
-  filters: { type: "Executive Wellness Report", period: "Q3 2026", status: "Published" },
-  fields: [
-    { label: "Wellness score", value: "82" },
-    { label: "Risk", value: "Medium" },
-    { label: "Next action", value: "Follow-up" },
-  ],
-  details: [{ label: "Report focus", value: "Board-ready narrative with concise wellness and business impact context." }],
-  progress: 90,
-};
 
 const insightParticipation: ClientRecord = {
   id: "insight-participation",
@@ -462,18 +360,8 @@ export const clientPageConfigs: Record<ClientPageConfig["id"], ClientPageConfig>
     primaryAction: "Download summary",
     searchPlaceholder: "Search reports, insights, activations",
     filters: [{ key: "area", label: "Area", options: ["All", "Reports", "Insights", "Activations", "Recommendations"] }],
-    metrics: [
-      { label: "Workforce Wellness Score", value: "82", detail: "+4 points since last quarter", tone: "success", icon: HeartPulse },
-      { label: "Absenteeism Risk", value: "Medium", detail: "Two departments need attention", tone: "warning", icon: Activity },
-      { label: "Presenteeism Index", value: "68", detail: "Improving against baseline", tone: "primary", icon: BarChart3 },
-      { label: "Screening Participation", value: "74%", detail: "1,428 employees screened", tone: "primary", icon: ClipboardCheck },
-      { label: "Employees Screened", value: "1,428", detail: "Across 4 locations", tone: "primary", icon: UsersRound },
-      { label: "Reports Available", value: "12", detail: "3 new executive summaries", tone: "primary", icon: FileText },
-      { label: "ROI / Impact", value: "1.8x", detail: "Estimated productivity value", tone: "success", icon: FileBarChart },
-      { label: "Next Action", value: "BP follow-up", detail: "Operations cohort", tone: "danger", icon: Lightbulb },
-    ],
-    records: [reportRoi, activationAnnual, insightParticipation, recommendationBpFollowup, departmentOperations, reportRisk],
-    featured: reportRoi,
+    metrics: [],
+    records: [],
     formFields: ["Summary title", "Recipient", "Reporting period"],
     emptyTitle: "No dashboard items found",
     emptyDescription: "Clear filters to return to the executive overview.",
@@ -490,14 +378,8 @@ export const clientPageConfigs: Record<ClientPageConfig["id"], ClientPageConfig>
       { key: "period", label: "Period", options: ["All", "Q3 2026", "Q2 2026", "July 2026"] },
       { key: "status", label: "Status", options: ["All", "Published", "New", "Review"] },
     ],
-    metrics: [
-      { label: "Published reports", value: "12", detail: "3 new this quarter", tone: "success", icon: FileText },
-      { label: "Executive summaries", value: "5", detail: "Leadership ready", tone: "primary", icon: FileBarChart },
-      { label: "Risk reports", value: "4", detail: "Department level", tone: "warning", icon: BarChart3 },
-      { label: "Downloads", value: "38", detail: "This month", tone: "neutral", icon: Activity },
-    ],
-    records: [reportRoi, reportScreening, reportRisk, reportAbsenteeism, reportExecutive],
-    featured: reportRoi,
+    metrics: [],
+    records: [],
     formFields: ["Report type", "Reporting period", "Business question"],
     emptyTitle: "No reports match these filters",
     emptyDescription: "Try another report type, reporting period, or status.",

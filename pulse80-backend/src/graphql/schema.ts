@@ -4,6 +4,8 @@ import { authResolvers } from "../modules/auth/auth.resolver.js";
 import { authTypeDefs } from "../modules/auth/auth.schema.js";
 import { dashboardResolvers } from "../modules/dashboard/dashboard.resolver.js";
 import { dashboardTypeDefs } from "../modules/dashboard/dashboard.schema.js";
+import { analyticsResolvers } from "../modules/analytics/analytics.resolver.js";
+import { analyticsTypeDefs } from "../modules/analytics/analytics.schema.js";
 import { organisationResolvers } from "../modules/organisations/organisation.resolver.js";
 import { organisationTypeDefs } from "../modules/organisations/organisation.schema.js";
 import { practitionerResolvers } from "../modules/practitioners/practitioner.resolver.js";
@@ -44,6 +46,6 @@ const rootResolvers = {
 };
 
 export const schema = makeExecutableSchema({
-  typeDefs: [rootTypeDefs, authTypeDefs, dashboardTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
-  resolvers: [rootResolvers, authResolvers, dashboardResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
+  typeDefs: [rootTypeDefs, authTypeDefs, dashboardTypeDefs, analyticsTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
+  resolvers: [rootResolvers, authResolvers, dashboardResolvers, analyticsResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
 });

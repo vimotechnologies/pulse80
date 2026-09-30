@@ -335,7 +335,7 @@ export function DataListPage<RecordType extends DataRecord>({
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.slice(0, 5).map((metric) => (
+        {metrics.map((metric) => (
           <ListSummaryMetric key={metric.label} metric={metric} />
         ))}
       </section>
