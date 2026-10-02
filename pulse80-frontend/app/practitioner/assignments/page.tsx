@@ -26,7 +26,7 @@ function toAssignmentRecord(assignment: PractitionerAssignment): PractitionerRec
     statusTone,
     search: [assignment.activityName, assignment.organisationName, assignment.programmeName, assignment.serviceName, assignment.location, assignment.status].join(" ").toLowerCase(),
     filters: { status: assignment.status, location: assignment.location },
-    fields: [],
+    fields: [{ label: "Starts at", value: assignment.startsAt }],
     details: [
       { label: "Organisation", value: assignment.organisationName },
       { label: "Programme", value: assignment.programmeName },

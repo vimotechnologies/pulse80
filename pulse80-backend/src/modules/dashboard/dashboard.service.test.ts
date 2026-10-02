@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import WebSocket from "ws";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../generated/database.types.js";
 import { DashboardService } from "./dashboard.service.js";
+
+type SupabaseClientOptions = NonNullable<Parameters<typeof createClient>[2]>;
+type RealtimeTransport = NonNullable<NonNullable<SupabaseClientOptions["realtime"]>["transport"]>;
+const websocketTransport = WebSocket as unknown as RealtimeTransport;
 
 type Participation = {
   eligible_participant_count: number;
@@ -24,6 +29,7 @@ function service(options?: {
   failView?: string;
 }) {
   const client = createClient<Database>("https://test.supabase.co", "test-key", {
+    realtime: { transport: websocketTransport },
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       fetch: async (input) => {
@@ -105,4 +111,70 @@ test("a view query failure is returned as an error, not as zero", async () => {
     service({ failView: "analytics_screening_participation" }).getOrganisationStats("org-a"),
     /Participation view failed/,
   );
+});
+
+test("admin portal analytics aggregates production view rows and counts", async () => {
+  const client = createClient<Database>("https://test.supabase.co", "test-key", {
+    realtime: { transport: websocketTransport },
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: async (input) => {
+        const url = new URL(String(input));
+        const resource = url.pathname.split("/").pop();
+
+        if (resource === "analytics_screening_participation") {
+          return Response.json([
+            { eligible_participant_count: 10, screened_participant_count: 6 },
+            { eligible_participant_count: 4, screened_participant_count: 2 },
+          ]);
+        }
+        if (resource === "analytics_screening_completion") {
+          return Response.json([
+            { expected_required_screenings: 12, completed_required_screenings: 9 },
+            { expected_required_screenings: 8, completed_required_screenings: 3 },
+          ]);
+        }
+        if (resource === "analytics_risk_metrics") {
+          return Response.json([
+            { risk_category: "Low", participant_count: 7 },
+            { risk_category: "High", participant_count: 3 },
+            { risk_category: "Not Calculated", participant_count: 2 },
+          ]);
+        }
+        if (resource === "screenings") {
+          return new Response(null, { headers: { "content-range": "*/14" } });
+        }
+        if (resource === "analytics_referrals") {
+          const missing = url.searchParams.get("referral_missing") === "eq.true";
+          return new Response(null, { headers: { "content-range": `*/${missing ? 2 : 5}` } });
+        }
+        if (resource === "analytics_referral_followups") {
+          const followedUp = url.searchParams.get("follow_up_completed") === "eq.true";
+          return new Response(null, { headers: { "content-range": `*/${followedUp ? 3 : 4}` } });
+        }
+
+        assert.fail(`Unexpected Supabase resource: ${resource}`);
+      },
+    },
+  });
+
+  const analytics = await new DashboardService(client).getAdminPortalAnalytics();
+
+  assert.equal(analytics.participantsScreened, 8);
+  assert.equal(analytics.eligibleParticipants, 14);
+  assert.equal(analytics.screeningParticipationRate, (8 / 14) * 100);
+  assert.equal(analytics.completedScreenings, 14);
+  assert.equal(analytics.expectedRequiredScreenings, 20);
+  assert.equal(analytics.completedRequiredScreenings, 12);
+  assert.equal(analytics.screeningCompletionRate, 60);
+  assert.deepEqual(analytics.riskDistribution, [
+    { riskCategory: "Low", participantCount: 7 },
+    { riskCategory: "Moderate", participantCount: 0 },
+    { riskCategory: "High", participantCount: 3 },
+    { riskCategory: "Not Calculated", participantCount: 2 },
+  ]);
+  assert.equal(analytics.requiredReferralCount, 5);
+  assert.equal(analytics.missingReferralCount, 2);
+  assert.equal(analytics.followUpCount, 4);
+  assert.equal(analytics.followedUpReferralCount, 3);
 });

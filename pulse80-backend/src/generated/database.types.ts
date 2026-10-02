@@ -39,6 +39,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      organisation_units: {
+        Row: {
+          id: string
+          organisation_id: string
+          parent_id: string | null
+          kind: string
+          name: string
+          location: string
+          employees: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organisation_id: string
+          parent_id?: string | null
+          kind: string
+          name: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organisation_id?: string
+          parent_id?: string | null
+          kind?: string
+          name?: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portal_records: {
+        Row: {
+          id: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id: string | null
+          title: string
+          description: string
+          status: string
+          amount: number | null
+          currency: string
+          due_on: string | null
+          created_by: string
+          updated_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id?: string | null
+          title: string
+          description?: string
+          status: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by: string
+          updated_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          organisation_id?: string
+          practitioner_user_id?: string | null
+          title?: string
+          description?: string
+          status?: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by?: string
+          updated_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "portal_records_organisation_id_fkey"; columns: ["organisation_id"]; isOneToOne: false; referencedRelation: "organisations"; referencedColumns: ["id"] },
+          { foreignKeyName: "portal_records_practitioner_user_id_fkey"; columns: ["practitioner_user_id"]; isOneToOne: false; referencedRelation: "practitioner_profiles"; referencedColumns: ["user_id"] }
+        ]
+      }
       activation_readiness_items: {
         Row: {
           activation_id: string
@@ -1046,6 +1136,47 @@ export type Database = {
           expected_required_screenings: number | null
           organisation_id: string | null
           screening_completion_rate: number | null
+        }
+        Relationships: []
+      }
+      analytics_risk_metrics: {
+        Row: {
+          organisation_id: string | null
+          participant_count: number | null
+          percentage: number | null
+          risk_category: string | null
+          total_participants: number | null
+        }
+        Relationships: []
+      }
+      analytics_referrals: {
+        Row: {
+          completed_at: string | null
+          due_at: string | null
+          organisation_id: string | null
+          referral_created: boolean | null
+          referral_id: string | null
+          referral_missing: boolean | null
+          referral_required: boolean | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_date: string | null
+          screening_id: string | null
+          urgency: string | null
+        }
+        Relationships: []
+      }
+      analytics_referral_followups: {
+        Row: {
+          follow_up_completed: boolean | null
+          follow_up_count: number | null
+          latest_follow_up_at: string | null
+          next_follow_up_at: string | null
+          organisation_id: string | null
+          referral_id: string | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_id: string | null
         }
         Relationships: []
       }

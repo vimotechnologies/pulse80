@@ -50,6 +50,8 @@ export const permissions = [
   "reports:read",
 
   "billing:read",
+  "billing:manage",
+  "reports:manage",
 ] as const;
 
 export type Permission = (typeof permissions)[number];
@@ -134,6 +136,7 @@ export const platformRolePermissions: Record<
     "screening:review",
     "analytics:read",
     "reports:read",
+    "reports:manage",
   ],
 
   business_development: [
@@ -144,6 +147,7 @@ export const platformRolePermissions: Record<
   finance: [
     "organisation:read",
     "billing:read",
+    "billing:manage",
   ],
 
   wellness_coordinator: [
@@ -155,6 +159,7 @@ export const platformRolePermissions: Record<
     "screening:review",
     "analytics:read",
     "reports:read",
+    "reports:manage",
   ],
 };
 

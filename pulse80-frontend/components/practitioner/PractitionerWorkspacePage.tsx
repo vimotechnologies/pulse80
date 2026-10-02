@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   practitionerPageConfigs,
   type PractitionerPageConfig,
+  type PractitionerMetric,
   type PractitionerRecord,
 } from "@/data/practitioner-portal-ui";
 
@@ -25,18 +26,49 @@ type PractitionerWorkspacePageProps = {
 export function PractitionerWorkspacePage({ configId, records }: PractitionerWorkspacePageProps) {
   const router = useRouter();
   const baseConfig = practitionerPageConfigs[configId];
-  const config = records ? { ...baseConfig, records } : baseConfig;
+  const liveAssignments = configId === "assignments" && records !== undefined;
+  const config = records
+    ? {
+        ...baseConfig,
+        primaryAction: liveAssignments ? "Download assignments summary" : baseConfig.primaryAction,
+        secondaryAction: undefined,
+        records,
+        filters: baseConfig.filters.map(filter => ({ ...filter, options: ["All", ...new Set(records.map(record => record.filters[filter.key]).filter(Boolean))] })),
+        metrics: liveAssignments ? buildAssignmentMetrics(records, baseConfig.metrics) : baseConfig.metrics,
+      }
+    : { ...baseConfig, records: [], metrics: [], filters: [], primaryAction: "", secondaryAction: undefined };
 
   return (
     <DataListPage
       config={config}
       columns={practitionerColumns(config.id)}
       detailEyebrow={`${config.eyebrow} details`}
-      onCycleStatus={(record) => cyclePractitionerStatus(config.id, record)}
+      readOnly={liveAssignments}
+      allowExport={false}
+      onCycleStatus={liveAssignments ? undefined : (record) => cyclePractitionerStatus(config.id, record)}
       onOpenRecord={config.id === "assignments" ? (record) => router.push(`/practitioner/assignments/${record.id}`) : undefined}
       rowActions={config.id === "assignments" ? { edit: false, archive: false, download: false } : undefined}
     />
   );
+}
+
+function buildAssignmentMetrics(records: PractitionerRecord[], source: PractitionerMetric[]): PractitionerMetric[] {
+  const now = Date.now();
+  const confirmed = records.filter((record) => record.status === "Confirmed").length;
+  const needsAction = records.filter((record) => ["Action Required", "Needs Correction"].includes(record.status)).length;
+  const upcoming = records.filter((record) => {
+    const startsAt = new Date(record.fields.find((field) => field.label === "Starts at")?.value ?? "").getTime();
+    return startsAt >= now && !["Completed", "Cancelled"].includes(record.status);
+  }).length;
+  const sites = new Set(records.map((record) => record.filters.location).filter(Boolean));
+  const number = new Intl.NumberFormat("en-BW");
+
+  return [
+    { ...source[0], label: "Confirmed", value: number.format(confirmed), detail: "Assignments confirmed" },
+    { ...source[1], label: "Needs action", value: number.format(needsAction), detail: "Require practitioner response" },
+    { ...source[2], label: "Upcoming", value: number.format(upcoming), detail: "Future assignments not completed or cancelled" },
+    { ...source[3], label: "Sites", value: number.format(sites.size), detail: "Distinct assignment locations" },
+  ];
 }
 
 function practitionerColumns(configId: PractitionerPageConfig["id"]): DataColumn<PractitionerRecord>[] {

@@ -16,6 +16,15 @@ export const dashboardResolvers = {
 
       return new DashboardService(context.adminSupabase).getAdminStats();
     },
+    adminPortalAnalytics: async (
+      _parent: unknown,
+      _arguments: unknown,
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "analytics:read");
+
+      return new DashboardService(context.adminSupabase).getAdminPortalAnalytics();
+    },
     organisationDashboardStats: async (
       _parent: unknown,
       _arguments: unknown,

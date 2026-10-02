@@ -70,6 +70,8 @@ export const programmeTypeDefs = /* GraphQL */ `
   extend type Query {
     adminProgrammes: [Programme!]!
     adminActivations: [Activation!]!
+    adminOrganisationActivations(organisationId: ID!): [Activation!]!
+    organisationActivations: [Activation!]!
   }
 
   extend type Mutation {

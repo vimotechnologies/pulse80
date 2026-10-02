@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { inviteOrganisationUser } from "@/app/actions/users";
+import { OrganisationOperations } from "@/components/admin/OrganisationOperations";
+import { OrganisationUnits } from "@/components/admin/OrganisationUnits";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -350,32 +353,11 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
     return true;
   }
 
-  function inviteClientUser(payload: InvitePayload) {
-    const targetId = payload.organizationId;
-    setOrganizations((current) =>
-      current.map((organization) =>
-        organization.id === targetId
-          ? {
-              ...organization,
-              clientUsers: [
-                ...organization.clientUsers,
-                {
-                  id: `client-${Date.now()}`,
-                  name: payload.name,
-                  email: payload.email,
-                  role: payload.role,
-                  invitationStatus: "Invitation Pending",
-                  lastActive: "Invitation sent today",
-                },
-              ],
-            }
-          : organization,
-      ),
-    );
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error); return; }
     setInviteOpen(false);
-    setInviteOrganizationId(targetId);
-    const orgName = organizations.find((organization) => organization.id === targetId)?.name ?? "organization";
-    showToast(`Invitation simulated for ${payload.email}. Email includes ${orgName}, role, and a secure time-limited setup link.`);
+    showToast("User access saved. New users receive a setup email.");
   }
 
   return (
@@ -568,28 +550,11 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
     window.setTimeout(() => setToast(null), 3200);
   }
 
-  function updateOrganization(updatedOrganization: Organization) {
-    setOrganization(updatedOrganization);
-  }
-
-  function inviteClientUser(payload: InvitePayload) {
-    if (!organization) return;
-    setOrganization({
-      ...organization,
-      clientUsers: [
-        ...organization.clientUsers,
-        {
-          id: `client-${Date.now()}`,
-          name: payload.name,
-          email: payload.email,
-          role: payload.role,
-          invitationStatus: "Invitation Pending",
-          lastActive: "Invitation sent today",
-        },
-      ],
-    });
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error); return; }
     setInviteOpen(false);
-    showToast(`Invitation simulated for ${payload.email}.`);
+    showToast("User access saved. New users receive a setup email.");
   }
 
   if (!organization) {
@@ -718,12 +683,12 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             <div className="p-5">
             {activeTab === "Contacts" ? <ContactsTab organization={draft ?? organization} editable={isEditing} onChange={setDraft} /> : null}
             {activeTab === "Branches & Departments" ? (
-              <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
+              <OrganisationUnits organisationId={organization.id} />
             ) : null}
             {activeTab === "Contract" ? <ContractTab organization={organization} /> : null}
-            {activeTab === "Operations" ? <OperationsTab organization={organization} /> : null}
+            {activeTab === "Operations" ? <OrganisationOperations organisationId={organization.id} /> : null}
             {activeTab === "Client Portal Access" ? (
-              <ClientPortalTab organization={organization} onInvite={() => setInviteOpen(true)} onUpdate={updateOrganization} onToast={showToast} />
+              <div className="space-y-3"><p className="text-sm">Review current memberships and manage access in Users &amp; Roles.</p><Link href="/admin/users" className="text-primary underline">Manage users and roles</Link><button type="button" onClick={() => setInviteOpen(true)} className="ml-4 text-primary">Invite client user</button></div>
             ) : null}
             </div>
           )}
@@ -962,108 +927,6 @@ function ContactsTab({ organization, editable, onChange }: { organization: Organ
   );
 }
 
-function BranchesTab({
-  organization,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
-}) {
-  function addBranch() {
-    const branch: Branch = {
-      id: `branch-${Date.now()}`,
-      name: "New Branch",
-      country: organization.country,
-      region: organization.region,
-      town: organization.primaryLocation,
-      address: "Address to be confirmed",
-      employees: 0,
-      primary: false,
-      departments: [],
-      status: "Active",
-    };
-    onUpdate({ ...organization, branches: [...organization.branches, branch] });
-    onToast("Branch added locally.");
-  }
-
-  function addDepartment(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId
-          ? {
-              ...branch,
-              departments: [
-                ...branch.departments,
-                {
-                  id: `dept-${Date.now()}`,
-                  name: "New Department",
-                  branchId,
-                  employees: 0,
-                  wellnessScore: 0,
-                  risk: "Low",
-                  latestActivation: "Not scheduled",
-                  status: "Active",
-                },
-              ],
-            }
-          : branch,
-      ),
-    });
-    onToast("Department added locally.");
-  }
-
-  function archiveBranch(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId ? { ...branch, status: "Archived" } : branch,
-      ),
-    });
-    onToast("Branch archived locally.");
-  }
-
-  return (
-    <div className="space-y-3">
-      <button type="button" onClick={addBranch} className="rounded-2xl bg-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black">
-        Add branch
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Branch</span><span>Region</span><span>Town</span><span>Employees</span><span>Departments</span><span>Actions</span>
-        </div>
-        {organization.branches.map((branch) => (
-          <div key={branch.id} className="border-t border-card-border">
-            <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 px-4 py-3 text-[12px] text-black">
-              <span className="font-semibold">{branch.name}<span className="block font-normal text-black/55">{branch.address}</span></span>
-              <span>{branch.region}</span>
-              <span>{branch.town}</span>
-              <span>{branch.employees}</span>
-              <span>{branch.departments.length}</span>
-              <span className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => addDepartment(branch.id)} className="text-[12px] font-semibold text-primary">Add department</button>
-                <button type="button" onClick={() => archiveBranch(branch.id)} className="text-[12px] font-semibold text-black/60">Archive</button>
-              </span>
-            </div>
-            {branch.departments.map((department) => (
-              <div key={department.id} className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#fbfcfd] px-4 py-2 text-[12px] text-black/70">
-                <span className="pl-6">{department.name}</span>
-                <span>{branch.name}</span>
-                <span>{department.status}</span>
-                <span>{department.employees}</span>
-                <span>{department.wellnessScore}%</span>
-                <span><RiskBadge risk={department.risk} /></span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function ContractTab({ organization }: { organization: Organization }) {
   const remaining = daysUntil(organization.contractEnd);
   return (
@@ -1084,111 +947,8 @@ function ContractTab({ organization }: { organization: Organization }) {
         <DetailTile label="Contract duration" value={contractDuration(organization.contractStart, organization.contractEnd)} />
         <DetailTile label="Contract status" value={remaining < 0 ? "Expired" : "Active"} />
         <DetailTile label="Days remaining" value={remaining < 0 ? "Expired" : `${remaining} days`} />
-        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Required now" : "Scheduled 60 days before expiry"} />
+        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Review renewal now" : "Review 60 days before expiry"} />
         <DetailTile label="Custom package notes" value={organization.customPackageNotes ?? "None"} />
-      </div>
-    </div>
-  );
-}
-
-function ActivationsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Activation", "Type", "Date", "Branch", "Status", "Participation", "Report"]} rows={organization.activations.map((item) => [item.title, item.type, item.date, item.branch, item.status, item.participation, item.reportStatus])} />;
-}
-
-function ReportsTab({ organization }: { organization: Organization }) {
-  const [downloading, setDownloading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  return <>
-    <ToastMessage message={message} />
-    <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate,
-      <button key="download" type="button" disabled={downloading} className="font-semibold text-primary disabled:opacity-50" aria-label={`Download ${item.title} as PDF`} onClick={async () => {
-        setDownloading(true);
-        setMessage(null);
-        try {
-          await downloadPdf({ title: item.title, client: { name: organization.name, logoUrl: organization.logoUrl ?? organization.logo }, sections: [{ title: "Report details", lines: [
-            `Type: ${item.type}`, `Period: ${item.period}`, `Status: ${item.status}`, `Published: ${item.publishedDate || "Not published"}`,
-          ] }] });
-          setMessage("PDF download started.");
-        } catch { setMessage("Could not generate the PDF. Please try again."); }
-        finally { setDownloading(false); }
-      }}>Download PDF</button>,
-    ])} />
-  </>;
-}
-
-function OperationsTab({ organization }: { organization: Organization }) {
-  return (
-    <div className="space-y-5">
-      <OperationsSection title="Activations" icon={CalendarCheck}>
-        <ActivationsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Reports" icon={FileText}>
-        <ReportsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Insights" icon={HeartPulse}>
-        <SimpleList title="Wellness Insights" items={organization.insights} />
-      </OperationsSection>
-    </div>
-  );
-}
-
-function OperationsSection({ title, icon: Icon, children }: { title: string; icon: typeof Building2; children: ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-black" aria-hidden="true" />
-        <h2 className="text-[14px] font-semibold text-black">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function ClientPortalTab({
-  organization,
-  onInvite,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onInvite: () => void;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
-}) {
-  function updateUser(id: string, invitationStatus: InvitationStatus, message: string) {
-    onUpdate({
-      ...organization,
-      clientUsers: organization.clientUsers.map((user) =>
-        user.id === id ? { ...user, invitationStatus } : user,
-      ),
-    });
-    onToast(message);
-  }
-
-  return (
-    <div className="space-y-3">
-      <button type="button" onClick={onInvite} className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
-        <User className="h-4 w-4" aria-hidden="true" />
-        Invite Client User
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Name</span><span>Email</span><span>Role</span><span>Invitation</span><span>Last active</span><span>Actions</span>
-        </div>
-        {organization.clientUsers.map((user) => (
-          <div key={user.id} className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-            <span className="font-semibold">{user.name}</span>
-            <span className="truncate">{user.email}</span>
-            <span>{user.role}</span>
-            <span>{user.invitationStatus}</span>
-            <span>{user.lastActive}</span>
-            <span className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => updateUser(user.id, "Invitation Pending", "Invitation resent locally.")} className="font-semibold text-primary">Resend</button>
-              <button type="button" onClick={() => updateUser(user.id, "Not Invited", "Invitation revoked locally.")} className="font-semibold text-black/60">Revoke</button>
-              <button type="button" onClick={() => updateUser(user.id, "Access Suspended", "Access suspended locally.")} className="font-semibold text-warning">Suspend</button>
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1199,32 +959,6 @@ function DetailTile({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-card-border bg-white px-4 py-3">
       <p className="text-[12px] leading-4 text-black/55">{label}</p>
       <p className="mt-1 text-[12px] font-semibold leading-4 text-black">{value}</p>
-    </div>
-  );
-}
-
-function MiniTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-        {columns.map((column) => <span key={column}>{column}</span>)}
-      </div>
-      {rows.map((row, rowIndex) => (
-        <div key={rowIndex} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-          {row.map((cell, cellIndex) => <span key={cellIndex} className="min-w-0 truncate">{cell}</span>)}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SimpleList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="rounded-2xl border border-card-border bg-white p-4">
-      <h3 className="text-[14px] font-semibold text-black">{title}</h3>
-      <div className="mt-3 divide-y divide-card-border">
-        {items.map((item) => <p key={item} className="py-3 text-[12px] leading-5 text-black/70">{item}</p>)}
-      </div>
     </div>
   );
 }
@@ -1288,7 +1022,7 @@ function InviteClientUserModal({
   organizations: Organization[];
   initialOrganizationId?: string;
   onClose: () => void;
-  onSubmit: (payload: InvitePayload) => void;
+  onSubmit: (payload: InvitePayload) => Promise<void>;
 }) {
   const [payload, setPayload] = useState<InvitePayload>({
     name: "",
@@ -1297,14 +1031,15 @@ function InviteClientUserModal({
     organizationId: initialOrganizationId ?? organizations[0]?.id ?? "",
     message: "",
   });
+  const [submitting, setSubmitting] = useState(false);
   const canSubmit = payload.name.trim() && payload.email.trim() && payload.organizationId;
   return (
     <Modal title="Invite Client User" onClose={onClose}>
       <form
         className="grid gap-3"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (canSubmit) onSubmit(payload);
+          if (canSubmit && !submitting) { setSubmitting(true); try { await onSubmit(payload); } finally { setSubmitting(false); } }
         }}
       >
         <TextInput label="Full name" value={payload.name} onChange={(name) => setPayload((current) => ({ ...current, name }))} required />
@@ -1316,14 +1051,10 @@ function InviteClientUserModal({
             {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
           </select>
         </label>
-        <label className="grid gap-1 text-[12px] font-semibold text-black">
-          Optional personalized message
-          <textarea value={payload.message} onChange={(event) => setPayload((current) => ({ ...current, message: event.target.value }))} className="min-h-24 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10" />
-        </label>
-        <StateBanner tone="info" title="Frontend-only invitation simulation" detail="The simulated email includes organization name, Pulse80 portal information, user role, a secure time-limited invitation link, and instructions to create a password. No permanent password is emailed." />
+        <StateBanner tone="info" title="Organisation access" detail="New users receive a secure setup email. Existing users are added to this organisation." />
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
-          <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Send invitation</button>
+          <button type="submit" disabled={!canSubmit || submitting} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">{submitting ? "Saving…" : "Invite or add user"}</button>
         </div>
       </form>
     </Modal>

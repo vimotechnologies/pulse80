@@ -111,6 +111,8 @@ type DataListPageProps<RecordType extends DataRecord> = {
   detailEyebrow?: string;
   featuredTitle?: string;
   enableBulkActions?: boolean;
+  readOnly?: boolean;
+  allowExport?: boolean;
   onCycleStatus?: (record: RecordType) => Partial<RecordType>;
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
   onOpenRecord?: (record: RecordType) => void;
@@ -137,12 +139,15 @@ export function DataListPage<RecordType extends DataRecord>({
   detailEyebrow = "Record details",
   featuredTitle = "Featured latest report",
   enableBulkActions = false,
+  readOnly = false,
+  allowExport = !readOnly,
   onCycleStatus,
   onRoleChange,
   onOpenRecord,
   rowActions,
 }: DataListPageProps<RecordType>) {
-  const [records, setRecords] = useState<RecordType[]>(() => config.records);
+  const [localRecords, setRecords] = useState<RecordType[]>(() => config.records);
+  const records = readOnly ? config.records : localRecords;
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>(() =>
     Object.fromEntries(config.filters.map((item) => [item.key, "All"])),
@@ -371,14 +376,14 @@ export function DataListPage<RecordType extends DataRecord>({
         description={config.description}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <ActionButton variant="secondary" loading={loading} onClick={refreshList}>
+            {!readOnly ? <ActionButton variant="secondary" loading={loading} onClick={refreshList}>
               <Refresh className="mr-2 h-5 w-5" aria-hidden="true" />
               Refresh
-            </ActionButton>
-            <ActionButton loading={isDownloadAction(config.primaryAction) && downloading} onClick={() => isDownloadAction(config.primaryAction) ? void downloadRecords(sortedRecords, `${config.title} summary`, true) : setModalMode("create")}>
+            </ActionButton> : null}
+            {config.primaryAction ? <ActionButton loading={isDownloadAction(config.primaryAction) && downloading} onClick={() => isDownloadAction(config.primaryAction) ? void downloadRecords(sortedRecords, `${config.title} summary`, true) : setModalMode("create")}>
               {isDownloadAction(config.primaryAction) ? <Download className="mr-2 h-5 w-5" aria-hidden="true" /> : <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />}
               {config.primaryAction}
-            </ActionButton>
+            </ActionButton> : null}
           </div>
         }
       />
@@ -387,11 +392,11 @@ export function DataListPage<RecordType extends DataRecord>({
 
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.slice(0, 5).map((metric) => (
+      {metrics.length ? <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
           <ListSummaryMetric key={metric.label} metric={metric} />
         ))}
-      </section>
+      </section> : null}
 
       {config.featured ? (
         <DashboardWidget interactive className="overflow-hidden">
@@ -444,10 +449,10 @@ export function DataListPage<RecordType extends DataRecord>({
           setPage(1);
         }}
         onClear={resetFilters}
-        onExport={() => void downloadRecords(sortedRecords)}
+        onExport={allowExport ? () => void downloadRecords(sortedRecords) : undefined}
       />
 
-      {selectedIds.length > 0 ? (
+      {!readOnly && selectedIds.length > 0 ? (
         <BulkActionBar
           count={selectedIds.length}
           onClear={() => setSelectedIds([])}
@@ -490,18 +495,18 @@ export function DataListPage<RecordType extends DataRecord>({
               <RowActionMenu
                 record={record}
                 onView={() => openRecord(record)}
-                onEdit={rowActions?.edit === false ? undefined : () => {
+                onEdit={readOnly || rowActions?.edit === false ? undefined : () => {
                   setSelected(record);
                   setModalMode("edit");
                 }}
-                onArchive={rowActions?.archive === false ? undefined : () => {
+                onArchive={readOnly || rowActions?.archive === false ? undefined : () => {
                   setSelected(record);
                   setModalMode("archive");
                 }}
-                onDownload={rowActions?.download === false ? undefined : () => void downloadRecords([record], record.title)}
-                onCycleStatus={rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
+                onDownload={readOnly || rowActions?.download === false ? undefined : () => void downloadRecords([record], record.title)}
+                onCycleStatus={readOnly || rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
                 onRoleChange={
-                  onRoleChange
+                  onRoleChange && !readOnly
                     ? (role) => {
                         updateRecord(record.id, onRoleChange(record, role));
                         showToast("Role changed locally.");
@@ -521,9 +526,9 @@ export function DataListPage<RecordType extends DataRecord>({
           title={selected.title}
           subtitle={selected.subtitle}
           onClose={() => setSelected(null)}
-          onEdit={rowActions?.edit === false ? undefined : () => setModalMode("edit")}
-          onArchive={rowActions?.archive === false ? undefined : () => setModalMode("archive")}
-          onAction={() => isDownloadAction(config.secondaryAction ?? "") ? void downloadRecords(sortedRecords) : showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
+          onEdit={readOnly || rowActions?.edit === false ? undefined : () => setModalMode("edit")}
+          onArchive={readOnly || rowActions?.archive === false ? undefined : () => setModalMode("archive")}
+          onAction={readOnly ? undefined : () => isDownloadAction(config.secondaryAction ?? "") ? void downloadRecords(sortedRecords) : showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
           actionLabel={config.secondaryAction ?? "Run action"}
         />
       ) : null}
@@ -589,7 +594,7 @@ export function DataToolbar<RecordType extends DataRecord>({
   sortDirection: "asc" | "desc";
   onSortChange: (value: string) => void;
   onClear: () => void;
-  onExport: () => void;
+  onExport?: () => void;
 }) {
   return (
     <UnifiedFilterCard>
@@ -618,7 +623,7 @@ export function DataToolbar<RecordType extends DataRecord>({
           }))}
           onChange={onSortChange}
         />
-        <UnifiedFilterAction onClick={onExport}>Export</UnifiedFilterAction>
+        {onExport ? <UnifiedFilterAction onClick={onExport}>Export</UnifiedFilterAction> : null}
         <UnifiedFilterClear onClick={onClear} />
       </div>
     </UnifiedFilterCard>
@@ -980,7 +985,7 @@ export function DetailModal<RecordType extends DataRecord>({
   onClose: () => void;
   onEdit?: () => void;
   onArchive?: () => void;
-  onAction: () => void;
+  onAction?: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
@@ -1075,9 +1080,9 @@ export function DetailModal<RecordType extends DataRecord>({
             <Edit className="mr-2 h-5 w-5" aria-hidden="true" />
             Edit details
           </ActionButton> : null}
-          <ActionButton variant="secondary" onClick={onAction}>
+          {onAction ? <ActionButton variant="secondary" onClick={onAction}>
             {actionLabel}
-          </ActionButton>
+          </ActionButton> : null}
           {onArchive ? <ActionButton variant="secondary" className="text-pulse-red" onClick={onArchive}>
             Archive
           </ActionButton> : null}

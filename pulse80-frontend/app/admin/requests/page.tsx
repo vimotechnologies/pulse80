@@ -1,6 +1,6 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
-
-export default function AdminRequestsPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/requests"]} />;
+import { loadRecordWorkspace } from "@/app/actions/portal-records";
+import { RecordWorkspace } from "@/components/records/RecordWorkspace";
+export default async function Page() {
+  const workspace = await loadRecordWorkspace("request");
+  return <RecordWorkspace kind="request" workspace={workspace} />;
 }
