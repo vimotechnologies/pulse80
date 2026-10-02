@@ -128,6 +128,8 @@ export const portalConfigs: Record<PortalKey, PortalConfig> = {
           { label: "Recommendations", href: "/admin/recommendations", icon: Lightbulb },
         ],
       },
+      { label: "Billing", href: "/admin/billing", icon: CreditCard },
+      { label: "Practitioner payments", href: "/admin/payments", icon: CreditCard },
       { label: "Users & Roles", href: "/admin/users", icon: UsersRound },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],

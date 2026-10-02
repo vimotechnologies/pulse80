@@ -10,33 +10,83 @@ import {
   type DataColumn,
 } from "@/components/portal/DataListPage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { adminPageConfigs, type AdminPageConfig, type AdminRecord } from "@/data/admin-portal-ui";
+import { adminPageConfigs, type AdminMetric, type AdminPageConfig, type AdminRecord } from "@/data/admin-portal-ui";
+import type { AdminPortalAnalytics } from "@/app/actions/admin-dashboard";
 
 type AdminOperationsPageProps = {
   configId: AdminPageConfig["id"];
+  analytics?: AdminPortalAnalytics;
 };
 
-export function AdminOperationsPage({ configId }: AdminOperationsPageProps) {
-  const config = adminPageConfigs[configId];
+export function AdminOperationsPage({ configId, analytics }: AdminOperationsPageProps) {
+  const baseConfig = adminPageConfigs[configId];
+  const hasAnalytics = Boolean(analytics && (configId === "reports" || configId === "insights"));
+  const config = hasAnalytics
+    ? {
+        ...baseConfig,
+        primaryAction: configId === "reports" ? "Download reports summary" : "Download insights summary",
+        secondaryAction: undefined,
+        records: [],
+        filters: [],
+        metrics: buildAdminMetrics(configId as "reports" | "insights", analytics!, baseConfig.metrics),
+        emptyTitle: "No report records are available",
+        emptyDescription: "The metrics above are calculated from current production analytics. Saved reports are managed in the report library.",
+      }
+    : {
+        ...baseConfig,
+        description: `${baseConfig.description} Live data is not connected for this workflow.`,
+        primaryAction: "",
+        secondaryAction: undefined,
+        metrics: [],
+        records: [],
+        filters: [],
+        emptyTitle: "No live data available",
+        emptyDescription: "This workflow has no connected backend data yet. Demo records and metrics are hidden.",
+      };
 
   return (
     <DataListPage
       config={config}
       columns={adminColumns(config.id)}
       detailEyebrow={`${config.eyebrow} details`}
-      enableBulkActions={config.id === "users" || config.id === "billing"}
-      onCycleStatus={(record) => cycleAdminStatus(config.id, record)}
-      onRoleChange={
-        config.id === "users"
-          ? (record, role) => ({
-              filters: { ...record.filters, role },
-              fields: record.fields.map((field) => (field.label === "Role" ? { ...field, value: role } : field)),
-              subtitle: record.subtitle.replace(/· .+$/, `· ${role}`),
-            })
-          : undefined
-      }
+      readOnly
+      onCycleStatus={undefined}
+      onRoleChange={undefined}
+      enableBulkActions={false}
+      rowActions={{ edit: false, archive: false, download: false, cycleStatus: false }}
     />
   );
+}
+
+function buildAdminMetrics(
+  configId: "reports" | "insights",
+  analytics: AdminPortalAnalytics,
+  source: AdminMetric[],
+): AdminMetric[] {
+  const number = new Intl.NumberFormat("en-BW");
+  const metric = (index: number, label: string, value: string, detail: string): AdminMetric => ({
+    ...source[index],
+    label,
+    value,
+    detail,
+  });
+
+  if (configId === "reports") {
+    return [
+      metric(0, "Participants screened", number.format(analytics.participantsScreened), "Unique participants with completed screenings"),
+      metric(1, "Completed screenings", number.format(analytics.completedScreenings), "Completed screening records"),
+      metric(2, "Screening participation", analytics.screeningParticipationRate === null ? "Not available" : `${analytics.screeningParticipationRate.toFixed(2)}%`, `${number.format(analytics.participantsScreened)} of ${number.format(analytics.eligibleParticipants)} eligible participants`),
+      metric(3, "Screening completion", analytics.screeningCompletionRate === null ? "Not available" : `${analytics.screeningCompletionRate.toFixed(2)}%`, `${number.format(analytics.completedRequiredScreenings)} of ${number.format(analytics.expectedRequiredScreenings)} required screenings`),
+      metric(0, "Missing referrals", number.format(analytics.missingReferralCount), `Of ${number.format(analytics.requiredReferralCount)} referral-required screenings`),
+    ];
+  }
+
+  return [
+    ...analytics.riskDistribution.map((entry, index) =>
+      metric(index, entry.riskCategory === "Not Calculated" ? "Risk not calculated" : `${entry.riskCategory} risk`, number.format(entry.participantCount), `${entry.riskCategory} risk participants`)),
+    metric(0, "Referrals required", number.format(analytics.requiredReferralCount), "Completed screenings requiring referral"),
+    metric(1, "Referrals followed up", number.format(analytics.followedUpReferralCount), `Followed up of ${number.format(analytics.followUpCount)} referrals`),
+  ];
 }
 
 function adminColumns(configId: AdminPageConfig["id"]): DataColumn<AdminRecord>[] {
@@ -197,29 +247,4 @@ function progressColumn(label: string): DataColumn<AdminRecord> {
     render: (record) => <ProgressCell record={record} />,
     sortValue: (record) => record.progress ?? 0,
   };
-}
-
-function cycleAdminStatus(configId: AdminPageConfig["id"], record: AdminRecord): Partial<AdminRecord> {
-  if (configId === "reports") {
-    const published = record.status === "Published";
-    const nextStatus = published ? "Draft" : "Published";
-    return {
-      status: nextStatus,
-      statusTone: published ? "neutral" : "success",
-      filters: { ...record.filters, status: nextStatus },
-      progress: published ? 58 : 100,
-    };
-  }
-
-  if (configId === "recommendations") {
-    const nextStatus = record.status === "Completed" ? "New" : record.status === "Planned" ? "Completed" : "Planned";
-    return {
-      status: nextStatus,
-      statusTone: nextStatus === "Completed" ? "success" : nextStatus === "Planned" ? "info" : "warning",
-      filters: { ...record.filters, status: nextStatus },
-      progress: nextStatus === "Completed" ? 100 : nextStatus === "Planned" ? 62 : 28,
-    };
-  }
-
-  return {};
 }

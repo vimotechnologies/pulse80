@@ -16,6 +16,21 @@ type AdminDashboardStats = {
   upcomingAssignments: number;
 };
 
+export type AdminPortalAnalytics = {
+  participantsScreened: number;
+  eligibleParticipants: number;
+  screeningParticipationRate: number | null;
+  completedScreenings: number;
+  expectedRequiredScreenings: number;
+  completedRequiredScreenings: number;
+  screeningCompletionRate: number | null;
+  riskDistribution: { riskCategory: string; participantCount: number }[];
+  requiredReferralCount: number;
+  missingReferralCount: number;
+  followUpCount: number;
+  followedUpReferralCount: number;
+};
+
 const adminDashboardStatsQuery = /* GraphQL */ `
   query AdminDashboardStats {
     adminDashboardStats {
@@ -23,6 +38,25 @@ const adminDashboardStatsQuery = /* GraphQL */ `
       representedEmployees
       verifiedPractitioners
       upcomingAssignments
+    }
+  }
+`;
+
+const adminPortalAnalyticsQuery = /* GraphQL */ `
+  query AdminPortalAnalytics {
+    adminPortalAnalytics {
+      participantsScreened
+      eligibleParticipants
+      screeningParticipationRate
+      completedScreenings
+      expectedRequiredScreenings
+      completedRequiredScreenings
+      screeningCompletionRate
+      riskDistribution { riskCategory participantCount }
+      requiredReferralCount
+      missingReferralCount
+      followUpCount
+      followedUpReferralCount
     }
   }
 `;
@@ -64,4 +98,12 @@ export async function loadAdminDashboardMetrics(): Promise<PortalMetric[]> {
       icon: CalendarCheck,
     },
   ];
+}
+
+export async function loadAdminPortalAnalytics(): Promise<AdminPortalAnalytics> {
+  const { adminPortalAnalytics } = await graphqlRequest<{
+    adminPortalAnalytics: AdminPortalAnalytics;
+  }>(adminPortalAnalyticsQuery);
+
+  return adminPortalAnalytics;
 }

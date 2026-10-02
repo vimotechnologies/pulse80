@@ -2,7 +2,7 @@ import { GraphQLError } from "graphql";
 import { z } from "zod";
 
 import type { GraphQLContext } from "../../graphql/context.js";
-import { requirePlatformPermission } from "../auth/auth.guard.js";
+import { requirePermission, requirePlatformPermission } from "../auth/auth.guard.js";
 import { ProgrammeService, type ActivationInput, type ProgrammeInput } from "./programme.service.js";
 
 const idSchema = z.uuid();
@@ -51,6 +51,14 @@ export const programmeResolvers = {
     adminActivations: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "programme:read");
       return (await new ProgrammeService(context.adminSupabase).listActivations()).map(activationShape);
+    },
+    adminOrganisationActivations: async (_parent: unknown, args: { organisationId: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationActivations(parse(idSchema, args.organisationId))).map(activationShape);
+    },
+    organisationActivations: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationActivations(organisationId)).map(activationShape);
     },
   },
   Mutation: {

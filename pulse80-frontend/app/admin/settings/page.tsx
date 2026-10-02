@@ -1,5 +1,3 @@
-import { AdminOperationsPage } from "@/components/admin/AdminOperationsPage";
-
-export default function AdminSettingsPage() {
-  return <AdminOperationsPage configId="settings" />;
-}
+import { loadAccount } from "@/app/actions/account";
+import { AccountSettings } from "@/components/admin/AccountSettings";
+export default async function Page() { return <AccountSettings account={await loadAccount()} />; }

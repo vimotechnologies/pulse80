@@ -1,5 +1,5 @@
 import { PortalDashboard } from "@/components/portal/PortalDashboard";
-import { portalConfigs, portalDashboards } from "@/data/portal-phase-two";
+import { portalConfigs } from "@/data/portal-phase-two";
 import { loadAdminDashboardMetrics } from "@/app/actions/admin-dashboard";
 
 export default async function AdminDashboardPage() {
@@ -8,7 +8,7 @@ export default async function AdminDashboardPage() {
   return (
     <PortalDashboard
       config={portalConfigs.admin}
-      data={{ ...portalDashboards.admin, metrics }}
+      data={{ metrics }}
     />
   );
 }

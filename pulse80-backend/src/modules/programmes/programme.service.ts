@@ -57,6 +57,16 @@ export class ProgrammeService {
     return data;
   }
 
+  async listOrganisationActivations(organisationId: string) {
+    const { data, error } = await this.supabase
+      .from("activations")
+      .select(activationSelect)
+      .eq("organisation_id", organisationId)
+      .order("starts_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async createProgramme(input: ProgrammeInput) {
     const { data, error } = await this.supabase.from("programmes").insert({
       organisation_id: input.organisationId,

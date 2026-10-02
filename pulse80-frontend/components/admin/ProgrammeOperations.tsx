@@ -27,6 +27,60 @@ export function AdminActivations({ activations, programmes }: { activations: Act
   ]}><div className="grid gap-3 md:grid-cols-[1fr_220px]"><Search value={query} onChange={setQuery} placeholder="Search activations, programmes, locations" /><select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClass}>{["All", "Draft", "Scheduled", "In Progress", "Completed", "Cancelled", "Action Required"].map((item) => <option key={item}>{item}</option>)}</select></div><Table headers={["Activation", "Organisation", "Date & location", "Expected", "Team", "Readiness", "Status", ""]}>{rows.map((item) => <tr key={item.id} className="border-t border-card-border"><Cell><b>{item.title}</b><small>{item.programmeName}</small></Cell><Cell>{item.organisationName}</Cell><Cell>{formatDate(item.startsAt)}<small>{item.location}</small></Cell><Cell>{item.expectedParticipants}</Cell><Cell>{item.practitionerCount}</Cell><Cell><b>{item.readinessScore}%</b><div className="mt-2 space-y-1">{item.readinessItems.map((check) => <label key={check.id} className="flex items-center gap-2 text-xs"><input disabled={pending} type="checkbox" checked={check.completed} onChange={(event) => saveReadiness(check.id, event.target.checked)} />{check.label}</label>)}</div></Cell><Cell><StatusBadge status={item.status} tone={tone(item.status)} /></Cell><Cell><button onClick={() => setEditing(item)} className="font-semibold text-primary">Edit</button></Cell></tr>)}</Table>{!rows.length && <Empty text="No activations match these filters." />}{editing !== undefined && <ActivationModal item={editing} programmes={programmes.filter((item) => !["Completed", "Cancelled"].includes(item.status))} pending={pending} onClose={() => setEditing(undefined)} onSave={(form) => start(async () => { const result = editing ? await updateActivation(editing.id, form) : await createActivation(form); setMessage(result.ok ? `Activation ${editing ? "updated" : "created"}.` : errorText(result.error)); if (result.ok) { setEditing(undefined); router.refresh(); } })} />}</Shell>;
 }
 
+export function AdminMobilisation({ activations }: { activations: Activation[] }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const outstandingItems = activations.flatMap((activation) =>
+    activation.readinessItems
+      .filter((item) => !item.completed)
+      .map((item) => ({ activation, item })),
+  );
+  const readyActivations = activations.filter((activation) => activation.readinessItems.length > 0 && activation.readinessScore === 100).length;
+  const saveReadiness = (id: string, completed: boolean) => start(async () => {
+    const result = await setActivationReadiness(id, completed);
+    setMessage(result.ok ? "Activation readiness updated." : errorText(result.error));
+    if (result.ok) router.refresh();
+  });
+
+  return <div className="space-y-6">
+    <PortalPageHeader eyebrow="Admin Operations" title="Mobilisation" description="Track saved activation readiness checklists before delivery." />
+    <ToastMessage message={message} />
+    <section className="grid gap-4 md:grid-cols-3">
+      <ListSummaryMetric metric={{ label: "Activations", value: String(activations.length), detail: "From current programme records", tone: "primary", icon: CalendarCheck }} />
+      <ListSummaryMetric metric={{ label: "Ready", value: String(readyActivations), detail: "All saved readiness items complete", tone: "success", icon: ClipboardCheck }} />
+      <ListSummaryMetric metric={{ label: "Outstanding items", value: String(outstandingItems.length), detail: "Saved checklist items still pending", tone: outstandingItems.length ? "warning" : "success", icon: Activity }} />
+    </section>
+    <section className="overflow-hidden rounded-2xl border border-card-border bg-surface shadow-sm">
+      <div className="border-b border-card-border px-5 py-4">
+        <h2 className="text-sm font-semibold text-navy">Readiness checklist</h2>
+      </div>
+      {activations.length ? <div className="divide-y divide-card-border">
+        {activations.map((activation) => (
+          <article key={activation.id} className="grid gap-4 px-5 py-4 md:grid-cols-[1fr_160px]">
+            <div>
+              <h3 className="text-sm font-semibold text-navy">{activation.title}</h3>
+              <p className="mt-1 text-xs text-muted">{activation.organisationName} · {activation.location} · {formatDate(activation.startsAt)}</p>
+              {activation.readinessItems.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {activation.readinessItems.map((item) => (
+                  <label key={item.id} className="flex items-center gap-2 text-sm text-navy">
+                    <input type="checkbox" checked={item.completed} disabled={pending} onChange={(event) => saveReadiness(item.id, event.target.checked)} />
+                    {item.label}
+                  </label>
+                ))}
+              </div> : <p className="mt-3 text-xs text-muted">No readiness items have been configured.</p>}
+            </div>
+            <div className="flex items-start justify-between gap-3 md:flex-col md:items-end">
+              <StatusBadge status={activation.status} tone={tone(activation.status)} />
+              <p className="text-sm font-semibold text-navy">{activation.readinessScore}% ready</p>
+            </div>
+          </article>
+        ))}
+      </div> : <Empty text="No activation records are available." />}
+    </section>
+  </div>;
+}
+
 function Shell({ title, description, action, onAction, message, metrics, children }: { title: string; description: string; action: string; onAction: () => void; message: string | null; metrics: Array<{ label: string; value: number; detail: string; icon: typeof Activity }>; children: ReactNode }) { return <div className="space-y-6"><PortalPageHeader eyebrow="Admin Operations" title={title} description={description} actions={<button onClick={onAction} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">{action}</button>} /><ToastMessage message={message} /><section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <ListSummaryMetric key={metric.label} metric={{ ...metric, value: metric.value.toLocaleString("en-BW"), tone: "primary" }} />)}</section><section className="rounded-2xl border border-card-border bg-surface p-4 shadow-sm">{children}</section></div>; }
 function Search({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) { return <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={inputClass} />; }
 function Table({ headers, children }: { headers: string[]; children: ReactNode }) { return <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[950px] text-left text-sm"><thead className="bg-[#f8fafc] text-xs text-muted"><tr>{headers.map((header, index) => <th key={`${header}-${index}`} className="px-4 py-3">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
