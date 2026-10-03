@@ -221,6 +221,73 @@ const statusOptions: OrganizationStatus[] = [
 ];
 
 const riskOptions: WellnessRisk[] = ["Low", "Medium", "High", "Critical"];
+const industryOptions = [
+  "Agriculture, Forestry & Fishing", "Arts, Entertainment & Recreation", "Construction",
+  "Education", "Energy & Utilities", "Financial Services & Insurance",
+  "Government & Public Administration", "Healthcare & Social Assistance",
+  "Hospitality & Tourism", "Information & Communications Technology", "Manufacturing",
+  "Mining & Quarrying", "Non-profit & Community Services", "Professional & Technical Services",
+  "Real Estate", "Retail & Wholesale Trade", "Safety & Security",
+  "Transportation & Logistics", "Water & Sanitation", "Other",
+];
+const organizationCountryOptions = ["Botswana", "South Africa"];
+
+const districtsByCountry: Record<string, string[]> = {
+  Botswana: [
+    "Central", "Chobe", "Francistown", "Gaborone", "Ghanzi", "Jwaneng",
+    "Kgalagadi", "Kgatleng", "Kweneng", "Lobatse", "North-East",
+    "North-West", "Selebi-Phikwe", "South-East", "Southern", "Sowa Town",
+  ],
+  "South Africa": [
+    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
+    "Mpumalanga", "Northern Cape", "North West", "Western Cape",
+  ],
+};
+
+const citiesByCountryAndRegion: Record<string, Record<string, string[]>> = {
+  Botswana: {
+    Central: ["Bobonong", "Gweta", "Letlhakane", "Mahalapye", "Mmadinare", "Nata", "Orapa", "Palapye", "Rakops", "Serowe", "Shoshong", "Tonota", "Tutume"],
+    Chobe: ["Kasane", "Kazungula", "Pandamatenga"],
+    Francistown: ["Francistown"],
+    Gaborone: ["Gaborone"],
+    Ghanzi: ["Charles Hill", "Ghanzi"],
+    Jwaneng: ["Jwaneng"],
+    Kgalagadi: ["Bokspits", "Hukuntsi", "Kang", "Tsabong"],
+    Kgatleng: ["Artesia", "Mochudi", "Oodi", "Pilane"],
+    Kweneng: ["Gabane", "Letlhakeng", "Molepolole", "Thamaga"],
+    Lobatse: ["Lobatse"],
+    "North-East": ["Masunga", "Matsiloje", "Tati Siding"],
+    "North-West": ["Etsha", "Gumare", "Maun", "Shakawe"],
+    "Selebi-Phikwe": ["Selebi-Phikwe"],
+    "South-East": ["Mogoditshane", "Mmopane", "Ramotswa", "Tlokweng"],
+    Southern: ["Goodhope", "Kanye", "Moshupa"],
+    "Sowa Town": ["Sowa Town"],
+  },
+  "South Africa": {
+    "Eastern Cape": ["East London", "Gqeberha", "Grahamstown (Makhanda)", "King William's Town (Qonce)", "Komani", "Mthatha", "Port Alfred"],
+    "Free State": ["Bethlehem", "Bloemfontein", "Harrismith", "Kroonstad", "Parys", "Sasolburg", "Welkom"],
+    Gauteng: ["Johannesburg", "Pretoria", "Ekurhuleni", "Soweto", "Centurion", "Midrand", "Vanderbijlpark", "Vereeniging"],
+    "KwaZulu-Natal": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Pinetown", "Port Shepstone", "uMhlanga"],
+    Limpopo: ["Polokwane", "Tzaneen", "Thohoyandou", "Lephalale", "Mokopane", "Musina", "Makhado", "Giyani"],
+    Mpumalanga: ["Mbombela", "eMalahleni", "Middelburg", "Secunda", "Ermelo", "Standerton", "Barberton", "White River"],
+    "Northern Cape": ["Kimberley", "Upington", "Springbok", "Kuruman", "De Aar", "Kathu", "Postmasburg"],
+    "North West": ["Mahikeng", "Rustenburg", "Klerksdorp", "Potchefstroom", "Brits", "Vryburg", "Zeerust"],
+    "Western Cape": ["Cape Town", "Stellenbosch", "George", "Paarl", "Worcester", "Knysna", "Oudtshoorn", "Mossel Bay", "Hermanus", "Saldanha"],
+  },
+};
+
+function cleanOrganizationValue(value: string) {
+  return value.trim().toLowerCase() === "not specified" ? "" : value;
+}
+
+function optionsWithCurrentValue(options: string[], currentValue: string) {
+  const value = cleanOrganizationValue(currentValue);
+  return value && !options.includes(value) ? [...options, value].sort() : options;
+}
+
+function regionLabel(country: string) {
+  return country === "Botswana" ? "District" : "Province";
+}
 const sortOptions = [
   { value: "Organization name", label: "Sort by: Organization (A-Z)" },
   { value: "Employee count", label: "Sort by: Employees" },
@@ -241,8 +308,8 @@ const roleLabelOptions = [
 
 const initialForm: OrganizationForm = {
   name: "",
-  industry: "Financial Services",
-  country: "Botswana",
+  industry: "",
+  country: "",
   town: "",
   region: "",
   employees: "",
@@ -613,6 +680,10 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
                   disabled={isSaving}
                   onClick={async () => {
                     if (!draft) return;
+                    if (![draft.name, draft.industry, draft.country, draft.region, draft.primaryLocation].every((value) => value.trim() && value.trim().toLowerCase() !== "not specified")) {
+                      showToast("Choose an industry, country, district or province, and city or town before saving.");
+                      return;
+                    }
                     setIsSaving(true);
                     const result = await updateAdminOrganisation(
                       organizationId,
@@ -636,7 +707,7 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             ) : (
               <button
                 type="button"
-                onClick={() => { setDraft(organization); setIsEditing(true); }}
+                onClick={() => { setDraft({ ...organization, industry: cleanOrganizationValue(organization.industry), country: cleanOrganizationValue(organization.country), region: cleanOrganizationValue(organization.region), primaryLocation: cleanOrganizationValue(organization.primaryLocation) }); setIsEditing(true); }}
                 className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                 style={{ fontSize: 12, lineHeight: "12px" }}
               >
@@ -804,10 +875,10 @@ function OrganizationOverviewForm({
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
         <OverviewField label="Organization Name" required value={organization.name} editable={editable} onChange={(value) => update("name", value)} />
         <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
-        <OverviewField label="Industry" required value={organization.industry} editable={editable} onChange={(value) => update("industry", value)} />
-        <OverviewField label="Country" required value={organization.country} editable={editable} onChange={(value) => update("country", value)} />
-        <OverviewField label="Primary Location" required value={organization.primaryLocation} editable={editable} onChange={(value) => update("primaryLocation", value)} />
-        <OverviewField label="Region" value={organization.region} editable={editable} onChange={(value) => update("region", value)} />
+        <OverviewField label="Industry" required value={organization.industry} editable={editable} options={optionsWithCurrentValue(industryOptions, organization.industry)} placeholder="Select industry" onChange={(value) => update("industry", value)} />
+        <OverviewField label="Country" required value={organization.country} editable={editable} options={organizationCountryOptions} placeholder="Select country" onChange={(value) => onChange({ ...organization, country: value, region: "", primaryLocation: "" })} />
+        <OverviewField label={regionLabel(organization.country)} required value={organization.region} editable={editable} options={optionsWithCurrentValue(districtsByCountry[organization.country] ?? [], organization.region)} placeholder={organization.country ? `Select ${regionLabel(organization.country).toLowerCase()}` : "Select country first"} disabled={!organization.country} onChange={(value) => onChange({ ...organization, region: value, primaryLocation: "" })} />
+        <OverviewField label="City / Town" required value={organization.primaryLocation} editable={editable} options={optionsWithCurrentValue(citiesByCountryAndRegion[organization.country]?.[organization.region] ?? [], organization.primaryLocation)} placeholder={organization.region ? "Select city or town" : "Select region first"} disabled={!organization.region} onChange={(value) => update("primaryLocation", value)} />
         <OverviewField label="Employee Count" required type="number" value={String(organization.employees)} editable={editable} onChange={(value) => update("employees", Number(value) || 0)} />
         <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
         <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
@@ -835,17 +906,18 @@ function OrganizationOverviewForm({
   );
 }
 
-function OverviewField({ label, value, editable, onChange, required, options, type = "text" }: {
+function OverviewField({ label, value, editable, onChange, required, options, placeholder, disabled = false, type = "text" }: {
   label: string; value: string; editable: boolean; onChange: (value: string) => void;
-  required?: boolean; options?: readonly string[]; type?: string;
+  required?: boolean; options?: readonly string[]; placeholder?: string; disabled?: boolean; type?: string;
 }) {
   if (!editable) return <ReadonlyField label={label} value={type === "date" ? formatShortDate(value) : value} required={required} />;
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label} {required ? <span className="text-pulse-red">*</span> : null}</span>
       {options ? (
-        <select value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10">
-          {options.map((option) => <option key={option}>{option}</option>)}
+        <select required={required} disabled={disabled} value={cleanOrganizationValue(value)} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+          {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
         </select>
       ) : (
         <input type={type} min={type === "number" ? 0 : undefined} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10" />
@@ -966,7 +1038,7 @@ function DetailTile({ label, value }: { label: string; value: string }) {
 function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => Promise<boolean> }) {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canSubmit = form.name.trim() && form.town.trim() && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
+  const canSubmit = form.name.trim() && form.industry && form.country && form.region && form.town && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
 
   return (
     <Modal title="Add Organization" onClose={onClose}>
@@ -983,10 +1055,10 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
         <LogoUpload value={form.logo} onChange={(logo) => setForm((current) => ({ ...current, logo }))} />
         <div className="grid gap-3 md:grid-cols-2">
           <TextInput label="Company name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
-          <TextInput label="Industry" value={form.industry} onChange={(industry) => setForm((current) => ({ ...current, industry }))} />
-          <TextInput label="Country" value={form.country} onChange={(country) => setForm((current) => ({ ...current, country }))} />
-          <TextInput label="Primary town / city" value={form.town} onChange={(town) => setForm((current) => ({ ...current, town }))} required />
-          <TextInput label="Province / district / region" value={form.region} onChange={(region) => setForm((current) => ({ ...current, region }))} />
+          <SelectInput label="Industry" value={form.industry} options={industryOptions} placeholder="Select industry" onChange={(industry) => setForm((current) => ({ ...current, industry }))} required />
+          <SelectInput label="Country" value={form.country} options={organizationCountryOptions} placeholder="Select country" onChange={(country) => setForm((current) => ({ ...current, country, region: "", town: "" }))} required />
+          <SelectInput label={regionLabel(form.country)} value={form.region} options={districtsByCountry[form.country] ?? []} placeholder={form.country ? `Select ${regionLabel(form.country).toLowerCase()}` : "Select country first"} onChange={(region) => setForm((current) => ({ ...current, region, town: "" }))} disabled={!form.country} required />
+          <SelectInput label="City / Town" value={form.town} options={citiesByCountryAndRegion[form.country]?.[form.region] ?? []} placeholder={form.region ? "Select city or town" : "Select region first"} onChange={(town) => setForm((current) => ({ ...current, town }))} disabled={!form.region} required />
           <TextInput label="Employee count" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} required />
           <SelectInput label="Package" value={form.package} options={packageOptions} onChange={(value) => setForm((current) => ({ ...current, package: value as PackageName }))} />
           <SelectInput label="Status" value={form.status} options={statusOptions} onChange={(value) => setForm((current) => ({ ...current, status: value as OrganizationStatus }))} />
@@ -1140,12 +1212,13 @@ function TextInput({ label, value, onChange, required = false }: { label: string
   );
 }
 
-function SelectInput({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function SelectInput({ label, value, options, onChange, placeholder, disabled = false, required = false }: { label: string; value: string; options: string[]; onChange: (value: string) => void; placeholder?: string; disabled?: boolean; required?: boolean }) {
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
-        {options.map((option) => <option key={option}>{option}</option>)}
+      <select required={required} disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+        {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
   );

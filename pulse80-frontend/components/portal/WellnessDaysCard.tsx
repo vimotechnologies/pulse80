@@ -11,7 +11,7 @@ import {
 } from "@/components/icons/IconsaxIcons";
 import { cn } from "@/lib/utils/cn";
 
-type WellnessDay = {
+export type WellnessDay = {
   id: string;
   date: string;
   eventDate: string;
@@ -21,260 +21,18 @@ type WellnessDay = {
   expectedEmployees: number;
   readiness: number;
   logo: string;
-  contact: {
-    name: string;
-    role: string;
-    email: string;
-    phone: string;
-  };
-  status: "Confirmed" | "Mobilising" | "3-Day Confirmation Due" | "Scheduled" | "Needs Attention";
+  status: string;
 };
 
-const weekSets: Array<{ label: string; days: WellnessDay[] }> = [
-  {
-    label: "May 20 - May 29",
-    days: [
-      {
-        id: "de-beers-may-20",
-        date: "May 20",
-        eventDate: "2026-05-20",
-        organization: "De Beers",
-        activationType: "Onsite Preventive Screening",
-        location: "Gaborone HQ",
-        expectedEmployees: 180,
-        readiness: 86,
-        logo: "DB",
-        contact: {
-          name: "Naledi Molefe",
-          role: "HR Wellness Lead",
-          email: "naledi.molefe@debeers.co.bw",
-          phone: "+267 391 2400",
-        },
-        status: "Confirmed",
-      },
-      {
-        id: "delta-mining-may-22",
-        date: "May 22",
-        eventDate: "2026-05-22",
-        organization: "Delta Mining Group",
-        activationType: "Fitness / Smartwatch Activation",
-        location: "Jwaneng Site",
-        expectedEmployees: 240,
-        readiness: 62,
-        logo: "DM",
-        contact: {
-          name: "Kabo Motsumi",
-          role: "HR Operations Partner",
-          email: "kabo.motsumi@deltamining.co.bw",
-          phone: "+267 588 0142",
-        },
-        status: "Mobilising",
-      },
-      {
-        id: "sandfire-may-24",
-        date: "May 24",
-        eventDate: "2026-05-24",
-        organization: "Sandfire Motheo",
-        activationType: "Mental Wellness Activation",
-        location: "CBD Branch",
-        expectedEmployees: 90,
-        readiness: 45,
-        logo: "SM",
-        contact: {
-          name: "Amantle Dube",
-          role: "HR Coordinator",
-          email: "amantle.dube@sandfiremotheo.co.bw",
-          phone: "+267 370 1188",
-        },
-        status: "3-Day Confirmation Due",
-      },
-      {
-        id: "lucara-may-27",
-        date: "May 27",
-        eventDate: "2026-05-27",
-        organization: "Lucara Mine",
-        activationType: "Health Awareness Day",
-        location: "Main Campus",
-        expectedEmployees: 120,
-        readiness: 72,
-        logo: "LM",
-        contact: {
-          name: "Neo Kgosi",
-          role: "People & Culture Manager",
-          email: "neo.kgosi@lucaramine.co.bw",
-          phone: "+267 297 3000",
-        },
-        status: "Scheduled",
-      },
-      {
-        id: "btcl-may-29",
-        date: "May 29",
-        eventDate: "2026-05-29",
-        organization: "BTCL",
-        activationType: "BP, BMI & Glucose Screening",
-        location: "Gaborone Office",
-        expectedEmployees: 210,
-        readiness: 58,
-        logo: "BT",
-        contact: {
-          name: "Boitumelo Ramoroka",
-          role: "HR Business Partner",
-          email: "boitumelo.ramoroka@btcl.co.bw",
-          phone: "+267 395 8000",
-        },
-        status: "Needs Attention",
-      },
-    ],
-  },
-  {
-    label: "Jun 1 - Jun 5",
-    days: [
-      {
-        id: "orange-jun-1",
-        date: "Jun 1",
-        eventDate: "2026-06-01",
-        organization: "Orange Botswana",
-        activationType: "Digital Health Screening",
-        location: "Main Mall Office",
-        expectedEmployees: 160,
-        readiness: 78,
-        logo: "OB",
-        contact: {
-          name: "Tshiamo Keitseng",
-          role: "HR Manager",
-          email: "tshiamo.keitseng@orange.co.bw",
-          phone: "+267 360 9000",
-        },
-        status: "Confirmed",
-      },
-      {
-        id: "fnb-jun-3",
-        date: "Jun 3",
-        eventDate: "2026-06-03",
-        organization: "FNB Botswana",
-        activationType: "Financial Wellness Day",
-        location: "CBD Campus",
-        expectedEmployees: 300,
-        readiness: 66,
-        logo: "FN",
-        contact: {
-          name: "Lesedi Phiri",
-          role: "People Partner",
-          email: "lesedi.phiri@fnb.co.bw",
-          phone: "+267 364 2600",
-        },
-        status: "Mobilising",
-      },
-    ],
-  },
-  {
-    label: "Jun 8 - Jun 12",
-    days: [
-      {
-        id: "bpc-jun-8",
-        date: "Jun 8",
-        eventDate: "2026-06-08",
-        organization: "Botswana Power Corporation",
-        activationType: "Occupational Health Screening",
-        location: "Gaborone Depot",
-        expectedEmployees: 260,
-        readiness: 82,
-        logo: "BP",
-        contact: {
-          name: "Mpho Radipotsane",
-          role: "HR Wellness Coordinator",
-          email: "mpho.radipotsane@bpc.bw",
-          phone: "+267 360 3000",
-        },
-        status: "Scheduled",
-      },
-      {
-        id: "mascom-jun-10",
-        date: "Jun 10",
-        eventDate: "2026-06-10",
-        organization: "Mascom",
-        activationType: "Preventive Screening",
-        location: "Head Office",
-        expectedEmployees: 185,
-        readiness: 49,
-        logo: "MS",
-        contact: {
-          name: "Kgomotso Moremi",
-          role: "HR Lead",
-          email: "kgomotso.moremi@mascom.bw",
-          phone: "+267 390 3396",
-        },
-        status: "Needs Attention",
-      },
-    ],
-  },
-];
+type WellnessProps = { events: WellnessDay[]; today: string };
 
-const calendarOnlyEvents: WellnessDay[] = [
-  {
-    id: "prime-bank-mar-14",
-    date: "Mar 14",
-    eventDate: "2026-03-14",
-    organization: "Prime Bank",
-    activationType: "Cardiometabolic Screening",
-    location: "Fairgrounds Branch",
-    expectedEmployees: 140,
-    readiness: 100,
-    logo: "PB",
-    contact: {
-      name: "Karabo Pule",
-      role: "HR Officer",
-      email: "karabo.pule@primebank.co.bw",
-      phone: "+267 318 4400",
-    },
-    status: "Confirmed",
-  },
-  {
-    id: "gaborone-textiles-apr-9",
-    date: "Apr 9",
-    eventDate: "2026-04-09",
-    organization: "Gaborone Textiles",
-    activationType: "Workforce Wellness Day",
-    location: "Factory Floor",
-    expectedEmployees: 320,
-    readiness: 100,
-    logo: "GT",
-    contact: {
-      name: "Ontiretse Tlale",
-      role: "HR Supervisor",
-      email: "ontiretse.tlale@gabtextiles.co.bw",
-      phone: "+267 392 1140",
-    },
-    status: "Confirmed",
-  },
-  {
-    id: "air-botswana-aug-18",
-    date: "Aug 18",
-    eventDate: "2026-08-18",
-    organization: "Air Botswana",
-    activationType: "Mental Wellness Activation",
-    location: "Airport Office",
-    expectedEmployees: 125,
-    readiness: 35,
-    logo: "AB",
-    contact: {
-      name: "Thabo Modise",
-      role: "HR Business Partner",
-      email: "thabo.modise@airbotswana.co.bw",
-      phone: "+267 368 8400",
-    },
-    status: "3-Day Confirmation Due",
-  },
-];
-
-const allWellnessDays = [...weekSets.flatMap((week) => week.days), ...calendarOnlyEvents];
-
-const statusStyles: Record<WellnessDay["status"], string> = {
-  Confirmed: "border-success/20 bg-success/10 text-black",
-  Mobilising: "border-warning/25 bg-warning/10 text-black",
-  "3-Day Confirmation Due": "border-warning/25 bg-warning/10 text-black",
+const statusStyles: Record<string, string> = {
+  Draft: "border-slate-300 bg-slate-100 text-black",
   Scheduled: "border-primary/20 bg-primary/10 text-black",
-  "Needs Attention": "border-pulse-red/20 bg-pulse-red/10 text-black",
+  "In Progress": "border-warning/25 bg-warning/10 text-black",
+  Completed: "border-success/20 bg-success/10 text-black",
+  Cancelled: "border-slate-300 bg-slate-100 text-black",
+  "Action Required": "border-pulse-red/20 bg-pulse-red/10 text-black",
 };
 
 function readinessTone(readiness: number) {
@@ -283,19 +41,26 @@ function readinessTone(readiness: number) {
   return "bg-pulse-red";
 }
 
-export function WellnessDaysCard() {
+export function WellnessDaysCard(props: WellnessProps) {
   return (
     <>
-      <ThisWeeksWellnessDaysCard />
-      <WellnessCalendarCard />
+      <ThisWeeksWellnessDaysCard {...props} />
+      <WellnessCalendarCard {...props} />
     </>
   );
 }
 
-export function ThisWeeksWellnessDaysCard() {
+export function ThisWeeksWellnessDaysCard({ events, today }: WellnessProps) {
   const [selectedDay, setSelectedDay] = useState<WellnessDay | null>(null);
   const [weekIndex, setWeekIndex] = useState(0);
-  const currentWeek = weekSets[weekIndex];
+  const weekStart = new Date(`${today}T12:00:00`);
+  weekStart.setDate(weekStart.getDate() - (weekStart.getDay() + 6) % 7 + weekIndex * 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const currentWeek = {
+    label: `${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${weekEnd.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`,
+    days: events.filter((event) => event.eventDate >= toDateKey(weekStart) && event.eventDate <= toDateKey(weekEnd)),
+  };
 
   return (
     <>
@@ -304,17 +69,16 @@ export function ThisWeeksWellnessDaysCard() {
           <div className="flex gap-3">
             <CalendarCheck className="mt-1 h-5 w-5 shrink-0 text-black" aria-hidden="true" />
             <div>
-              <h2 className="text-[14px] font-semibold leading-5 text-black">This Week&apos;s Wellness Days</h2>
+              <h2 className="text-[14px] font-semibold leading-5 text-black">{weekIndex === 0 ? "This Week’s Wellness Days" : "Wellness Days"}</h2>
               <p className="mt-1 text-[12px] leading-4 text-black/55">
-                Upcoming confirmed and pending wellness activities.
+                Activations scheduled for the selected week.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setWeekIndex((value) => Math.max(0, value - 1))}
-              disabled={weekIndex === 0}
+              onClick={() => setWeekIndex((value) => value - 1)}
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Previous week"
             >
@@ -323,8 +87,7 @@ export function ThisWeeksWellnessDaysCard() {
             <span className="min-w-24 text-center text-[12px] leading-4 text-black">{currentWeek.label}</span>
             <button
               type="button"
-              onClick={() => setWeekIndex((value) => Math.min(2, value + 1))}
-              disabled={weekIndex === 2}
+              onClick={() => setWeekIndex((value) => value + 1)}
               className="flex h-8 w-8 items-center justify-center rounded-2xl border border-slate-300 bg-white text-black transition hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:text-black"
               aria-label="Next week"
             >
@@ -344,6 +107,9 @@ export function ThisWeeksWellnessDaysCard() {
             </div>
 
             <div className="divide-y divide-card-border">
+              {currentWeek.days.length === 0 ? (
+                <p role="status" className="px-5 py-8 text-center text-sm text-subtle">No activations to display for this week.</p>
+              ) : null}
               {currentWeek.days.map((day) => (
                 <button
                   key={day.id}
@@ -378,12 +144,12 @@ export function ThisWeeksWellnessDaysCard() {
   );
 }
 
-export function WellnessCalendarCard() {
+export function WellnessCalendarCard({ events, today }: WellnessProps) {
   const [selectedDay, setSelectedDay] = useState<WellnessDay | null>(null);
 
   return (
     <>
-      <WellnessCalendarView events={allWellnessDays} onSelect={setSelectedDay} />
+      <WellnessCalendarView events={events} today={today} onSelect={setSelectedDay} />
       {selectedDay ? <WellnessDayModal day={selectedDay} onClose={() => setSelectedDay(null)} /> : null}
     </>
   );
@@ -391,12 +157,14 @@ export function WellnessCalendarCard() {
 
 function WellnessCalendarView({
   events,
+  today,
   onSelect,
 }: {
   events: WellnessDay[];
+  today: string;
   onSelect: (event: WellnessDay) => void;
 }) {
-  const [visibleMonth, setVisibleMonth] = useState(() => new Date(2026, 4, 1));
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date(`${today.slice(0, 7)}-01T12:00:00`));
   const monthEvents = useMemo(() => groupEventsByDay(events), [events]);
   const cells = useMemo(() => buildMonthCells(visibleMonth), [visibleMonth]);
   const monthLabel = visibleMonth.toLocaleString("en", { month: "long", year: "numeric" });
@@ -432,6 +200,9 @@ function WellnessCalendarView({
         </div>
       </div>
       <div className="p-5">
+        {!events.some((event) => event.eventDate.slice(0, 7) === toDateKey(visibleMonth).slice(0, 7)) ? (
+          <p role="status" className="mb-4 text-center text-sm text-subtle">No activations to display for this month.</p>
+        ) : null}
         <div className="grid grid-cols-7 gap-2 text-center text-[12px] leading-4 text-black">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
             <span key={day}>{day}</span>
@@ -456,7 +227,7 @@ function WellnessCalendarView({
                       type="button"
                       onClick={() => onSelect(event)}
                       className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-card-border bg-[#e4e7ec] text-[10px] font-semibold leading-none text-black transition hover:-translate-y-0.5 hover:bg-black hover:text-white active:translate-y-0"
-                      aria-label={`Open ${event.organization}`}
+                      aria-label={`Open ${event.organization}: ${event.activationType} on ${event.date}`}
                     >
                       {event.logo}
                     </button>
@@ -504,10 +275,7 @@ function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => v
             </div>
           </div>
           <DetailRow label="Status" value={day.status} />
-          <DetailRow label="Contact Role" value={day.contact.role} />
-          <DetailRow label="HR Contact Name" value={day.contact.name} />
-          <DetailRow label="Email" value={day.contact.email} />
-          <DetailRow label="Contact Number" value={day.contact.phone} />
+
         </div>
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-card-border px-5 py-4">
