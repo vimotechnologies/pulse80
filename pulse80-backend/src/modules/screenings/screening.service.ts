@@ -73,6 +73,8 @@ export class ScreeningService {
     if (!assignment) throw new Error("Screenings can only be captured for your confirmed or active assignments.");
     if (!assignment.organisation_id) throw new Error("The assignment is not linked to an organisation.");
 
+    if (!assignment.activation_id) throw new Error("This assignment needs an activation link before screening capture.");
+
     const bmi = input.heightCm && input.weightKg
       ? Number((input.weightKg / ((input.heightCm / 100) ** 2)).toFixed(2))
       : null;

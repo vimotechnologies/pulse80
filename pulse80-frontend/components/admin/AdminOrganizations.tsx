@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { inviteOrganisationUser } from "@/app/actions/users";
+import { OrganisationOperations } from "@/components/admin/OrganisationOperations";
+import { OrganisationUnits } from "@/components/admin/OrganisationUnits";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -218,6 +221,73 @@ const statusOptions: OrganizationStatus[] = [
 ];
 
 const riskOptions: WellnessRisk[] = ["Low", "Medium", "High", "Critical"];
+const industryOptions = [
+  "Agriculture, Forestry & Fishing", "Arts, Entertainment & Recreation", "Construction",
+  "Education", "Energy & Utilities", "Financial Services & Insurance",
+  "Government & Public Administration", "Healthcare & Social Assistance",
+  "Hospitality & Tourism", "Information & Communications Technology", "Manufacturing",
+  "Mining & Quarrying", "Non-profit & Community Services", "Professional & Technical Services",
+  "Real Estate", "Retail & Wholesale Trade", "Safety & Security",
+  "Transportation & Logistics", "Water & Sanitation", "Other",
+];
+const organizationCountryOptions = ["Botswana", "South Africa"];
+
+const districtsByCountry: Record<string, string[]> = {
+  Botswana: [
+    "Central", "Chobe", "Francistown", "Gaborone", "Ghanzi", "Jwaneng",
+    "Kgalagadi", "Kgatleng", "Kweneng", "Lobatse", "North-East",
+    "North-West", "Selebi-Phikwe", "South-East", "Southern", "Sowa Town",
+  ],
+  "South Africa": [
+    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
+    "Mpumalanga", "Northern Cape", "North West", "Western Cape",
+  ],
+};
+
+const citiesByCountryAndRegion: Record<string, Record<string, string[]>> = {
+  Botswana: {
+    Central: ["Bobonong", "Gweta", "Letlhakane", "Mahalapye", "Mmadinare", "Nata", "Orapa", "Palapye", "Rakops", "Serowe", "Shoshong", "Tonota", "Tutume"],
+    Chobe: ["Kasane", "Kazungula", "Pandamatenga"],
+    Francistown: ["Francistown"],
+    Gaborone: ["Gaborone"],
+    Ghanzi: ["Charles Hill", "Ghanzi"],
+    Jwaneng: ["Jwaneng"],
+    Kgalagadi: ["Bokspits", "Hukuntsi", "Kang", "Tsabong"],
+    Kgatleng: ["Artesia", "Mochudi", "Oodi", "Pilane"],
+    Kweneng: ["Gabane", "Letlhakeng", "Molepolole", "Thamaga"],
+    Lobatse: ["Lobatse"],
+    "North-East": ["Masunga", "Matsiloje", "Tati Siding"],
+    "North-West": ["Etsha", "Gumare", "Maun", "Shakawe"],
+    "Selebi-Phikwe": ["Selebi-Phikwe"],
+    "South-East": ["Mogoditshane", "Mmopane", "Ramotswa", "Tlokweng"],
+    Southern: ["Goodhope", "Kanye", "Moshupa"],
+    "Sowa Town": ["Sowa Town"],
+  },
+  "South Africa": {
+    "Eastern Cape": ["East London", "Gqeberha", "Grahamstown (Makhanda)", "King William's Town (Qonce)", "Komani", "Mthatha", "Port Alfred"],
+    "Free State": ["Bethlehem", "Bloemfontein", "Harrismith", "Kroonstad", "Parys", "Sasolburg", "Welkom"],
+    Gauteng: ["Johannesburg", "Pretoria", "Ekurhuleni", "Soweto", "Centurion", "Midrand", "Vanderbijlpark", "Vereeniging"],
+    "KwaZulu-Natal": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Pinetown", "Port Shepstone", "uMhlanga"],
+    Limpopo: ["Polokwane", "Tzaneen", "Thohoyandou", "Lephalale", "Mokopane", "Musina", "Makhado", "Giyani"],
+    Mpumalanga: ["Mbombela", "eMalahleni", "Middelburg", "Secunda", "Ermelo", "Standerton", "Barberton", "White River"],
+    "Northern Cape": ["Kimberley", "Upington", "Springbok", "Kuruman", "De Aar", "Kathu", "Postmasburg"],
+    "North West": ["Mahikeng", "Rustenburg", "Klerksdorp", "Potchefstroom", "Brits", "Vryburg", "Zeerust"],
+    "Western Cape": ["Cape Town", "Stellenbosch", "George", "Paarl", "Worcester", "Knysna", "Oudtshoorn", "Mossel Bay", "Hermanus", "Saldanha"],
+  },
+};
+
+function cleanOrganizationValue(value: string) {
+  return value.trim().toLowerCase() === "not specified" ? "" : value;
+}
+
+function optionsWithCurrentValue(options: string[], currentValue: string) {
+  const value = cleanOrganizationValue(currentValue);
+  return value && !options.includes(value) ? [...options, value].sort() : options;
+}
+
+function regionLabel(country: string) {
+  return country === "Botswana" ? "District" : "Province";
+}
 const sortOptions = [
   { value: "Organization name", label: "Sort by: Organization (A-Z)" },
   { value: "Employee count", label: "Sort by: Employees" },
@@ -238,8 +308,8 @@ const roleLabelOptions = [
 
 const initialForm: OrganizationForm = {
   name: "",
-  industry: "Financial Services",
-  country: "Botswana",
+  industry: "",
+  country: "",
   town: "",
   region: "",
   employees: "",
@@ -350,32 +420,11 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
     return true;
   }
 
-  function inviteClientUser(payload: InvitePayload) {
-    const targetId = payload.organizationId;
-    setOrganizations((current) =>
-      current.map((organization) =>
-        organization.id === targetId
-          ? {
-              ...organization,
-              clientUsers: [
-                ...organization.clientUsers,
-                {
-                  id: `client-${Date.now()}`,
-                  name: payload.name,
-                  email: payload.email,
-                  role: payload.role,
-                  invitationStatus: "Invitation Pending",
-                  lastActive: "Invitation sent today",
-                },
-              ],
-            }
-          : organization,
-      ),
-    );
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error); return; }
     setInviteOpen(false);
-    setInviteOrganizationId(targetId);
-    const orgName = organizations.find((organization) => organization.id === targetId)?.name ?? "organization";
-    showToast(`Invitation simulated for ${payload.email}. Email includes ${orgName}, role, and a secure time-limited setup link.`);
+    showToast("User access saved. New users receive a setup email.");
   }
 
   return (
@@ -568,28 +617,11 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
     window.setTimeout(() => setToast(null), 3200);
   }
 
-  function updateOrganization(updatedOrganization: Organization) {
-    setOrganization(updatedOrganization);
-  }
-
-  function inviteClientUser(payload: InvitePayload) {
-    if (!organization) return;
-    setOrganization({
-      ...organization,
-      clientUsers: [
-        ...organization.clientUsers,
-        {
-          id: `client-${Date.now()}`,
-          name: payload.name,
-          email: payload.email,
-          role: payload.role,
-          invitationStatus: "Invitation Pending",
-          lastActive: "Invitation sent today",
-        },
-      ],
-    });
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error); return; }
     setInviteOpen(false);
-    showToast(`Invitation simulated for ${payload.email}.`);
+    showToast("User access saved. New users receive a setup email.");
   }
 
   if (!organization) {
@@ -648,6 +680,10 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
                   disabled={isSaving}
                   onClick={async () => {
                     if (!draft) return;
+                    if (![draft.name, draft.industry, draft.country, draft.region, draft.primaryLocation].every((value) => value.trim() && value.trim().toLowerCase() !== "not specified")) {
+                      showToast("Choose an industry, country, district or province, and city or town before saving.");
+                      return;
+                    }
                     setIsSaving(true);
                     const result = await updateAdminOrganisation(
                       organizationId,
@@ -671,7 +707,7 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             ) : (
               <button
                 type="button"
-                onClick={() => { setDraft(organization); setIsEditing(true); }}
+                onClick={() => { setDraft({ ...organization, industry: cleanOrganizationValue(organization.industry), country: cleanOrganizationValue(organization.country), region: cleanOrganizationValue(organization.region), primaryLocation: cleanOrganizationValue(organization.primaryLocation) }); setIsEditing(true); }}
                 className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                 style={{ fontSize: 12, lineHeight: "12px" }}
               >
@@ -718,12 +754,12 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             <div className="p-5">
             {activeTab === "Contacts" ? <ContactsTab organization={draft ?? organization} editable={isEditing} onChange={setDraft} /> : null}
             {activeTab === "Branches & Departments" ? (
-              <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
+              <OrganisationUnits organisationId={organization.id} />
             ) : null}
             {activeTab === "Contract" ? <ContractTab organization={organization} /> : null}
-            {activeTab === "Operations" ? <OperationsTab organization={organization} /> : null}
+            {activeTab === "Operations" ? <OrganisationOperations organisationId={organization.id} /> : null}
             {activeTab === "Client Portal Access" ? (
-              <ClientPortalTab organization={organization} onInvite={() => setInviteOpen(true)} onUpdate={updateOrganization} onToast={showToast} />
+              <div className="space-y-3"><p className="text-sm">Review current memberships and manage access in Users &amp; Roles.</p><Link href="/admin/users" className="text-primary underline">Manage users and roles</Link><button type="button" onClick={() => setInviteOpen(true)} className="ml-4 text-primary">Invite client user</button></div>
             ) : null}
             </div>
           )}
@@ -839,10 +875,10 @@ function OrganizationOverviewForm({
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
         <OverviewField label="Organization Name" required value={organization.name} editable={editable} onChange={(value) => update("name", value)} />
         <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
-        <OverviewField label="Industry" required value={organization.industry} editable={editable} onChange={(value) => update("industry", value)} />
-        <OverviewField label="Country" required value={organization.country} editable={editable} onChange={(value) => update("country", value)} />
-        <OverviewField label="Primary Location" required value={organization.primaryLocation} editable={editable} onChange={(value) => update("primaryLocation", value)} />
-        <OverviewField label="Region" value={organization.region} editable={editable} onChange={(value) => update("region", value)} />
+        <OverviewField label="Industry" required value={organization.industry} editable={editable} options={optionsWithCurrentValue(industryOptions, organization.industry)} placeholder="Select industry" onChange={(value) => update("industry", value)} />
+        <OverviewField label="Country" required value={organization.country} editable={editable} options={organizationCountryOptions} placeholder="Select country" onChange={(value) => onChange({ ...organization, country: value, region: "", primaryLocation: "" })} />
+        <OverviewField label={regionLabel(organization.country)} required value={organization.region} editable={editable} options={optionsWithCurrentValue(districtsByCountry[organization.country] ?? [], organization.region)} placeholder={organization.country ? `Select ${regionLabel(organization.country).toLowerCase()}` : "Select country first"} disabled={!organization.country} onChange={(value) => onChange({ ...organization, region: value, primaryLocation: "" })} />
+        <OverviewField label="City / Town" required value={organization.primaryLocation} editable={editable} options={optionsWithCurrentValue(citiesByCountryAndRegion[organization.country]?.[organization.region] ?? [], organization.primaryLocation)} placeholder={organization.region ? "Select city or town" : "Select region first"} disabled={!organization.region} onChange={(value) => update("primaryLocation", value)} />
         <OverviewField label="Employee Count" required type="number" value={String(organization.employees)} editable={editable} onChange={(value) => update("employees", Number(value) || 0)} />
         <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
         <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
@@ -870,17 +906,18 @@ function OrganizationOverviewForm({
   );
 }
 
-function OverviewField({ label, value, editable, onChange, required, options, type = "text" }: {
+function OverviewField({ label, value, editable, onChange, required, options, placeholder, disabled = false, type = "text" }: {
   label: string; value: string; editable: boolean; onChange: (value: string) => void;
-  required?: boolean; options?: readonly string[]; type?: string;
+  required?: boolean; options?: readonly string[]; placeholder?: string; disabled?: boolean; type?: string;
 }) {
   if (!editable) return <ReadonlyField label={label} value={type === "date" ? formatShortDate(value) : value} required={required} />;
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label} {required ? <span className="text-pulse-red">*</span> : null}</span>
       {options ? (
-        <select value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10">
-          {options.map((option) => <option key={option}>{option}</option>)}
+        <select required={required} disabled={disabled} value={cleanOrganizationValue(value)} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+          {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
         </select>
       ) : (
         <input type={type} min={type === "number" ? 0 : undefined} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10" />
@@ -962,108 +999,6 @@ function ContactsTab({ organization, editable, onChange }: { organization: Organ
   );
 }
 
-function BranchesTab({
-  organization,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
-}) {
-  function addBranch() {
-    const branch: Branch = {
-      id: `branch-${Date.now()}`,
-      name: "New Branch",
-      country: organization.country,
-      region: organization.region,
-      town: organization.primaryLocation,
-      address: "Address to be confirmed",
-      employees: 0,
-      primary: false,
-      departments: [],
-      status: "Active",
-    };
-    onUpdate({ ...organization, branches: [...organization.branches, branch] });
-    onToast("Branch added locally.");
-  }
-
-  function addDepartment(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId
-          ? {
-              ...branch,
-              departments: [
-                ...branch.departments,
-                {
-                  id: `dept-${Date.now()}`,
-                  name: "New Department",
-                  branchId,
-                  employees: 0,
-                  wellnessScore: 0,
-                  risk: "Low",
-                  latestActivation: "Not scheduled",
-                  status: "Active",
-                },
-              ],
-            }
-          : branch,
-      ),
-    });
-    onToast("Department added locally.");
-  }
-
-  function archiveBranch(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId ? { ...branch, status: "Archived" } : branch,
-      ),
-    });
-    onToast("Branch archived locally.");
-  }
-
-  return (
-    <div className="space-y-3">
-      <button type="button" onClick={addBranch} className="rounded-2xl bg-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black">
-        Add branch
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Branch</span><span>Region</span><span>Town</span><span>Employees</span><span>Departments</span><span>Actions</span>
-        </div>
-        {organization.branches.map((branch) => (
-          <div key={branch.id} className="border-t border-card-border">
-            <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 px-4 py-3 text-[12px] text-black">
-              <span className="font-semibold">{branch.name}<span className="block font-normal text-black/55">{branch.address}</span></span>
-              <span>{branch.region}</span>
-              <span>{branch.town}</span>
-              <span>{branch.employees}</span>
-              <span>{branch.departments.length}</span>
-              <span className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => addDepartment(branch.id)} className="text-[12px] font-semibold text-primary">Add department</button>
-                <button type="button" onClick={() => archiveBranch(branch.id)} className="text-[12px] font-semibold text-black/60">Archive</button>
-              </span>
-            </div>
-            {branch.departments.map((department) => (
-              <div key={department.id} className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#fbfcfd] px-4 py-2 text-[12px] text-black/70">
-                <span className="pl-6">{department.name}</span>
-                <span>{branch.name}</span>
-                <span>{department.status}</span>
-                <span>{department.employees}</span>
-                <span>{department.wellnessScore}%</span>
-                <span><RiskBadge risk={department.risk} /></span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function ContractTab({ organization }: { organization: Organization }) {
   const remaining = daysUntil(organization.contractEnd);
   return (
@@ -1084,111 +1019,8 @@ function ContractTab({ organization }: { organization: Organization }) {
         <DetailTile label="Contract duration" value={contractDuration(organization.contractStart, organization.contractEnd)} />
         <DetailTile label="Contract status" value={remaining < 0 ? "Expired" : "Active"} />
         <DetailTile label="Days remaining" value={remaining < 0 ? "Expired" : `${remaining} days`} />
-        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Required now" : "Scheduled 60 days before expiry"} />
+        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Review renewal now" : "Review 60 days before expiry"} />
         <DetailTile label="Custom package notes" value={organization.customPackageNotes ?? "None"} />
-      </div>
-    </div>
-  );
-}
-
-function ActivationsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Activation", "Type", "Date", "Branch", "Status", "Participation", "Report"]} rows={organization.activations.map((item) => [item.title, item.type, item.date, item.branch, item.status, item.participation, item.reportStatus])} />;
-}
-
-function ReportsTab({ organization }: { organization: Organization }) {
-  const [downloading, setDownloading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  return <>
-    <ToastMessage message={message} />
-    <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate,
-      <button key="download" type="button" disabled={downloading} className="font-semibold text-primary disabled:opacity-50" aria-label={`Download ${item.title} as PDF`} onClick={async () => {
-        setDownloading(true);
-        setMessage(null);
-        try {
-          await downloadPdf({ title: item.title, client: { name: organization.name, logoUrl: organization.logoUrl ?? organization.logo }, sections: [{ title: "Report details", lines: [
-            `Type: ${item.type}`, `Period: ${item.period}`, `Status: ${item.status}`, `Published: ${item.publishedDate || "Not published"}`,
-          ] }] });
-          setMessage("PDF download started.");
-        } catch { setMessage("Could not generate the PDF. Please try again."); }
-        finally { setDownloading(false); }
-      }}>Download PDF</button>,
-    ])} />
-  </>;
-}
-
-function OperationsTab({ organization }: { organization: Organization }) {
-  return (
-    <div className="space-y-5">
-      <OperationsSection title="Activations" icon={CalendarCheck}>
-        <ActivationsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Reports" icon={FileText}>
-        <ReportsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Insights" icon={HeartPulse}>
-        <SimpleList title="Wellness Insights" items={organization.insights} />
-      </OperationsSection>
-    </div>
-  );
-}
-
-function OperationsSection({ title, icon: Icon, children }: { title: string; icon: typeof Building2; children: ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-black" aria-hidden="true" />
-        <h2 className="text-[14px] font-semibold text-black">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function ClientPortalTab({
-  organization,
-  onInvite,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onInvite: () => void;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
-}) {
-  function updateUser(id: string, invitationStatus: InvitationStatus, message: string) {
-    onUpdate({
-      ...organization,
-      clientUsers: organization.clientUsers.map((user) =>
-        user.id === id ? { ...user, invitationStatus } : user,
-      ),
-    });
-    onToast(message);
-  }
-
-  return (
-    <div className="space-y-3">
-      <button type="button" onClick={onInvite} className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
-        <User className="h-4 w-4" aria-hidden="true" />
-        Invite Client User
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Name</span><span>Email</span><span>Role</span><span>Invitation</span><span>Last active</span><span>Actions</span>
-        </div>
-        {organization.clientUsers.map((user) => (
-          <div key={user.id} className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-            <span className="font-semibold">{user.name}</span>
-            <span className="truncate">{user.email}</span>
-            <span>{user.role}</span>
-            <span>{user.invitationStatus}</span>
-            <span>{user.lastActive}</span>
-            <span className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => updateUser(user.id, "Invitation Pending", "Invitation resent locally.")} className="font-semibold text-primary">Resend</button>
-              <button type="button" onClick={() => updateUser(user.id, "Not Invited", "Invitation revoked locally.")} className="font-semibold text-black/60">Revoke</button>
-              <button type="button" onClick={() => updateUser(user.id, "Access Suspended", "Access suspended locally.")} className="font-semibold text-warning">Suspend</button>
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1203,36 +1035,10 @@ function DetailTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MiniTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-        {columns.map((column) => <span key={column}>{column}</span>)}
-      </div>
-      {rows.map((row, rowIndex) => (
-        <div key={rowIndex} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-          {row.map((cell, cellIndex) => <span key={cellIndex} className="min-w-0 truncate">{cell}</span>)}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SimpleList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="rounded-2xl border border-card-border bg-white p-4">
-      <h3 className="text-[14px] font-semibold text-black">{title}</h3>
-      <div className="mt-3 divide-y divide-card-border">
-        {items.map((item) => <p key={item} className="py-3 text-[12px] leading-5 text-black/70">{item}</p>)}
-      </div>
-    </div>
-  );
-}
-
 function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => Promise<boolean> }) {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canSubmit = form.name.trim() && form.town.trim() && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
+  const canSubmit = form.name.trim() && form.industry && form.country && form.region && form.town && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
 
   return (
     <Modal title="Add Organization" onClose={onClose}>
@@ -1249,10 +1055,10 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
         <LogoUpload value={form.logo} onChange={(logo) => setForm((current) => ({ ...current, logo }))} />
         <div className="grid gap-3 md:grid-cols-2">
           <TextInput label="Company name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
-          <TextInput label="Industry" value={form.industry} onChange={(industry) => setForm((current) => ({ ...current, industry }))} />
-          <TextInput label="Country" value={form.country} onChange={(country) => setForm((current) => ({ ...current, country }))} />
-          <TextInput label="Primary town / city" value={form.town} onChange={(town) => setForm((current) => ({ ...current, town }))} required />
-          <TextInput label="Province / district / region" value={form.region} onChange={(region) => setForm((current) => ({ ...current, region }))} />
+          <SelectInput label="Industry" value={form.industry} options={industryOptions} placeholder="Select industry" onChange={(industry) => setForm((current) => ({ ...current, industry }))} required />
+          <SelectInput label="Country" value={form.country} options={organizationCountryOptions} placeholder="Select country" onChange={(country) => setForm((current) => ({ ...current, country, region: "", town: "" }))} required />
+          <SelectInput label={regionLabel(form.country)} value={form.region} options={districtsByCountry[form.country] ?? []} placeholder={form.country ? `Select ${regionLabel(form.country).toLowerCase()}` : "Select country first"} onChange={(region) => setForm((current) => ({ ...current, region, town: "" }))} disabled={!form.country} required />
+          <SelectInput label="City / Town" value={form.town} options={citiesByCountryAndRegion[form.country]?.[form.region] ?? []} placeholder={form.region ? "Select city or town" : "Select region first"} onChange={(town) => setForm((current) => ({ ...current, town }))} disabled={!form.region} required />
           <TextInput label="Employee count" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} required />
           <SelectInput label="Package" value={form.package} options={packageOptions} onChange={(value) => setForm((current) => ({ ...current, package: value as PackageName }))} />
           <SelectInput label="Status" value={form.status} options={statusOptions} onChange={(value) => setForm((current) => ({ ...current, status: value as OrganizationStatus }))} />
@@ -1288,7 +1094,7 @@ function InviteClientUserModal({
   organizations: Organization[];
   initialOrganizationId?: string;
   onClose: () => void;
-  onSubmit: (payload: InvitePayload) => void;
+  onSubmit: (payload: InvitePayload) => Promise<void>;
 }) {
   const [payload, setPayload] = useState<InvitePayload>({
     name: "",
@@ -1297,14 +1103,15 @@ function InviteClientUserModal({
     organizationId: initialOrganizationId ?? organizations[0]?.id ?? "",
     message: "",
   });
+  const [submitting, setSubmitting] = useState(false);
   const canSubmit = payload.name.trim() && payload.email.trim() && payload.organizationId;
   return (
     <Modal title="Invite Client User" onClose={onClose}>
       <form
         className="grid gap-3"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (canSubmit) onSubmit(payload);
+          if (canSubmit && !submitting) { setSubmitting(true); try { await onSubmit(payload); } finally { setSubmitting(false); } }
         }}
       >
         <TextInput label="Full name" value={payload.name} onChange={(name) => setPayload((current) => ({ ...current, name }))} required />
@@ -1316,14 +1123,10 @@ function InviteClientUserModal({
             {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
           </select>
         </label>
-        <label className="grid gap-1 text-[12px] font-semibold text-black">
-          Optional personalized message
-          <textarea value={payload.message} onChange={(event) => setPayload((current) => ({ ...current, message: event.target.value }))} className="min-h-24 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10" />
-        </label>
-        <StateBanner tone="info" title="Frontend-only invitation simulation" detail="The simulated email includes organization name, Pulse80 portal information, user role, a secure time-limited invitation link, and instructions to create a password. No permanent password is emailed." />
+        <StateBanner tone="info" title="Organisation access" detail="New users receive a secure setup email. Existing users are added to this organisation." />
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
-          <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Send invitation</button>
+          <button type="submit" disabled={!canSubmit || submitting} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">{submitting ? "Saving…" : "Invite or add user"}</button>
         </div>
       </form>
     </Modal>
@@ -1409,12 +1212,13 @@ function TextInput({ label, value, onChange, required = false }: { label: string
   );
 }
 
-function SelectInput({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function SelectInput({ label, value, options, onChange, placeholder, disabled = false, required = false }: { label: string; value: string; options: string[]; onChange: (value: string) => void; placeholder?: string; disabled?: boolean; required?: boolean }) {
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
-        {options.map((option) => <option key={option}>{option}</option>)}
+      <select required={required} disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+        {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
   );

@@ -21,6 +21,11 @@ type CompletionViewRow = {
   screening_completion_rate: number | null;
 };
 
+type RiskMetricsRow = {
+  risk_category: string | null;
+  participant_count: number | null;
+};
+
 function requireCount(result: CountResult) {
   if (result.error) {
     throw new Error(result.error.message);
@@ -64,6 +69,100 @@ export class DashboardService {
       ),
       verifiedPractitioners: requireCount(verifiedPractitioners),
       upcomingAssignments: requireCount(upcomingAssignments),
+    };
+  }
+
+  async getAdminPortalAnalytics() {
+    const [participation, completion, risk, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+      this.supabase
+        .from("analytics_screening_participation")
+        .select("eligible_participant_count, screened_participant_count")
+        .range(0, 9999),
+      this.supabase
+        .from("analytics_screening_completion")
+        .select("expected_required_screenings, completed_required_screenings")
+        .range(0, 9999),
+      this.supabase
+        .from("analytics_risk_metrics")
+        .select("risk_category, participant_count")
+        .range(0, 9999),
+      this.supabase
+        .from("screenings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "Completed"),
+      this.supabase
+        .from("analytics_referrals")
+        .select("referral_id", { count: "exact", head: true }),
+      this.supabase
+        .from("analytics_referrals")
+        .select("referral_id", { count: "exact", head: true })
+        .eq("referral_missing", true),
+      this.supabase
+        .from("analytics_referral_followups")
+        .select("referral_id", { count: "exact", head: true }),
+      this.supabase
+        .from("analytics_referral_followups")
+        .select("referral_id", { count: "exact", head: true })
+        .eq("follow_up_completed", true),
+    ]);
+
+    for (const result of [participation, completion, risk]) {
+      if (result.error) throw new Error(result.error.message);
+    }
+
+    const participationRows = participation.data as unknown as ParticipationViewRow[];
+    const completionRows = completion.data as unknown as CompletionViewRow[];
+    const riskRows = risk.data as unknown as RiskMetricsRow[];
+    const eligibleParticipants = participationRows.reduce(
+      (total, row) => total + (row.eligible_participant_count ?? 0),
+      0,
+    );
+    const participantsScreened = participationRows.reduce(
+      (total, row) => total + (row.screened_participant_count ?? 0),
+      0,
+    );
+    const expectedRequiredScreenings = completionRows.reduce(
+      (total, row) => total + (row.expected_required_screenings ?? 0),
+      0,
+    );
+    const completedRequiredScreenings = completionRows.reduce(
+      (total, row) => total + (row.completed_required_screenings ?? 0),
+      0,
+    );
+    const riskCategories = ["Low", "Moderate", "High", "Not Calculated"];
+    const riskDistribution = riskCategories.map((riskCategory) => ({
+      riskCategory,
+      participantCount: riskRows
+        .filter((row) => row.risk_category === riskCategory)
+        .reduce((total, row) => total + (row.participant_count ?? 0), 0),
+    }));
+
+    for (const result of [completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals]) {
+      if (result.error) throw new Error(result.error.message);
+    }
+
+    const requiredReferralCount = requireCount(referrals);
+    const missingReferralCount = requireCount(missingReferrals);
+    const followUpCount = requireCount(followUps);
+    const followedUpReferralCount = requireCount(followedUpReferrals);
+
+    return {
+      participantsScreened,
+      eligibleParticipants,
+      screeningParticipationRate: eligibleParticipants
+        ? (participantsScreened / eligibleParticipants) * 100
+        : null,
+      completedScreenings: requireCount(completedScreenings),
+      expectedRequiredScreenings,
+      completedRequiredScreenings,
+      screeningCompletionRate: expectedRequiredScreenings
+        ? (completedRequiredScreenings / expectedRequiredScreenings) * 100
+        : null,
+      riskDistribution,
+      requiredReferralCount,
+      missingReferralCount,
+      followUpCount,
+      followedUpReferralCount,
     };
   }
 

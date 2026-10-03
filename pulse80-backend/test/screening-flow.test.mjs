@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import WebSocket from 'ws';
 import { createClient } from '@supabase/supabase-js';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
@@ -59,7 +60,7 @@ test('anonymous capture code -> PostgreSQL views -> GraphQL dashboard', async ()
  const rows=(await db.query(`select * from ${table} where organisation_id=$1`,[org])).rows;
  return Response.json(rows.map(row=>Object.fromEntries(Object.entries(row).map(([k,v])=>[k,k==='organisation_id'?v:Number(v)]))));
  };
- const client=createClient('https://test.supabase.co','test-key',{auth:{persistSession:false},global:{fetch:transport}});
+ const client=createClient('https://test.supabase.co','test-key',{realtime:{transport:WebSocket},auth:{persistSession:false},global:{fetch:transport}});
  const schema=makeExecutableSchema({typeDefs:['type Query { _empty: Boolean }',dashboardTypeDefs],resolvers:dashboardResolvers});
  const source='{organisationDashboardStats{screeningParticipation screeningCompletionRate participantsScreened eligibleParticipants expectedRequiredScreenings completedRequiredScreenings}}';
  const ctx={user:{id:user},supabase:client,adminSupabase:client,identity:{organisationId:org,organisationRole:'hr',platformRole:null}};

@@ -52,6 +52,8 @@ Only `Completed` means successfully completed for KPI purposes.
 
 A participant is counted once in `Participants Screened` when they have at least one Completed screening service. Multiple services for the same participant increase Screening Events, not Participants Screened.
 
+Participants Screened excludes screenings without a linked activation, including organisation-wide totals. The linked activation must belong to the same organisation as the screening.
+
 ### Screening completion
 
 Screening Completion Rate measures completion of required participant-service combinations. It must not blindly multiply every participant by every available service where a service is not required for that participant.

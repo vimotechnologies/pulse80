@@ -25,7 +25,7 @@ test("a same-day Botswana withdrawal is urgent", () => {
 // Exercise the query's filters and pagination with mixed screening records.
 type ScreeningFixture = {
   id: string; organisation_id: string; activation_id: string | null;
-  participant_reference: string; practitioner_user_id: string; status: string;
+  programme_participant_id: string | null; participant_reference: string; practitioner_user_id: string; status: string;
 };
 function screeningClient(rows: ScreeningFixture[], errorMessage?: string) {
   return {
@@ -56,19 +56,20 @@ function screeningClient(rows: ScreeningFixture[], errorMessage?: string) {
 test("participants screened deduplicates completed services across pages and isolates scope", async () => {
   const row = (id: string, changes: Partial<ScreeningFixture> = {}): ScreeningFixture => ({
     id, organisation_id: "org-a", activation_id: "event-a",
-    participant_reference: "person-a", practitioner_user_id: "practitioner-a",
+    programme_participant_id: "participant-a", participant_reference: "person-a", practitioner_user_id: "practitioner-a",
     status: "Completed", ...changes,
   });
   const client = screeningClient([
-    row("01"), row("02", { participant_reference: "person-b" }), row("03"),
-    row("04", { organisation_id: "org-b" }),
+    row("01"), row("02", { participant_reference: "person-b", programme_participant_id: "participant-b" }), row("03"),
+    row("04", { organisation_id: "org-b", programme_participant_id: "participant-other-org" }),
     row("05", { activation_id: "event-b" }),
-    row("06", { activation_id: null }), row("07", { activation_id: null }),
+    row("06", { activation_id: null, programme_participant_id: null }), row("07", { activation_id: null, programme_participant_id: null }),
+    row("08", { programme_participant_id: "participant-other-programme" }),
     ...["Draft", "Under Review", "Needs Correction", "Approved"].map((status, i) =>
       row(`1${i}`, { status, participant_reference: `unfinished-${i}` })),
     row("20", { practitioner_user_id: "practitioner-b", participant_reference: "other-person" }),
   ]);
-  assert.equal(await countCompletedParticipants(client, "practitioner-a"), 5);
+  assert.equal(await countCompletedParticipants(client, "practitioner-a"), 4);
 });
 
 test("participants screened returns zero when no completed screenings match", async () => {
