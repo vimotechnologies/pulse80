@@ -37,6 +37,7 @@ export class FlexibleScreeningService {
     const a = assignment as AssignmentRow | null;
     if (!a?.organisation_id) throw new Error("Screenings can only be captured for your confirmed or active assignments.");
 
+    if (!a.activation_id) throw new Error("This assignment needs an activation link before screening capture.");
     const services = await this.assignmentServices(userId, input.assignmentId);
     if (!services.some((service: any) => service.id === input.serviceId)) throw new Error("This service is not part of the selected assignment.");
     const fields = await this.fieldsForService(input.serviceId);

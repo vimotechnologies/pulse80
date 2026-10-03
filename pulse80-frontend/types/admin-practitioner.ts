@@ -34,6 +34,9 @@ export type AdminPractitioner = {
 };
 
 export type AdminPractitionerAssignment = {
+  activationId: string | null;
+  serviceId: string | null;
+  serviceIds: string[];
   id: string;
   practitionerUserId: string;
   practitionerName: string;
@@ -52,6 +55,8 @@ export type AdminPractitionerAssignment = {
 };
 
 export type PractitionerAssignmentForm = {
+  activationId: string;
+  serviceIds: string[];
   practitionerUserId: string;
   organisationId: string;
   programmeName: string;
@@ -61,4 +66,9 @@ export type PractitionerAssignmentForm = {
   startsAt: string;
   endsAt: string;
   status: "Scheduled" | "Confirmed" | "In Progress" | "Completed" | "Cancelled" | "Action Required";
+};
+
+export type AssignmentActivationOption = {
+  id: string; organisationId: string; programmeName: string; title: string; location: string;
+  startsAt: string; endsAt: string; services: { id: string; name: string; code: string }[];
 };
