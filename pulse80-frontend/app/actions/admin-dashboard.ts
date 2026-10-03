@@ -107,3 +107,16 @@ export async function loadAdminPortalAnalytics(): Promise<AdminPortalAnalytics> 
 
   return adminPortalAnalytics;
 }
+
+export async function loadAdminDashboardActivations() {
+  const { adminActivations } = await graphqlRequest<{
+    adminActivations: Pick<import("@/types/programme").Activation,
+      "id" | "organisationName" | "title" | "location" | "startsAt" |
+      "expectedParticipants" | "status" | "readinessScore">[];
+  }>(`query AdminDashboardActivations {
+    adminActivations {
+      id organisationName title location startsAt expectedParticipants status readinessScore
+    }
+  }`);
+  return adminActivations;
+}
