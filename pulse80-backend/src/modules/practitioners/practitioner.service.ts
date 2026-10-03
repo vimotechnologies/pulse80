@@ -46,6 +46,8 @@ export type PractitionerDocumentVerificationStatus =
   | "Action Required";
 
 export interface PractitionerAssignmentInput {
+  activationId: string;
+  serviceIds: string[];
   practitionerUserId: string;
   organisationId: string;
   programmeName: string;
@@ -207,9 +209,10 @@ export class PractitionerService {
     const { data, error } = await this.supabase
       .from("practitioner_assignments")
       .select(`
-        id, practitioner_user_id, organisation_id, programme_name,
+        id, practitioner_user_id, organisation_id, activation_id, service_id, programme_name,
         activity_name, service_name, location, starts_at, ends_at,
         status, created_at, updated_at,
+        practitioner_assignment_services (service_id),
         organisations (name),
         practitioner_profiles (profession, profiles (full_name))
       `)
@@ -221,7 +224,9 @@ export class PractitionerService {
   async createAssignment(input: PractitionerAssignmentInput) {
     const practitioner = await this.validateAssignment(input);
     const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
-    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+    const { data, error } = await this.supabase.rpc("save_linked_practitioner_assignment", {
+      p_activation_id: input.activationId,
+      p_service_ids: input.serviceIds,
       p_assignment_id: null,
       p_practitioner_user_id: input.practitionerUserId,
       p_organisation_id: input.organisationId,
@@ -242,7 +247,9 @@ export class PractitionerService {
   async updateAssignment(assignmentId: string, input: PractitionerAssignmentInput) {
     const practitioner = await this.validateAssignment(input, assignmentId);
     const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
-    const { data, error } = await this.supabase.rpc("save_practitioner_assignment", {
+    const { data, error } = await this.supabase.rpc("save_linked_practitioner_assignment", {
+      p_activation_id: input.activationId,
+      p_service_ids: input.serviceIds,
       p_assignment_id: assignmentId,
       p_practitioner_user_id: input.practitionerUserId,
       p_organisation_id: input.organisationId,
@@ -261,7 +268,10 @@ export class PractitionerService {
   }
 
   private async validateAssignment(input: PractitionerAssignmentInput, assignmentId?: string) {
-    const serviceNames = [...new Set([input.serviceName, ...(input.serviceNames ?? [])])];
+    const { data: services, error: servicesError } = await this.supabase.from("services")
+      .select("id, name, code").in("id", input.serviceIds).eq("active", true);
+    if (servicesError) throw new Error(servicesError.message);
+    if (services.length !== new Set(input.serviceIds).size) throw new Error("Choose valid active services.");
     const [{ data: practitioner, error: practitionerError }, { data: capabilities, error: capabilityError }] =
       await Promise.all([
         this.supabase
@@ -271,9 +281,8 @@ export class PractitionerService {
           .single(),
         this.supabase
           .from("practitioner_capabilities")
-          .select("service_name")
+          .select("service_name, service_code")
           .eq("practitioner_user_id", input.practitionerUserId)
-          .in("service_name", serviceNames)
           .eq("approval_status", "Approved")
           ,
       ]);
@@ -282,9 +291,9 @@ export class PractitionerService {
     if (practitioner.verification_status !== "Verified" || practitioner.practitioner_status !== "Active") {
       throw new Error("Only active, verified practitioners can be assigned.");
     }
-    const approvedServices = new Set((capabilities ?? []).map((item) => item.service_name));
-    const unsupportedService = serviceNames.find((serviceName) => !approvedServices.has(serviceName));
-    if (unsupportedService) throw new Error(`The practitioner is not approved for ${unsupportedService}.`);
+    const unsupportedService = services.find((service) => !(capabilities ?? []).some((capability) =>
+      capability.service_name === service.name || capability.service_code === service.code));
+    if (unsupportedService) throw new Error(`The practitioner is not approved for ${unsupportedService.name}.`);
 
     let conflictQuery = this.supabase
       .from("practitioner_assignments")

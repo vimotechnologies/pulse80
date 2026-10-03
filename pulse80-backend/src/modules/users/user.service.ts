@@ -15,10 +15,10 @@ export class UserService {
   }
   async directory() {
     const users = await this.authUsers();
-    const profiles = [];
-    const memberships = [];
-    const staff = [];
-    const organisations = [];
+    const profiles: { id: string; full_name: string | null }[] = [];
+    const memberships: { id: string; profile_id: string; organisation_id: string; role: string; organisations: { name: string } | null }[] = [];
+    const staff: { user_id: string; role: string }[] = [];
+    const organisations: { id: string; name: string }[] = [];
     for (let offset = 0; ; offset += 500) {
       const result = await this.db.from("profiles").select("id,full_name").order("id").range(offset, offset + 499);
       if (result.error) throw new Error(result.error.message);

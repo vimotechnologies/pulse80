@@ -51,6 +51,8 @@ const documentStatusSchema = z.enum(["Verified", "Under Review", "Expired", "Act
 const idSchema = z.uuid();
 const assignmentStatuses = ["Scheduled", "Confirmed", "In Progress", "Completed", "Cancelled", "Action Required"] as const;
 const assignmentSchema = z.object({
+  activationId: z.uuid(),
+  serviceIds: z.array(z.uuid()).min(1).max(20),
   practitionerUserId: z.uuid(),
   organisationId: z.uuid(),
   programmeName: z.string().trim().min(2).max(180),
@@ -205,6 +207,10 @@ export const practitionerResolvers = {
     },
   },
   AdminPractitionerAssignment: {
+    serviceIds: (row: { service_id: string | null; practitioner_assignment_services: { service_id: string | null }[] }) =>
+      [...new Set([row.service_id, ...row.practitioner_assignment_services.map((item) => item.service_id)].filter((id): id is string => Boolean(id)))],
+    activationId: (row: { activation_id: string | null }) => row.activation_id,
+    serviceId: (row: { service_id: string | null }) => row.service_id,
     practitionerUserId: (row: { practitioner_user_id: string }) => row.practitioner_user_id,
     practitionerName: (row: { practitioner_profiles: { profiles: { full_name: string | null } | null } | null }) => row.practitioner_profiles?.profiles?.full_name ?? "Practitioner",
     practitionerProfession: (row: { practitioner_profiles: { profession: string } | null }) => row.practitioner_profiles?.profession ?? "Practitioner",

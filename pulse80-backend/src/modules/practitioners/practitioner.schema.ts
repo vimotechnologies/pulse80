@@ -174,6 +174,9 @@ export const practitionerTypeDefs = /* GraphQL */ `
   }
 
   type AdminPractitionerAssignment {
+    activationId: ID
+    serviceId: ID
+    serviceIds: [ID!]!
     id: ID!
     practitionerUserId: ID!
     practitionerName: String!
@@ -226,6 +229,8 @@ export const practitionerTypeDefs = /* GraphQL */ `
   }
 
   input PractitionerAssignmentInput {
+    activationId: ID!
+    serviceIds: [ID!]!
     practitionerUserId: ID!
     organisationId: ID!
     programmeName: String!
