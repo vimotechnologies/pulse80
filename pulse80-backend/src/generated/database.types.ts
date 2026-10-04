@@ -1248,6 +1248,10 @@ export type Database = {
       }
     }
     Functions: {
+      save_admin_organisation: {
+        Args: { p_organisation_id: string; p_fields: Json; p_contacts?: Json | null }
+        Returns: undefined
+      }
       capture_screening_with_result: {
         Args: {
           p_assignment_id: string

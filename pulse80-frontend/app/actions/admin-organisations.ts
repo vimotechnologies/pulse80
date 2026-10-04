@@ -137,16 +137,8 @@ export async function updateAdminOrganisation(id: string, organisation: Organiza
       customPackageNotes: organisation.customPackageNotes ?? null,
       ...(logoDataUrl ? { logoDataUrl } : {}),
       ...(removeLogo ? { removeLogo: true } : {}),
-      contacts: organisation.contacts.map((contact) => ({
-        ...(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contact.id) ? { id: contact.id } : {}),
-        name: contact.name,
-        roleLabel: contact.roleLabel,
-        email: contact.email,
-        phone: contact.phone || null,
-        method: contact.method,
-        primary: contact.primary,
-        notes: contact.notes || null,
-      })),
+      // Contacts are saved separately by saveAdminOrganisationContacts.
+      // Omit them here so profile edits preserve contacts, including an empty list.
     };
     const result = await graphqlRequest<{ updateAdminOrganisation: Organization }>(updateMutation, {
       variables: { id: parsed.data, input },
@@ -157,4 +149,32 @@ export async function updateAdminOrganisation(id: string, organisation: Organiza
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "UPDATE_FAILED" };
   }
+}
+
+export async function saveAdminOrganisationContacts(id: string, contacts: Organization["contacts"]) {
+  const parsed = idSchema.safeParse(id);
+  if (!parsed.success) return { ok: false as const, error: "Invalid organisation." };
+  try {
+    const result = await graphqlRequest<{ updateAdminOrganisation: Organization }>(updateMutation, {
+      variables: { id: parsed.data, input: { contacts: toContactInputs(contacts) } },
+    });
+    revalidatePath("/admin/organizations");
+    revalidatePath(`/admin/organizations/${parsed.data}`);
+    return { ok: true as const, organisation: withUiDefaults(result.updateAdminOrganisation) };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "CONTACTS_UPDATE_FAILED" };
+  }
+}
+
+function toContactInputs(contacts: Organization["contacts"]) {
+  return contacts.map((contact) => ({
+    ...(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contact.id) ? { id: contact.id } : {}),
+    name: contact.name,
+    roleLabel: contact.roleLabel,
+    email: contact.email,
+    phone: contact.phone || null,
+    method: contact.method,
+    primary: contact.primary,
+    notes: contact.notes || null,
+  }));
 }

@@ -142,48 +142,57 @@ export class OrganisationService {
   }
 
   async update(organisationId: string, input: OrganisationInput) {
-    const values: Database["public"]["Tables"]["organisations"]["Update"] = {};
-    if (input.name !== undefined) values.name = input.name;
-    if (input.slug !== undefined) values.slug = input.slug;
-    if (input.industry !== undefined) values.industry = input.industry;
-    if (input.country !== undefined) values.country = input.country;
-    if (input.primaryLocation !== undefined) values.primary_location = input.primaryLocation;
-    if (input.region !== undefined) values.region = input.region;
-    if (input.employees !== undefined) values.workforce_size = input.employees;
-    if (input.package !== undefined) values.package_name = input.package;
-    if (input.contractStart !== undefined) values.contract_start = input.contractStart;
-    if (input.contractEnd !== undefined) values.contract_end = input.contractEnd;
-    if (input.status !== undefined) values.status = input.status;
-    if (input.customPackageNotes !== undefined) values.custom_package_notes = input.customPackageNotes;
+    const fields: Record<string, string | number | null> = {};
+    if (input.name !== undefined) fields.name = input.name;
+    if (input.slug !== undefined) fields.slug = input.slug;
+    if (input.industry !== undefined) fields.industry = input.industry;
+    if (input.country !== undefined) fields.country = input.country;
+    if (input.primaryLocation !== undefined) fields.primary_location = input.primaryLocation;
+    if (input.region !== undefined) fields.region = input.region;
+    if (input.employees !== undefined) fields.workforce_size = input.employees;
+    if (input.package !== undefined) fields.package_name = input.package;
+    if (input.contractStart !== undefined) fields.contract_start = input.contractStart;
+    if (input.contractEnd !== undefined) fields.contract_end = input.contractEnd;
+    if (input.status !== undefined) fields.status = input.status;
+    if (input.customPackageNotes !== undefined) fields.custom_package_notes = input.customPackageNotes;
 
-    if (Object.keys(values).length) {
-      const { error } = await this.supabase
-        .from("organisations")
-        .update(values)
-        .eq("id", organisationId);
+    if (Object.keys(fields).length || input.contacts) {
+      const { error } = await this.supabase.rpc("save_admin_organisation", {
+        p_organisation_id: organisationId,
+        p_fields: fields,
+        p_contacts: input.contacts ? input.contacts.map((contact) => ({
+          ...(contact.id ? { id: contact.id } : {}),
+          name: contact.name,
+          role_label: contact.roleLabel,
+          email: contact.email,
+          phone: contact.phone ?? null,
+          method: contact.method,
+          primary: contact.primary,
+          notes: contact.notes ?? null,
+        })) : null,
+      });
       if (error) throw new Error(error.message);
     }
-    if (input.contacts) await this.saveContacts(organisationId, input.contacts);
     if (input.removeLogo) await this.removeLogo(organisationId);
     if (input.logoDataUrl) await this.saveLogo(organisationId, input.logoDataUrl);
     return this.getById(organisationId);
   }
 
   private async saveContacts(organisationId: string, contacts: ContactInput[]) {
-    const rows = contacts.map((contact) => ({
-      ...(contact.id ? { id: contact.id } : {}),
-      organisation_id: organisationId,
-      full_name: contact.name,
-      role_label: contact.roleLabel,
-      email: contact.email,
-      phone: contact.phone || null,
-      preferred_method: contact.method,
-      is_primary: contact.primary,
-      notes: contact.notes || null,
-    }));
-    const { error } = await this.supabase
-      .from("organisation_contacts")
-      .upsert(rows);
+    const { error } = await this.supabase.rpc("save_admin_organisation", {
+      p_organisation_id: organisationId,
+      p_fields: {},
+      p_contacts: contacts.map((contact) => ({
+        ...(contact.id ? { id: contact.id } : {}),
+        name: contact.name,
+        role_label: contact.roleLabel,
+        email: contact.email,
+        phone: contact.phone ?? null,
+        method: contact.method,
+        primary: contact.primary,
+        notes: contact.notes ?? null,
+      })),
+    });
     if (error) throw new Error(error.message);
   }
 
