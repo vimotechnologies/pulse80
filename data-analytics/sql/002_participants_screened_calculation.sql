@@ -6,7 +6,7 @@
 -- Count each unique participant once when they have at least
 -- one Completed screening.
 --
--- Production mapping:
+-- Production mapping (validated against live Pulse80):
 --   screenings.organisation_id
 --   screenings.activation_id -> activations.id
 --   activations.programme_id
@@ -14,81 +14,29 @@
 --   screenings.status
 --   screenings.captured_at
 --
--- Rules:
---   1. Only Completed screenings count.
---   2. A participant is counted once even if they have several
---      Completed screening records.
---   3. Results are isolated by organisation.
---   4. Programme filtering is optional.
---   5. Period filtering uses captured_at.
---   6. period_start is inclusive.
---   7. period_end is exclusive.
---   8. Screenings without a linked activation are excluded,
---      including organisation-wide totals. The activation must
---      belong to the same organisation as the screening.
+-- SECURITY / TENANT RULE:
+-- $1 MUST come from the authenticated backend organisation context.
+-- Never populate $1 directly from a frontend/client-supplied organisation id.
+-- This query is intended for the backend service/resolver, not direct browser use.
 --
 -- Parameters:
---   $1 organisation_id   uuid          (required)
---   $2 programme_id      uuid | null   (optional — null = all programmes)
---   $3 period_start      timestamptz | null (optional — null = no lower bound)
---   $4 period_end        timestamptz | null (optional — null = no upper bound)
+--   $1 organisation_id   uuid              required, backend-authorised tenant
+--   $2 programme_id      uuid | null       optional
+--   $3 period_start      timestamptz | null optional, inclusive
+--   $4 period_end        timestamptz | null optional, exclusive
 --
-
 select
-    count(distinct f.employee_id) as participants_screened
-from analytics_screening_facts f
-where f.organisation_id = $1
-    and ($2::uuid is null or f.programme_id = $2)
-    and lower(f.screening_status) in ('completed')
-    and ($3::timestamptz is null or f.screened_at >= $3)
-    and ($4::timestamptz is null or f.screened_at < $4);
+  count(distinct s.participant_reference)::integer as participants_screened
+from public.screenings s
+join public.activations a
+  on a.id = s.activation_id
+ and a.organisation_id = s.organisation_id
+where s.organisation_id = $1::uuid
+  and lower(s.status) = 'completed'
+  and ($2::uuid is null or a.programme_id = $2::uuid)
+  and ($3::timestamptz is null or s.captured_at >= $3::timestamptz)
+  and ($4::timestamptz is null or s.captured_at < $4::timestamptz);
 
--- ---------------------------------------------------------------------------
--- B. Callable wrapper (optional convenience for the API/resolver layer)
---    Same logic as (A), packaged as a stable SQL function so a GraphQL
---    resolver can call `select analytics_participants_screened($1,$2,$3,$4)`
---    instead of inlining the query text.
--- ---------------------------------------------------------------------------
-
-create or replace function analytics_participants_screened(
-    p_organisation_id uuid,
-    p_programme_id    uuid default null,
-    p_period_start    timestamptz default null,
-    p_period_end      timestamptz default null
-)
-returns integer
-language sql
-stable
-as $$
-    select count(distinct f.employee_id)::integer
-    from analytics_screening_facts f
-    where f.organisation_id = p_organisation_id
-      and (p_programme_id is null or f.programme_id = p_programme_id)
-      and lower(f.screening_status) in ('completed')
-      and (p_period_start is null or f.screened_at >= p_period_start)
-      and (p_period_end   is null or f.screened_at < p_period_end)
-$$;
-
--- ---------------------------------------------------------------------------
--- C. Correction to the existing summary view
---    analytics_screening_summary.participants_screened currently counts
---    DISTINCT participation_id with no status filter, so it (a) does not
---    match the person-grain definition above and (b) includes people whose
---    only screening record is not in the accepted-status list. Align it
---    with the same definition used above so every dashboard reads the same
---    number. completed_screening_events is left as-is; it already used the
---    correct, EDA-confirmed 'completed' value.
--- ---------------------------------------------------------------------------
-create or replace view analytics_screening_summary as 
-select
-    organisation_id,
-    programme_id,
-    count(distinct screening_id) as screening_events,
-    count(distinct employee_id) filter (
-        where lower(screening_status) in ('completed')
-    ) as participants_screened,
-    count(distinct screening_id) filter (
-        where lower(screening_status) = 'completed'
-    ) as completed_screening_events
-from analytics_screening_facts
-group by organisation_id, programme_id;
+-- Deliberately no public SQL/RPC wrapper here.
+-- Tenant authorisation belongs in the backend resolver/service, which must
+-- resolve the caller's authorised organisation before executing this query.
