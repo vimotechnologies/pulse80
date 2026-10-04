@@ -1,14 +1,32 @@
 import { GraphQLError } from "graphql";
 import { z } from "zod";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
 import { ScreeningService, type ScreeningCaptureInput } from "./screening.service.js";
-import { FlexibleScreeningService } from "./flexible-screening.service.js";
+import { FlexibleScreeningService, type FlexibleCaptureInput } from "./flexible-screening.service.js";
 
 const nullableNumber = (minimum: number, maximum: number) => z.number().min(minimum).max(maximum).nullish().transform((value) => value ?? null);
 const captureSchema = z.object({ assignmentId: z.uuid(), participantReference: z.string().trim().min(2).max(80), department: z.string().trim().max(120).nullish().transform((v)=>v||null), consentConfirmed: z.literal(true), practitionerNote: z.string().trim().max(1000).nullish().transform((v)=>v||null), systolicMmhg: nullableNumber(40,300), diastolicMmhg: nullableNumber(20,200), glucoseMmolL: nullableNumber(.5,50), cholesterolMmolL: nullableNumber(.5,30), heightCm: nullableNumber(50,260), weightKg: nullableNumber(2,500) });
 const correctionSchema = captureSchema.omit({ assignmentId: true });
+const flexibleSchema: z.ZodType<FlexibleCaptureInput> = z.object({
+  assignmentId: z.uuid(),
+  serviceId: z.uuid(),
+  participantReference: z.string().trim().min(2).max(80),
+  department: z.string().trim().max(120).nullish(),
+  consentConfirmed: z.literal(true),
+  practitionerNote: z.string().trim().max(1000).nullish(),
+  values: z.array(z.object({
+    fieldId: z.uuid(),
+    valueNumber: z.number().finite().nullish(),
+    valueText: z.string().nullish(),
+    valueBoolean: z.boolean().nullish(),
+    valueCode: z.string().nullish(),
+  })),
+  outcomeSummary: z.string().trim().max(2000).nullish(),
+  referralRequired: z.boolean().optional(),
+  escalationRequired: z.boolean().optional(),
+  reportingRiskCategory: z.string().trim().max(80).nullish(),
+});
 const reviewSchema = z.object({
   status: z.enum(["Completed", "Needs Correction"]),
   reviewNote: z.string().trim().max(1000).nullish().transform((value) => value || null),
@@ -28,6 +46,12 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return parsed.data;
 }
 
+function flexible(context: GraphQLContext) {
+  return new FlexibleScreeningService(context.adminSupabase);
+}
+
+type FlexibleField = Awaited<ReturnType<FlexibleScreeningService["fieldsForService"]>>[number];
+
 type ScreeningRow = Awaited<ReturnType<ScreeningService["listAll"]>>[number];
 function shape(row: ScreeningRow) {
  const result=row.screening_results;
@@ -46,7 +70,7 @@ export const screeningResolvers = {
   myScreenings: async (_p:unknown,_a:unknown,c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return (await new ScreeningService(c.adminSupabase).listForPractitioner(user.id)).map(shape);},
   myScreeningAssignments: async (_p:unknown,_a:unknown,c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return (await new ScreeningService(c.adminSupabase).listAssignmentOptions(user.id)).map((r)=>({id:r.id,organisationName:r.organisations?.name??"Organisation unavailable",activationName:r.activations?.title??null,serviceName:r.service_name,location:r.location,startsAt:r.starts_at,status:r.status}));},
   screeningServicesForAssignment: async (_p:unknown,a:{assignmentId:string},c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return flexible(c).assignmentServices(user.id,z.uuid().parse(a.assignmentId));},
-  screeningFieldsForService: async (_p:unknown,a:{serviceId:string},c:GraphQLContext)=>{requireAuthenticatedUser(c);return (await flexible(c).fieldsForService(z.uuid().parse(a.serviceId))).map((f)=>({id:f.id,serviceId:f.service_id,code:f.code,label:f.label,dataType:f.data_type,unit:f.unit,required:f.required,options:Array.isArray(f.options)?f.options:[],minValue:f.min_value,maxValue:f.max_value,displayOrder:f.display_order}));}
+  screeningFieldsForService: async (_p:unknown,a:{serviceId:string},c:GraphQLContext)=>{requireAuthenticatedUser(c);return (await flexible(c).fieldsForService(z.uuid().parse(a.serviceId))).map((f:FlexibleField)=>({id:f.id,serviceId:f.service_id,code:f.code,label:f.label,dataType:f.data_type,unit:f.unit,required:f.required,options:Array.isArray(f.options)?f.options:[],minValue:f.min_value,maxValue:f.max_value,displayOrder:f.display_order}));}
  },
  Mutation: {
   captureScreening: async (_p:unknown,a:{input:unknown},c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return shape(await new ScreeningService(c.adminSupabase).capture(user.id,parse(captureSchema,a.input) as ScreeningCaptureInput));},

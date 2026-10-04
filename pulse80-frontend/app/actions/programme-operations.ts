@@ -20,7 +20,7 @@ const programmeInput = (form: ProgrammeForm) => ({ ...form, description: form.de
 const activationInput = (form: ActivationForm) => ({ ...form, description: form.description || null, startsAt: new Date(form.startsAt).toISOString(), endsAt: new Date(form.endsAt).toISOString(), expectedParticipants: Number(form.expectedParticipants), serviceNames: list(form.serviceNames), readinessLabels: list(form.readinessLabels) });
 
 async function mutate<T>(query: string, variables: Record<string, unknown>) {
-  try { const result = await graphqlRequest<T>(query, { variables }); revalidatePath("/admin/programmes"); revalidatePath("/admin/activations"); revalidatePath("/client/activations"); return { ok: true as const, result }; }
+  try { const result = await graphqlRequest<T>(query, { variables }); revalidatePath("/admin/dashboard"); revalidatePath("/admin/programmes"); revalidatePath("/admin/activations"); revalidatePath("/client/activations"); return { ok: true as const, result }; }
   catch (error) { return { ok: false as const, error: error instanceof Error ? error.message : "UPDATE_FAILED" }; }
 }
 export async function createProgramme(form: ProgrammeForm) {

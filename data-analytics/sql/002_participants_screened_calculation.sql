@@ -1,9 +1,32 @@
--- ---------------------------------------------------------------------------
--- A. Parameterised query (primary deliverable)
---    Intended to be called directly by the API layer with bind parameters.
---    Positional placeholders shown for a plain pg client; swap for named
---    parameters if your query layer prefers them.
--- ---------------------------------------------------------------------------
+-- ============================================================
+-- PUL-307: Participants Screened
+-- ============================================================
+--
+-- Definition:
+-- Count each unique participant once when they have at least
+-- one Completed screening.
+--
+-- Production mapping:
+--   screenings.organisation_id
+--   screenings.activation_id -> activations.id
+--   activations.programme_id
+--   screenings.participant_reference
+--   screenings.status
+--   screenings.captured_at
+--
+-- Rules:
+--   1. Only Completed screenings count.
+--   2. A participant is counted once even if they have several
+--      Completed screening records.
+--   3. Results are isolated by organisation.
+--   4. Programme filtering is optional.
+--   5. Period filtering uses captured_at.
+--   6. period_start is inclusive.
+--   7. period_end is exclusive.
+--   8. Screenings without a linked activation are excluded,
+--      including organisation-wide totals. The activation must
+--      belong to the same organisation as the screening.
+--
 -- Parameters:
 --   $1 organisation_id   uuid          (required)
 --   $2 programme_id      uuid | null   (optional — null = all programmes)

@@ -12,7 +12,8 @@ export function calculateDashboardStats(completedCount: number, screeningCount: 
   };
 }
 
-// Participant references are unique within an organisation/activation, not globally.
+// Count canonical programme participants once across events and services.
+// Unlinked historical codes are not evidence of a participant identity.
 // Read every page so the API row limit cannot silently truncate this all-time KPI.
 export async function countCompletedParticipants(supabase: TypedSupabase, userId: string) {
   const participants = new Set<string>();
@@ -21,7 +22,7 @@ export async function countCompletedParticipants(supabase: TypedSupabase, userId
 
   while (true) {
     const { data, error } = await supabase.from("screenings")
-      .select("id, organisation_id, activation_id, participant_reference")
+      .select("id, organisation_id, programme_participant_id")
       .eq("practitioner_user_id", userId)
       .eq("status", "Completed")
       .order("id")
@@ -30,9 +31,9 @@ export async function countCompletedParticipants(supabase: TypedSupabase, userId
     if (!data?.length) break;
 
     for (const screening of data) {
-      participants.add(JSON.stringify([
-        screening.organisation_id, screening.activation_id, screening.participant_reference,
-      ]));
+      if (screening.programme_participant_id) {
+        participants.add(JSON.stringify([screening.organisation_id, screening.programme_participant_id]));
+      }
     }
     offset += data.length;
   }

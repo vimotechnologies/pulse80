@@ -10,13 +10,14 @@ import type {
 } from "@/types/admin-practitioner";
 
 const assignmentFields = /* GraphQL */ `
-  id practitionerUserId practitionerName practitionerProfession organisationId
+  id activationId serviceId serviceIds practitionerUserId practitionerName practitionerProfession organisationId
   organisationName programmeName activityName serviceName location startsAt
   endsAt status createdAt updatedAt
 `;
 
 const pageQuery = /* GraphQL */ `
   query AdminPractitionerAssignmentPage {
+    adminAssignmentActivations { id organisationId programmeName title location startsAt endsAt services { id name code } }
     adminPractitionerAssignments { ${assignmentFields} }
     adminPractitioners {
       userId fullName profession verificationStatus practitionerStatus
@@ -42,6 +43,7 @@ type OrganisationOption = { id: string; name: string; status: string };
 
 export async function loadPractitionerAssignmentPage() {
   return graphqlRequest<{
+    adminAssignmentActivations: import("@/types/admin-practitioner").AssignmentActivationOption[];
     adminPractitionerAssignments: AdminPractitionerAssignment[];
     adminPractitioners: Pick<AdminPractitioner, "userId" | "fullName" | "profession" | "verificationStatus" | "practitionerStatus" | "capabilities">[];
     adminOrganisations: OrganisationOption[];

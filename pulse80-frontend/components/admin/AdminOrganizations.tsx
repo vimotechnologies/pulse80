@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { inviteOrganisationUser } from "@/app/actions/users";
+import { OrganisationOperations } from "@/components/admin/OrganisationOperations";
+import { OrganisationUnits } from "@/components/admin/OrganisationUnits";
 import { useMemo, useState } from "react";
 import {
   createAdminOrganisation,
+  saveAdminOrganisationContacts,
   updateAdminOrganisation,
 } from "@/app/actions/admin-organisations";
 import {
@@ -13,7 +16,6 @@ import {
   ArrowDown,
   ArrowLeft2,
   Building2,
-  CalendarCheck,
   CalendarDays,
   ClipboardCheck,
   CloseSquare,
@@ -21,9 +23,7 @@ import {
   Download,
   Edit,
   Eye,
-  FileText,
   Globe2,
-  HeartPulse,
   Location,
   MoreHorizontal,
   ShieldCheck,
@@ -43,6 +43,7 @@ import {
   UnifiedFilterSelect,
   UnifiedFilterSort,
 } from "@/components/ui/UnifiedFilterCard";
+import { downloadPdf } from "@/lib/pdf/download";
 import { cn } from "@/lib/utils/cn";
 
 type OrganizationStatus =
@@ -217,6 +218,66 @@ const statusOptions: OrganizationStatus[] = [
 ];
 
 const riskOptions: WellnessRisk[] = ["Low", "Medium", "High", "Critical"];
+const industryOptions = [
+  "Agriculture, Forestry & Fishing", "Arts, Entertainment & Recreation", "Construction",
+  "Education", "Energy & Utilities", "Financial Services & Insurance",
+  "Government & Public Administration", "Healthcare & Social Assistance",
+  "Hospitality & Tourism", "Information & Communications Technology", "Manufacturing",
+  "Mining & Quarrying", "Non-profit & Community Services", "Professional & Technical Services",
+  "Real Estate", "Retail & Wholesale Trade", "Safety & Security",
+  "Transportation & Logistics", "Water & Sanitation", "Other",
+];
+const organizationCountryOptions = ["Botswana", "South Africa"];
+
+const districtsByCountry: Record<string, string[]> = {
+  Botswana: [
+    "Central", "Chobe", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng",
+    "North-East", "North-West", "South-East", "Southern",
+  ],
+  "South Africa": [
+    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
+    "Mpumalanga", "Northern Cape", "North West", "Western Cape",
+  ],
+};
+
+const citiesByCountryAndRegion: Record<string, Record<string, string[]>> = {
+  Botswana: {
+    Central: ["Bobonong", "Gweta", "Letlhakane", "Mahalapye", "Mmadinare", "Nata", "Orapa", "Palapye", "Rakops", "Selebi-Phikwe", "Serowe", "Shoshong", "Sowa Town", "Tonota", "Tutume"],
+    Chobe: ["Kasane", "Kazungula", "Pandamatenga"],
+    Ghanzi: ["Charles Hill", "Ghanzi"],
+    Kgalagadi: ["Bokspits", "Hukuntsi", "Kang", "Tsabong"],
+    Kgatleng: ["Artesia", "Mochudi", "Oodi", "Pilane"],
+    Kweneng: ["Gabane", "Letlhakeng", "Molepolole", "Thamaga"],
+    "North-East": ["Francistown", "Masunga", "Matsiloje", "Tati Siding"],
+    "North-West": ["Etsha", "Gumare", "Maun", "Shakawe"],
+    "South-East": ["Gaborone", "Lobatse", "Mogoditshane", "Mmopane", "Ramotswa", "Tlokweng"],
+    Southern: ["Goodhope", "Jwaneng", "Kanye", "Moshupa"],
+  },
+  "South Africa": {
+    "Eastern Cape": ["East London", "Gqeberha", "Grahamstown (Makhanda)", "King William's Town (Qonce)", "Komani", "Mthatha", "Port Alfred"],
+    "Free State": ["Bethlehem", "Bloemfontein", "Harrismith", "Kroonstad", "Parys", "Sasolburg", "Welkom"],
+    Gauteng: ["Johannesburg", "Pretoria", "Ekurhuleni", "Soweto", "Centurion", "Midrand", "Vanderbijlpark", "Vereeniging"],
+    "KwaZulu-Natal": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Pinetown", "Port Shepstone", "uMhlanga"],
+    Limpopo: ["Polokwane", "Tzaneen", "Thohoyandou", "Lephalale", "Mokopane", "Musina", "Makhado", "Giyani"],
+    Mpumalanga: ["Mbombela", "eMalahleni", "Middelburg", "Secunda", "Ermelo", "Standerton", "Barberton", "White River"],
+    "Northern Cape": ["Kimberley", "Upington", "Springbok", "Kuruman", "De Aar", "Kathu", "Postmasburg"],
+    "North West": ["Mahikeng", "Rustenburg", "Klerksdorp", "Potchefstroom", "Brits", "Vryburg", "Zeerust"],
+    "Western Cape": ["Cape Town", "Stellenbosch", "George", "Paarl", "Worcester", "Knysna", "Oudtshoorn", "Mossel Bay", "Hermanus", "Saldanha"],
+  },
+};
+
+function cleanOrganizationValue(value: string) {
+  return value.trim().toLowerCase() === "not specified" ? "" : value;
+}
+
+function optionsWithCurrentValue(options: string[], currentValue: string) {
+  const value = cleanOrganizationValue(currentValue);
+  return value && !options.includes(value) ? [...options, value].sort() : options;
+}
+
+function regionLabel(country: string) {
+  return country === "Botswana" ? "District" : "Province";
+}
 const sortOptions = [
   { value: "Organization name", label: "Sort by: Organization (A-Z)" },
   { value: "Employee count", label: "Sort by: Employees" },
@@ -237,8 +298,8 @@ const roleLabelOptions = [
 
 const initialForm: OrganizationForm = {
   name: "",
-  industry: "Financial Services",
-  country: "Botswana",
+  industry: "",
+  country: "",
   town: "",
   region: "",
   employees: "",
@@ -263,6 +324,7 @@ const initialForm: OrganizationForm = {
 };
 
 export function AdminOrganizations({ initialOrganizations }: { initialOrganizations: Organization[] }) {
+  const [exporting, setExporting] = useState(false);
   const [organizations, setOrganizations] = useState(initialOrganizations);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -348,32 +410,11 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
     return true;
   }
 
-  function inviteClientUser(payload: InvitePayload) {
-    const targetId = payload.organizationId;
-    setOrganizations((current) =>
-      current.map((organization) =>
-        organization.id === targetId
-          ? {
-              ...organization,
-              clientUsers: [
-                ...organization.clientUsers,
-                {
-                  id: `client-${Date.now()}`,
-                  name: payload.name,
-                  email: payload.email,
-                  role: payload.role,
-                  invitationStatus: "Invitation Pending",
-                  lastActive: "Invitation sent today",
-                },
-              ],
-            }
-          : organization,
-      ),
-    );
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error.replaceAll("_", " ")); return; }
     setInviteOpen(false);
-    setInviteOrganizationId(targetId);
-    const orgName = organizations.find((organization) => organization.id === targetId)?.name ?? "organization";
-    showToast(`Invitation simulated for ${payload.email}. Email includes ${orgName}, role, and a secure time-limited setup link.`);
+    showToast("User access saved. New users receive a setup email.");
   }
 
   return (
@@ -388,6 +429,29 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={() => { setInviteOrganizationId(null); setInviteOpen(true); }}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+            >
+              <User className="h-4 w-4" aria-hidden="true" />
+              Invite Client User
+            </button>
+            <button
+              type="button"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  await downloadPdf({ title: "Organizations", sections: filteredOrganizations.map((item) => ({
+                    title: item.name,
+                    client: { name: item.name, logoUrl: item.logoUrl ?? item.logo },
+                    lines: [`Code: ${item.code}`, `Industry: ${item.industry}`, `Location: ${item.primaryLocation}, ${item.country}`,
+                      `Branches: ${item.branches.length}`, `Employees: ${item.employees}`, `Package: ${item.package}`,
+                      `Contract: ${item.contractStart} to ${item.contractEnd}`, `Wellness risk: ${item.risk}`, `Status: ${item.status}`],
+                  })) });
+                  setToast("PDF download started.");
+                } catch { setToast("Could not generate the PDF. Please try again."); }
+                finally { setExporting(false); }
+              }}
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
@@ -540,39 +604,42 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
 export function AdminOrganizationDetails({ organizationId, initialOrganization }: { organizationId: string; initialOrganization: Organization | null }) {
   const [organization, setOrganization] = useState<Organization | null>(initialOrganization);
   const [draft, setDraft] = useState<Organization | null>(initialOrganization);
+  const [contactDraft, setContactDraft] = useState<OrganizationContact[]>(initialOrganization?.contacts ?? []);
   const [activeTab, setActiveTab] = useState("Overview");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const contactsEditing = editingContactId !== null;
   const [toast, setToast] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingContacts, setIsSavingContacts] = useState(false);
 
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 3200);
   }
 
-  function updateOrganization(updatedOrganization: Organization) {
-    setOrganization(updatedOrganization);
+  async function inviteClientUser(payload: InvitePayload) {
+    const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
+    if (!result.ok) { showToast(result.error.replaceAll("_", " ")); return; }
+    setInviteOpen(false);
+    showToast("User access saved. New accounts receive a setup email.");
   }
 
-  function inviteClientUser(payload: InvitePayload) {
-    if (!organization) return;
-    setOrganization({
-      ...organization,
-      clientUsers: [
-        ...organization.clientUsers,
-        {
-          id: `client-${Date.now()}`,
-          name: payload.name,
-          email: payload.email,
-          role: payload.role,
-          invitationStatus: "Invitation Pending",
-          lastActive: "Invitation sent today",
-        },
-      ],
-    });
-    setInviteOpen(false);
-    showToast(`Invitation simulated for ${payload.email}.`);
+  async function saveContacts() {
+    if (!organization || isSavingContacts) return;
+    setIsSavingContacts(true);
+    try {
+      const result = await saveAdminOrganisationContacts(organization.id, contactDraft);
+      if (!result.ok) { showToast(result.error); return; }
+      setOrganization(result.organisation);
+      setDraft(result.organisation);
+      setContactDraft(result.organisation.contacts);
+      setEditingContactId(null);
+      showToast("Organization contacts were saved.");
+    } finally {
+      setIsSavingContacts(false);
+    }
   }
 
   if (!organization) {
@@ -631,19 +698,27 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
                   disabled={isSaving}
                   onClick={async () => {
                     if (!draft) return;
+                    if (![draft.name, draft.industry, draft.country, draft.region, draft.primaryLocation].every((value) => value.trim() && value.trim().toLowerCase() !== "not specified")) {
+                      showToast("Choose an industry, country, district or province, and city or town before saving.");
+                      return;
+                    }
                     setIsSaving(true);
-                    const result = await updateAdminOrganisation(
-                      organizationId,
-                      draft,
-                      draft.logo?.startsWith("data:") ? draft.logo : undefined,
-                      Boolean(organization.logo && !draft.logo),
-                    );
-                    setIsSaving(false);
-                    if (!result.ok) { showToast("Changes could not be saved."); return; }
-                    setOrganization(result.organisation);
-                    setDraft(result.organisation);
-                    setIsEditing(false);
-                    showToast("Organization changes were saved.");
+                    try {
+                      const result = await updateAdminOrganisation(
+                        organizationId,
+                        draft,
+                        draft.logo?.startsWith("data:") ? draft.logo : undefined,
+                        Boolean(organization.logo && !draft.logo),
+                      );
+                      if (!result.ok) { showToast(result.error); return; }
+                      setOrganization(result.organisation);
+                      setDraft(result.organisation);
+                      setContactDraft(result.organisation.contacts);
+                      setIsEditing(false);
+                      showToast("Organization changes were saved.");
+                    } finally {
+                      setIsSaving(false);
+                    }
                   }}
                   className="inline-flex h-7 items-center rounded-md bg-primary px-3 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                   style={{ fontSize: 12, lineHeight: "12px" }}
@@ -654,7 +729,8 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             ) : (
               <button
                 type="button"
-                onClick={() => { setDraft(organization); setIsEditing(true); }}
+                onClick={() => { setDraft({ ...organization, industry: cleanOrganizationValue(organization.industry), country: cleanOrganizationValue(organization.country), region: cleanOrganizationValue(organization.region), primaryLocation: cleanOrganizationValue(organization.primaryLocation) }); setIsEditing(true); }}
+                disabled={contactsEditing}
                 className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                 style={{ fontSize: 12, lineHeight: "12px" }}
               >
@@ -699,14 +775,34 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             </div>
           ) : (
             <div className="p-5">
-            {activeTab === "Contacts" ? <ContactsTab organization={draft ?? organization} editable={isEditing} onChange={setDraft} /> : null}
+            {activeTab === "Contacts" ? (
+              <ContactsTab
+                contacts={contactDraft}
+                editingContactId={editingContactId}
+                saving={isSavingContacts}
+                onChange={setContactDraft}
+                onEdit={(id) => { setIsEditing(false); setDraft(organization); setContactDraft(organization.contacts); setEditingContactId(id); }}
+                onAdd={() => {
+                  const contact: OrganizationContact = {
+                    id: `new-${crypto.randomUUID()}`, name: "", roleLabel: "HR Manager", email: "", phone: "",
+                    method: "Email", primary: organization.contacts.length === 0, notes: "",
+                  };
+                  setIsEditing(false);
+                  setDraft(organization);
+                  setContactDraft([...organization.contacts, contact]);
+                  setEditingContactId(contact.id);
+                }}
+                onCancel={() => { setContactDraft(organization.contacts); setEditingContactId(null); }}
+                onSave={saveContacts}
+              />
+            ) : null}
             {activeTab === "Branches & Departments" ? (
-              <BranchesTab organization={organization} onUpdate={updateOrganization} onToast={showToast} />
+              <OrganisationUnits organisationId={organization.id} />
             ) : null}
             {activeTab === "Contract" ? <ContractTab organization={organization} /> : null}
-            {activeTab === "Operations" ? <OperationsTab organization={organization} /> : null}
+            {activeTab === "Operations" ? <OrganisationOperations organisationId={organization.id} /> : null}
             {activeTab === "Client Portal Access" ? (
-              <ClientPortalTab organization={organization} onInvite={() => setInviteOpen(true)} onUpdate={updateOrganization} onToast={showToast} />
+              <div className="space-y-3"><p className="text-sm">Review current memberships and manage access in Users &amp; Roles.</p><Link href="/admin/users" className="text-primary underline">Manage users and roles</Link><button type="button" onClick={() => setInviteOpen(true)} className="ml-4 text-primary">Invite client user</button></div>
             ) : null}
             </div>
           )}
@@ -753,19 +849,24 @@ function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; labe
 }
 
 function LogoMark({ organization, size = "sm" }: { organization: Organization; size?: "sm" | "lg" | "xl" }) {
+  const logoSource = organization.logo?.startsWith("data:image/")
+    ? organization.logo
+    : organization.logoUrl ?? (/^https?:\/\//i.test(organization.logo ?? "") ? organization.logo : undefined);
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
+        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-contain bg-center bg-no-repeat font-semibold text-black",
         size === "xl"
           ? "h-20 w-20 rounded-md bg-white text-[20px] text-primary shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
           : size === "lg"
           ? "h-20 w-20 rounded-full text-[22px] ring-4 ring-primary/10"
           : "h-9 w-9 rounded-2xl text-[12px]",
       )}
-      style={organization.logo?.startsWith("data:") ? { backgroundImage: `url(${organization.logo})` } : undefined}
+      role={logoSource ? "img" : undefined}
+      aria-label={logoSource ? `${organization.name} logo` : undefined}
+      style={logoSource ? { backgroundImage: `url("${logoSource}")` } : undefined}
     >
-      {organization.logo?.startsWith("data:") ? null : organization.logo ?? initials(organization.name)}
+      {logoSource ? null : initials(organization.name)}
     </span>
   );
 }
@@ -822,10 +923,10 @@ function OrganizationOverviewForm({
       <div className="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
         <OverviewField label="Organization Name" required value={organization.name} editable={editable} onChange={(value) => update("name", value)} />
         <ReadonlyField label="Reference Number" value={referenceNumber(organization)} />
-        <OverviewField label="Industry" required value={organization.industry} editable={editable} onChange={(value) => update("industry", value)} />
-        <OverviewField label="Country" required value={organization.country} editable={editable} onChange={(value) => update("country", value)} />
-        <OverviewField label="Primary Location" required value={organization.primaryLocation} editable={editable} onChange={(value) => update("primaryLocation", value)} />
-        <OverviewField label="Region" value={organization.region} editable={editable} onChange={(value) => update("region", value)} />
+        <OverviewField label="Industry" required value={organization.industry} editable={editable} options={optionsWithCurrentValue(industryOptions, organization.industry)} placeholder="Select industry" onChange={(value) => update("industry", value)} />
+        <OverviewField label="Country" required value={organization.country} editable={editable} options={organizationCountryOptions} placeholder="Select country" onChange={(value) => onChange({ ...organization, country: value, region: "", primaryLocation: "" })} />
+        <OverviewField label={regionLabel(organization.country)} required value={organization.region} editable={editable} options={optionsWithCurrentValue(districtsByCountry[organization.country] ?? [], organization.region)} placeholder={organization.country ? `Select ${regionLabel(organization.country).toLowerCase()}` : "Select country first"} disabled={!organization.country} onChange={(value) => onChange({ ...organization, region: value, primaryLocation: "" })} />
+        <OverviewField label="City / Town" required value={organization.primaryLocation} editable={editable} options={optionsWithCurrentValue(citiesByCountryAndRegion[organization.country]?.[organization.region] ?? [], organization.primaryLocation)} placeholder={organization.region ? "Select city or town" : "Select region first"} disabled={!organization.region} onChange={(value) => update("primaryLocation", value)} />
         <OverviewField label="Employee Count" required type="number" value={String(organization.employees)} editable={editable} onChange={(value) => update("employees", Number(value) || 0)} />
         <ReadonlyField label="Number of Branches" required value={String(displayBranchCount(organization))} />
         <ReadonlyField label="Number of Departments" required value={String(displayDepartmentCount(organization))} />
@@ -853,17 +954,18 @@ function OrganizationOverviewForm({
   );
 }
 
-function OverviewField({ label, value, editable, onChange, required, options, type = "text" }: {
+function OverviewField({ label, value, editable, onChange, required, options, placeholder, disabled = false, type = "text" }: {
   label: string; value: string; editable: boolean; onChange: (value: string) => void;
-  required?: boolean; options?: readonly string[]; type?: string;
+  required?: boolean; options?: readonly string[]; placeholder?: string; disabled?: boolean; type?: string;
 }) {
   if (!editable) return <ReadonlyField label={label} value={type === "date" ? formatShortDate(value) : value} required={required} />;
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-black/70">{label} {required ? <span className="text-pulse-red">*</span> : null}</span>
       {options ? (
-        <select value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10">
-          {options.map((option) => <option key={option}>{option}</option>)}
+        <select required={required} disabled={disabled} value={cleanOrganizationValue(value)} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+          {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
         </select>
       ) : (
         <input type={type} min={type === "number" ? 0 : undefined} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-full rounded-lg border border-primary/35 bg-white px-3 text-[12px] outline-none focus:ring-4 focus:ring-primary/10" />
@@ -901,147 +1003,50 @@ function ReadonlyField({
   );
 }
 
-function ContactsTab({ organization, editable, onChange }: { organization: Organization; editable: boolean; onChange: (organization: Organization) => void }) {
-  function updateContact(index: number, values: Partial<OrganizationContact>) {
-    onChange({
-      ...organization,
-      contacts: organization.contacts.map((contact, contactIndex) => contactIndex === index ? { ...contact, ...values } : contact),
-    });
-  }
-  return (
-    <div className="space-y-3">
-      {editable ? (
-        <button type="button" onClick={() => onChange({
-          ...organization,
-          contacts: [...organization.contacts, {
-            id: `new-${Date.now()}`,
-            name: "",
-            roleLabel: "HR Manager",
-            email: "",
-            phone: "",
-            method: "Email",
-            primary: organization.contacts.length === 0,
-            notes: "",
-          }],
-        })} className="rounded-lg border border-primary/25 px-3 py-2 text-[12px] font-semibold text-primary">Add contact</button>
-      ) : null}
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-        <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span>
-      </div>
-      {organization.contacts.map((contact, index) => (
-        <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-          {editable ? <input value={contact.name} onChange={(event) => updateContact(index, { name: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>}
-          {editable ? <input value={contact.roleLabel} onChange={(event) => updateContact(index, { roleLabel: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span>{contact.roleLabel}</span>}
-          {editable ? <input type="email" value={contact.email} onChange={(event) => updateContact(index, { email: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="truncate">{contact.email}</span>}
-          {editable ? <select value={contact.method} onChange={(event) => updateContact(index, { method: event.target.value as ContactMethod })} className="h-9 rounded-lg border border-primary/30 px-2">{["Email", "Phone", "WhatsApp", "Portal"].map((method) => <option key={method}>{method}</option>)}</select> : <span>{contact.method}</span>}
-          <span>{contact.primary ? "Yes" : "No"}</span>
-          {editable ? <><input value={contact.phone} onChange={(event) => updateContact(index, { phone: event.target.value })} placeholder="Phone" className="col-span-2 h-9 rounded-lg border border-primary/30 px-2" /><input value={contact.notes} onChange={(event) => updateContact(index, { notes: event.target.value })} placeholder="Notes" className="col-span-3 h-9 rounded-lg border border-primary/30 px-2" /></> : <span className="col-span-5 text-black/60">{contact.notes}</span>}
-        </div>
-      ))}
-      {!organization.contacts.length ? <p className="border-t border-card-border px-4 py-6 text-[12px] text-black/55">No contacts have been added yet.</p> : null}
-      </div>
-    </div>
-  );
-}
-
-function BranchesTab({
-  organization,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
+function ContactsTab({ contacts, editingContactId, saving, onChange, onEdit, onAdd, onCancel, onSave }: {
+  contacts: OrganizationContact[];
+  editingContactId: string | null;
+  saving: boolean;
+  onChange: (contacts: OrganizationContact[]) => void;
+  onEdit: (id: string) => void;
+  onAdd: () => void;
+  onCancel: () => void;
+  onSave: () => void;
 }) {
-  function addBranch() {
-    const branch: Branch = {
-      id: `branch-${Date.now()}`,
-      name: "New Branch",
-      country: organization.country,
-      region: organization.region,
-      town: organization.primaryLocation,
-      address: "Address to be confirmed",
-      employees: 0,
-      primary: false,
-      departments: [],
-      status: "Active",
-    };
-    onUpdate({ ...organization, branches: [...organization.branches, branch] });
-    onToast("Branch added locally.");
+  const editable = editingContactId !== null;
+  const canSave = contacts.length > 0 && contacts.length <= 10 && contacts.filter((contact) => contact.primary).length === 1 &&
+    contacts.every((contact) => contact.name.trim().length >= 2 && contact.roleLabel.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim()));
+  function updateContact(index: number, values: Partial<OrganizationContact>) {
+    onChange(contacts.map((contact, contactIndex) => contactIndex === index ? { ...contact, ...values } : contact));
   }
-
-  function addDepartment(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId
-          ? {
-              ...branch,
-              departments: [
-                ...branch.departments,
-                {
-                  id: `dept-${Date.now()}`,
-                  name: "New Department",
-                  branchId,
-                  employees: 0,
-                  wellnessScore: 0,
-                  risk: "Low",
-                  latestActivation: "Not scheduled",
-                  status: "Active",
-                },
-              ],
-            }
-          : branch,
-      ),
-    });
-    onToast("Department added locally.");
-  }
-
-  function archiveBranch(branchId: string) {
-    onUpdate({
-      ...organization,
-      branches: organization.branches.map((branch) =>
-        branch.id === branchId ? { ...branch, status: "Archived" } : branch,
-      ),
-    });
-    onToast("Branch archived locally.");
-  }
-
   return (
     <div className="space-y-3">
-      <button type="button" onClick={addBranch} className="rounded-2xl bg-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black">
-        Add branch
-      </button>
+      <div className="flex flex-wrap justify-end gap-2">
+        {!editable ? <button type="button" onClick={onAdd} disabled={saving || contacts.length >= 10} className="rounded-lg bg-primary px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-45">Add contact</button> : null}
+        {editable ? <>
+          <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-card-border px-3 py-2 text-[12px] font-semibold text-black disabled:opacity-50">Cancel</button>
+          <button type="button" onClick={onSave} disabled={!canSave || saving} className="rounded-lg bg-primary px-3 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45">{saving ? "Saving…" : "Save contact"}</button>
+        </> : null}
+      </div>
       <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Branch</span><span>Region</span><span>Town</span><span>Employees</span><span>Departments</span><span>Actions</span>
+      <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr_auto] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+        <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span><span />
+      </div>
+      {contacts.map((contact, index) => {
+        const rowEditable = contact.id === editingContactId;
+        return (
+        <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr_auto] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
+          {rowEditable ? <input value={contact.name} onChange={(event) => updateContact(index, { name: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>}
+          {rowEditable ? <input value={contact.roleLabel} onChange={(event) => updateContact(index, { roleLabel: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span>{contact.roleLabel}</span>}
+          {rowEditable ? <input type="email" value={contact.email} onChange={(event) => updateContact(index, { email: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="truncate">{contact.email}</span>}
+          {rowEditable ? <select value={contact.method} onChange={(event) => updateContact(index, { method: event.target.value as ContactMethod })} className="h-9 rounded-lg border border-primary/30 px-2">{["Email", "Phone", "WhatsApp", "Portal"].map((method) => <option key={method}>{method}</option>)}</select> : <span>{contact.method}</span>}
+          {rowEditable ? <label className="flex items-center gap-2"><input type="radio" name="primary-organisation-contact" checked={contact.primary} onChange={() => onChange(contacts.map((item, itemIndex) => ({ ...item, primary: itemIndex === index })))} /><span className="sr-only">Primary contact</span></label> : <span>{contact.primary ? "Yes" : "No"}</span>}
+          {rowEditable ? <button type="button" disabled={contacts.length <= 1 || contact.primary || saving} title={contact.primary ? "Choose another primary contact before removing this contact." : undefined} onClick={() => onChange(contacts.filter((_, contactIndex) => contactIndex !== index))} aria-label={`Remove ${contact.name || "contact"}`} className="text-pulse-red disabled:opacity-30">Remove</button> : <button type="button" onClick={() => onEdit(contact.id)} disabled={editable || saving} aria-label={`Edit contact ${contact.name}`} className="font-semibold text-primary disabled:opacity-45">Edit contact</button>}
+          {rowEditable ? <><input value={contact.phone} onChange={(event) => updateContact(index, { phone: event.target.value })} placeholder="Phone" aria-label={`${contact.name || "Contact"} phone`} className="col-span-2 h-9 rounded-lg border border-primary/30 px-2" /><input value={contact.notes} onChange={(event) => updateContact(index, { notes: event.target.value })} placeholder="Notes" aria-label={`${contact.name || "Contact"} notes`} className="col-span-3 h-9 rounded-lg border border-primary/30 px-2" /></> : <span className="col-span-6 text-black/60">{contact.notes}</span>}
         </div>
-        {organization.branches.map((branch) => (
-          <div key={branch.id} className="border-t border-card-border">
-            <div className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 px-4 py-3 text-[12px] text-black">
-              <span className="font-semibold">{branch.name}<span className="block font-normal text-black/55">{branch.address}</span></span>
-              <span>{branch.region}</span>
-              <span>{branch.town}</span>
-              <span>{branch.employees}</span>
-              <span>{branch.departments.length}</span>
-              <span className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => addDepartment(branch.id)} className="text-[12px] font-semibold text-primary">Add department</button>
-                <button type="button" onClick={() => archiveBranch(branch.id)} className="text-[12px] font-semibold text-black/60">Archive</button>
-              </span>
-            </div>
-            {branch.departments.map((department) => (
-              <div key={department.id} className="grid grid-cols-[1.1fr_0.8fr_0.8fr_0.7fr_0.6fr_1fr] gap-3 bg-[#fbfcfd] px-4 py-2 text-[12px] text-black/70">
-                <span className="pl-6">{department.name}</span>
-                <span>{branch.name}</span>
-                <span>{department.status}</span>
-                <span>{department.employees}</span>
-                <span>{department.wellnessScore}%</span>
-                <span><RiskBadge risk={department.risk} /></span>
-              </div>
-            ))}
-          </div>
-        ))}
+      );
+      })}
+      {!contacts.length ? <p className="border-t border-card-border px-4 py-6 text-[12px] text-black/55">No contacts have been added yet.</p> : null}
       </div>
     </div>
   );
@@ -1067,94 +1072,8 @@ function ContractTab({ organization }: { organization: Organization }) {
         <DetailTile label="Contract duration" value={contractDuration(organization.contractStart, organization.contractEnd)} />
         <DetailTile label="Contract status" value={remaining < 0 ? "Expired" : "Active"} />
         <DetailTile label="Days remaining" value={remaining < 0 ? "Expired" : `${remaining} days`} />
-        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Required now" : "Scheduled 60 days before expiry"} />
+        <DetailTile label="Renewal reminder" value={remaining <= 60 ? "Review renewal now" : "Review 60 days before expiry"} />
         <DetailTile label="Custom package notes" value={organization.customPackageNotes ?? "None"} />
-      </div>
-    </div>
-  );
-}
-
-function ActivationsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Activation", "Type", "Date", "Branch", "Status", "Participation", "Report"]} rows={organization.activations.map((item) => [item.title, item.type, item.date, item.branch, item.status, item.participation, item.reportStatus])} />;
-}
-
-function ReportsTab({ organization }: { organization: Organization }) {
-  return <MiniTable columns={["Report", "Type", "Period", "Status", "Published", "Actions"]} rows={organization.reports.map((item) => [item.title, item.type, item.period, item.status, item.publishedDate, "Preview · Download"])} />;
-}
-
-function OperationsTab({ organization }: { organization: Organization }) {
-  return (
-    <div className="space-y-5">
-      <OperationsSection title="Activations" icon={CalendarCheck}>
-        <ActivationsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Reports" icon={FileText}>
-        <ReportsTab organization={organization} />
-      </OperationsSection>
-      <OperationsSection title="Insights" icon={HeartPulse}>
-        <SimpleList title="Wellness Insights" items={organization.insights} />
-      </OperationsSection>
-    </div>
-  );
-}
-
-function OperationsSection({ title, icon: Icon, children }: { title: string; icon: typeof Building2; children: ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-black" aria-hidden="true" />
-        <h2 className="text-[14px] font-semibold text-black">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function ClientPortalTab({
-  organization,
-  onInvite,
-  onUpdate,
-  onToast,
-}: {
-  organization: Organization;
-  onInvite: () => void;
-  onUpdate: (organization: Organization) => void;
-  onToast: (message: string) => void;
-}) {
-  function updateUser(id: string, invitationStatus: InvitationStatus, message: string) {
-    onUpdate({
-      ...organization,
-      clientUsers: organization.clientUsers.map((user) =>
-        user.id === id ? { ...user, invitationStatus } : user,
-      ),
-    });
-    onToast(message);
-  }
-
-  return (
-    <div className="space-y-3">
-      <button type="button" onClick={onInvite} className="inline-flex h-9 items-center gap-2 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black">
-        <User className="h-4 w-4" aria-hidden="true" />
-        Invite Client User
-      </button>
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-        <div className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-          <span>Name</span><span>Email</span><span>Role</span><span>Invitation</span><span>Last active</span><span>Actions</span>
-        </div>
-        {organization.clientUsers.map((user) => (
-          <div key={user.id} className="grid grid-cols-[1fr_1.3fr_0.7fr_0.9fr_0.8fr_1.2fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-            <span className="font-semibold">{user.name}</span>
-            <span className="truncate">{user.email}</span>
-            <span>{user.role}</span>
-            <span>{user.invitationStatus}</span>
-            <span>{user.lastActive}</span>
-            <span className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => updateUser(user.id, "Invitation Pending", "Invitation resent locally.")} className="font-semibold text-primary">Resend</button>
-              <button type="button" onClick={() => updateUser(user.id, "Not Invited", "Invitation revoked locally.")} className="font-semibold text-black/60">Revoke</button>
-              <button type="button" onClick={() => updateUser(user.id, "Access Suspended", "Access suspended locally.")} className="font-semibold text-warning">Suspend</button>
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1169,36 +1088,10 @@ function DetailTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-        {columns.map((column) => <span key={column}>{column}</span>)}
-      </div>
-      {rows.map((row) => (
-        <div key={row.join("-")} className="grid gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black/70" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-          {row.map((cell) => <span key={cell} className="min-w-0 truncate">{cell}</span>)}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SimpleList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="rounded-2xl border border-card-border bg-white p-4">
-      <h3 className="text-[14px] font-semibold text-black">{title}</h3>
-      <div className="mt-3 divide-y divide-card-border">
-        {items.map((item) => <p key={item} className="py-3 text-[12px] leading-5 text-black/70">{item}</p>)}
-      </div>
-    </div>
-  );
-}
-
 function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => Promise<boolean> }) {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canSubmit = form.name.trim() && form.town.trim() && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
+  const canSubmit = form.name.trim() && form.industry && form.country && form.region && form.town && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
 
   return (
     <Modal title="Add Organization" onClose={onClose}>
@@ -1215,10 +1108,10 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
         <LogoUpload value={form.logo} onChange={(logo) => setForm((current) => ({ ...current, logo }))} />
         <div className="grid gap-3 md:grid-cols-2">
           <TextInput label="Company name" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} required />
-          <TextInput label="Industry" value={form.industry} onChange={(industry) => setForm((current) => ({ ...current, industry }))} />
-          <TextInput label="Country" value={form.country} onChange={(country) => setForm((current) => ({ ...current, country }))} />
-          <TextInput label="Primary town / city" value={form.town} onChange={(town) => setForm((current) => ({ ...current, town }))} required />
-          <TextInput label="Province / district / region" value={form.region} onChange={(region) => setForm((current) => ({ ...current, region }))} />
+          <SelectInput label="Industry" value={form.industry} options={industryOptions} placeholder="Select industry" onChange={(industry) => setForm((current) => ({ ...current, industry }))} required />
+          <SelectInput label="Country" value={form.country} options={organizationCountryOptions} placeholder="Select country" onChange={(country) => setForm((current) => ({ ...current, country, region: "", town: "" }))} required />
+          <SelectInput label={regionLabel(form.country)} value={form.region} options={districtsByCountry[form.country] ?? []} placeholder={form.country ? `Select ${regionLabel(form.country).toLowerCase()}` : "Select country first"} onChange={(region) => setForm((current) => ({ ...current, region, town: "" }))} disabled={!form.country} required />
+          <SelectInput label="City / Town" value={form.town} options={citiesByCountryAndRegion[form.country]?.[form.region] ?? []} placeholder={form.region ? "Select city or town" : "Select region first"} onChange={(town) => setForm((current) => ({ ...current, town }))} disabled={!form.region} required />
           <TextInput label="Employee count" value={form.employees} onChange={(employees) => setForm((current) => ({ ...current, employees }))} required />
           <SelectInput label="Package" value={form.package} options={packageOptions} onChange={(value) => setForm((current) => ({ ...current, package: value as PackageName }))} />
           <SelectInput label="Status" value={form.status} options={statusOptions} onChange={(value) => setForm((current) => ({ ...current, status: value as OrganizationStatus }))} />
@@ -1254,7 +1147,7 @@ function InviteClientUserModal({
   organizations: Organization[];
   initialOrganizationId?: string;
   onClose: () => void;
-  onSubmit: (payload: InvitePayload) => void;
+  onSubmit: (payload: InvitePayload) => Promise<void>;
 }) {
   const [payload, setPayload] = useState<InvitePayload>({
     name: "",
@@ -1263,14 +1156,15 @@ function InviteClientUserModal({
     organizationId: initialOrganizationId ?? organizations[0]?.id ?? "",
     message: "",
   });
+  const [submitting, setSubmitting] = useState(false);
   const canSubmit = payload.name.trim() && payload.email.trim() && payload.organizationId;
   return (
     <Modal title="Invite Client User" onClose={onClose}>
       <form
         className="grid gap-3"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (canSubmit) onSubmit(payload);
+          if (canSubmit && !submitting) { setSubmitting(true); try { await onSubmit(payload); } finally { setSubmitting(false); } }
         }}
       >
         <TextInput label="Full name" value={payload.name} onChange={(name) => setPayload((current) => ({ ...current, name }))} required />
@@ -1282,14 +1176,10 @@ function InviteClientUserModal({
             {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
           </select>
         </label>
-        <label className="grid gap-1 text-[12px] font-semibold text-black">
-          Optional personalized message
-          <textarea value={payload.message} onChange={(event) => setPayload((current) => ({ ...current, message: event.target.value }))} className="min-h-24 rounded-2xl border border-card-border px-3 py-2 text-[12px] font-normal outline-none focus:ring-4 focus:ring-primary/10" />
-        </label>
-        <StateBanner tone="info" title="Frontend-only invitation simulation" detail="The simulated email includes organization name, Pulse80 portal information, user role, a secure time-limited invitation link, and instructions to create a password. No permanent password is emailed." />
+        <StateBanner tone="info" title="Organisation access" detail="New users receive a secure setup email. Existing users are added to this organisation." />
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
-          <button type="submit" disabled={!canSubmit} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">Send invitation</button>
+          <button type="submit" disabled={!canSubmit || submitting} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">{submitting ? "Saving…" : "Invite or add user"}</button>
         </div>
       </form>
     </Modal>
@@ -1323,7 +1213,7 @@ function LogoUpload({ value, onChange }: { value?: string; onChange: (value?: st
         Upload or replace logo
         <input
           type="file"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -1375,12 +1265,13 @@ function TextInput({ label, value, onChange, required = false }: { label: string
   );
 }
 
-function SelectInput({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function SelectInput({ label, value, options, onChange, placeholder, disabled = false, required = false }: { label: string; value: string; options: string[]; onChange: (value: string) => void; placeholder?: string; disabled?: boolean; required?: boolean }) {
   return (
     <label className="grid gap-1 text-[12px] font-semibold text-black">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10">
-        {options.map((option) => <option key={option}>{option}</option>)}
+      <select required={required} disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-2xl border border-card-border px-3 text-[12px] font-normal outline-none transition focus:border-primary/45 focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-[#f2f4f7]">
+        {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
   );

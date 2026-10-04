@@ -51,11 +51,11 @@ def screening_completion_data(db_connection):
     Expected required screenings = 5.
 
     Screening results:
-        A + BP       = Approved
-        A + BMI      = Approved
+        A + BP       = Completed
+        A + BMI      = Completed
         A + Glucose  = Draft
         B + BP       = Needs Correction
-        B + BMI      = Approved
+        B + BMI      = Completed
 
     Completed required screenings = 3.
 
@@ -64,9 +64,9 @@ def screening_completion_data(db_connection):
         3 / 5 * 100 = 60.00%
 
     Extra cases:
-        - Participant A has an Approved Dental screening,
+        - Participant A has an Completed Dental screening,
           but Dental is not required.
-        - Participant A has a second Approved BP screening.
+        - Participant A has a second Completed BP screening.
           The duplicate must not increase completion.
     """
 
@@ -354,7 +354,7 @@ def screening_completion_data(db_connection):
             reviewed_at = (
                 "now()"
                 if status in (
-                    "Approved",
+                    "Completed",
                     "Needs Correction",
                 )
                 else "NULL"
@@ -407,7 +407,7 @@ def screening_completion_data(db_connection):
             participant_a_id,
             "PUL313-A",
             services["BP"],
-            "Approved",
+            "Completed",
         )
 
         # Participant A + BMI -> completed
@@ -415,7 +415,7 @@ def screening_completion_data(db_connection):
             participant_a_id,
             "PUL313-A",
             services["BMI"],
-            "Approved",
+            "Completed",
         )
 
         # Participant A + Glucose -> incomplete
@@ -439,7 +439,7 @@ def screening_completion_data(db_connection):
             participant_b_id,
             "PUL313-B",
             services["BMI"],
-            "Approved",
+            "Completed",
         )
 
         # ----------------------------------------------------
@@ -449,7 +449,7 @@ def screening_completion_data(db_connection):
         # Dental exists in the programme but is NOT required
         # for Participant A.
         #
-        # Even though this screening is Approved, it must not
+        # Even though this screening is Completed, it must not
         # affect the completion rate.
         # ----------------------------------------------------
 
@@ -457,14 +457,14 @@ def screening_completion_data(db_connection):
             participant_a_id,
             "PUL313-A",
             services["DENTAL"],
-            "Approved",
+            "Completed",
         )
 
         # ----------------------------------------------------
-        # Edge case: duplicate Approved screening
+        # Edge case: duplicate Completed screening
         # ----------------------------------------------------
         #
-        # Participant A already has an Approved BP screening.
+        # Participant A already has an Completed BP screening.
         #
         # This second record must NOT cause BP to count twice.
         # ----------------------------------------------------
@@ -473,7 +473,7 @@ def screening_completion_data(db_connection):
             participant_a_id,
             "PUL313-A",
             services["BP"],
-            "Approved",
+            "Completed",
         )
 
     yield {

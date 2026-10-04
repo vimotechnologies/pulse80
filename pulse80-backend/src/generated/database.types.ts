@@ -39,6 +39,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      services: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          category: string
+          description: string | null
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          name: string
+          category: string
+          description?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          name?: string
+          category?: string
+          description?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_services: {
+        Row: {
+          id: string
+          programme_id: string
+          service_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          programme_id: string
+          service_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          programme_id?: string
+          service_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      organisation_units: {
+        Row: {
+          id: string
+          organisation_id: string
+          parent_id: string | null
+          kind: string
+          name: string
+          location: string
+          employees: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organisation_id: string
+          parent_id?: string | null
+          kind: string
+          name: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organisation_id?: string
+          parent_id?: string | null
+          kind?: string
+          name?: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portal_records: {
+        Row: {
+          id: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id: string | null
+          title: string
+          description: string
+          status: string
+          amount: number | null
+          currency: string
+          due_on: string | null
+          created_by: string
+          updated_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id?: string | null
+          title: string
+          description?: string
+          status: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by: string
+          updated_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          organisation_id?: string
+          practitioner_user_id?: string | null
+          title?: string
+          description?: string
+          status?: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by?: string
+          updated_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "portal_records_organisation_id_fkey"; columns: ["organisation_id"]; isOneToOne: false; referencedRelation: "organisations"; referencedColumns: ["id"] },
+          { foreignKeyName: "portal_records_practitioner_user_id_fkey"; columns: ["practitioner_user_id"]; isOneToOne: false; referencedRelation: "practitioner_profiles"; referencedColumns: ["user_id"] }
+        ]
+      }
       activation_readiness_items: {
         Row: {
           activation_id: string
@@ -356,6 +500,7 @@ export type Database = {
       practitioner_assignments: {
         Row: {
           activation_id: string | null
+          service_id: string | null
           activity_name: string
           created_at: string
           ends_at: string | null
@@ -375,6 +520,7 @@ export type Database = {
         }
         Insert: {
           activation_id?: string | null
+          service_id?: string | null
           activity_name: string
           created_at?: string
           ends_at?: string | null
@@ -394,6 +540,7 @@ export type Database = {
         }
         Update: {
           activation_id?: string | null
+          service_id?: string | null
           activity_name?: string
           created_at?: string
           ends_at?: string | null
@@ -537,6 +684,7 @@ export type Database = {
           id: string
           practitioner_assignment_id: string
           service_code: string | null
+          service_id: string | null
           service_name: string
         }
         Insert: {
@@ -544,6 +692,7 @@ export type Database = {
           id?: string
           practitioner_assignment_id: string
           service_code?: string | null
+          service_id?: string | null
           service_name: string
         }
         Update: {
@@ -551,6 +700,7 @@ export type Database = {
           id?: string
           practitioner_assignment_id?: string
           service_code?: string | null
+          service_id?: string | null
           service_name?: string
         }
         Relationships: [
@@ -908,6 +1058,8 @@ export type Database = {
       screenings: {
         Row: {
           activation_id: string | null
+          programme_participant_id: string | null
+          service_id: string | null
           assignment_id: string
           captured_at: string
           consent_confirmed: boolean
@@ -927,6 +1079,8 @@ export type Database = {
         }
         Insert: {
           activation_id?: string | null
+          programme_participant_id?: string | null
+          service_id?: string | null
           assignment_id: string
           captured_at?: string
           consent_confirmed?: boolean
@@ -946,6 +1100,8 @@ export type Database = {
         }
         Update: {
           activation_id?: string | null
+          programme_participant_id?: string | null
+          service_id?: string | null
           assignment_id?: string
           captured_at?: string
           consent_confirmed?: boolean
@@ -1031,9 +1187,71 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      analytics_screening_participation: {
+        Row: {
+          eligible_participant_count: number | null
+          organisation_id: string | null
+          screened_participant_count: number | null
+          screening_participation_rate_pct: number | null
+        }
+        Relationships: []
+      }
+      analytics_screening_completion: {
+        Row: {
+          completed_required_screenings: number | null
+          expected_required_screenings: number | null
+          organisation_id: string | null
+          screening_completion_rate: number | null
+        }
+        Relationships: []
+      }
+      analytics_risk_metrics: {
+        Row: {
+          organisation_id: string | null
+          participant_count: number | null
+          percentage: number | null
+          risk_category: string | null
+          total_participants: number | null
+        }
+        Relationships: []
+      }
+      analytics_referrals: {
+        Row: {
+          completed_at: string | null
+          due_at: string | null
+          organisation_id: string | null
+          referral_created: boolean | null
+          referral_id: string | null
+          referral_missing: boolean | null
+          referral_required: boolean | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_date: string | null
+          screening_id: string | null
+          urgency: string | null
+        }
+        Relationships: []
+      }
+      analytics_referral_followups: {
+        Row: {
+          follow_up_completed: boolean | null
+          follow_up_count: number | null
+          latest_follow_up_at: string | null
+          next_follow_up_at: string | null
+          organisation_id: string | null
+          referral_id: string | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      save_admin_organisation: {
+        Args: { p_organisation_id: string; p_fields: Json; p_contacts?: Json | null }
+        Returns: undefined
+      }
       capture_screening_with_result: {
         Args: {
           p_assignment_id: string
@@ -1116,6 +1334,29 @@ export type Database = {
           p_starts_at: string
           p_status: string
         }
+        Returns: string
+      }
+      save_linked_practitioner_assignment: {
+        Args: {
+          p_activation_id: string
+          p_service_ids: string[]
+          p_activity_name: string
+          p_assignment_id: string | null
+          p_ends_at: string | null
+          p_location: string
+          p_organisation_id: string
+          p_practitioner_user_id: string
+          p_programme_name: string
+          p_role_name: string
+          p_service_name: string
+          p_service_names: string[]
+          p_starts_at: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_programme_participant: {
+        Args: { p_programme_id: string; p_employee_id: string; p_screening_reference: string; p_service_ids: string[]; p_eligibility_status: string; p_registration_status: string }
         Returns: string
       }
     }
