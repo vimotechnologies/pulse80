@@ -1,119 +1,67 @@
-# Participants Screened (API integration notes)
+# Participants Screened — production integration
 
-`Participations_EDA.ipynb`
-and `Screenings_EDA.ipynb` (run against the actual Screenings /
-Participations / Measurements / Practitioners / Programmes extracts) found:
+## Definition
 
-- `screenings.status` is **100% `'completed'`** across all 144 rows in the
-  sample, no `'approved'`, `'pending'`, `'rejected'`, etc. was observed.
-- The EDA calls this field "degenerate" in the sample and explicitly flags
-  that any completion/approval-style metric is **untestable against this
-  data alone**. The full status domain used in production isn't visible
-  from this extract.
+Participants Screened is the number of distinct participants with at least one screening whose status is `Completed` inside the authorised organisation and selected filters. Multiple screening records for the same participant count once.
 
-**Decision:** the calculation now filters on `status = 'completed'`, the
-only value confirmed to exist, written as a single named list in the SQL so
-it's a one-line change.
+## Production source of truth
 
-## What it counts
+Validated against the live Pulse80 production schema:
 
-Distinct **people**, not screening events or participation records, who
-have at least one screening with an accepted status (currently
-`'completed'`) in the organisation, programme and period selected by the
-caller.
+- `screenings.organisation_id` — tenant
+- `screenings.activation_id -> activations.id`
+- `activations.programme_id` — programme filter
+- `screenings.participant_reference` — participant identity used by current production screenings
+- `screenings.status` — only `Completed` counts
+- `screenings.captured_at` — reporting period
 
-## Tables / fields confirmed by the EDAs
+The implementation intentionally uses the current production schema rather than the older EDA `analytics_screening_facts.employee_id` model.
 
-- `screenings.status`, `screenings.screened_at`, `screenings.participation_id`,
-  `screenings.programme_service_id`; confirmed shape and values.
-- `participations.employee_id`, `participations.programme_id`; confirmed
-  `(employee_id, programme_id)` is a **unique natural key** (no
-  re-enrolment in a programme) and `participation_id` is a clean primary
-  key.
-- `employees.organisation_id`; **not** independently re-verified by these
-  two EDAs (Employees.csv/Programmes.csv were loaded but never explored in
-  the notebook cells). Still relied on via `analytics_screening_facts`
-  (001); confirm with an Employees/Organisations EDA before this ships.
-- Built on the existing `analytics_screening_facts` view so this metric
-  stays consistent with every other view in that file.
+## Backend contract and tenant isolation
 
-## Calling it from the API
+This metric must be called through the Pulse80 backend/GraphQL service. The frontend must not query the screenings tables or an unrestricted RPC directly.
 
-Use query **A** in `002_participants_screened_calculation.sql`, bound to 4
-inputs:
+The backend must:
 
-| Param | Type | Required | Meaning |
-|---|---|---|---|
-| `organisation_id` | uuid | yes | Tenant scope. always pass the authenticated org context, never trust client input for this. |
-| `programme_id` | uuid or null | no | Omit/pass null for "all programmes in this org." |
-| `period_start` | timestamptz or null | no | Inclusive lower bound on `screened_at`. |
-| `period_end` | timestamptz or null | no | Exclusive upper bound on `screened_at`. |
+1. Authenticate the caller.
+2. Resolve the caller's authorised organisation(s).
+3. Derive `organisation_id` from that authenticated context.
+4. Reject a requested programme unless it belongs to that organisation.
+5. Pass the authorised organisation id as SQL parameter `$1`.
+6. Return only the aggregate metric.
 
-Returns a single integer, `participants_screened`. Never `null`, an
-organisation/programme/period with no completed screenings returns `0`.
+Do not trust a frontend-supplied `organisation_id` as authorization.
 
-Wrapper **B** (`analytics_participants_screened(...)`) exposes the same
-logic as a stable SQL function if the resolver layer prefers calling a
-function over inlining SQL text.
+Production RLS currently protects screenings primarily for platform staff and practitioners reading their own screenings. Client analytics therefore belongs behind the backend authorization boundary rather than direct frontend Supabase access.
 
-## Period semantics
+## Query parameters
 
-Half-open window: `screened_at >= period_start AND screened_at <
-period_end`. A "June 2026" filter should pass
-`period_start = 2026-06-01T00:00:00Z`, `period_end = 2026-07-01T00:00:00Z`.
+| Parameter | Required | Meaning |
+|---|---|---|
+| `organisation_id` | yes | Backend-authorised tenant scope |
+| `programme_id` | no | Programme within the authorised organisation |
+| `period_start` | no | Inclusive `captured_at` lower bound |
+| `period_end` | no | Exclusive `captured_at` upper bound |
 
-## Known data-quality risk carried over from the EDA, read before using narrow periods
+An empty result returns `0`.
 
-`Screenings_EDA.ipynb` (Section 8) found an **hour-rollover bug**: 18 of 144
-`screened_at` timestamps (12.5%, across 6 of 24 visits) are exactly **-60
-minutes** off, traced to a minute-rollover calculation that doesn't carry
-into the hour. This doesn't change *who* gets counted (the person still has
-a completed screening, just possibly at the wrong minute/hour), but a
-period boundary drawn tightly around an affected hour can bucket a
-screening into the wrong window. Not a correctness risk for day/week/month
-periods; a real risk for hour-level reporting until the source bug is
-fixed. `test_narrow_period_window_can_miss_the_defective_row` in the test
-file reproduces this on a fixture so it's documented rather than assumed
-away; flag with whoever owns check-in/screening ingestion.
+## Live validation — 4 October 2026
 
-## Edge cases the resolver can rely on (covered by tests)
+Read-only production validation confirmed the metric against real Pulse80 data.
 
-- A person with several completed screening services in the window
-  (confirmed real pattern: every participation has exactly 6 rows, one per
-  `programme_service_id` station) is counted once.
-- A person with only a non-accepted-status screening is not counted
-  (**synthetic**, the real sample has no such row; see below).
-- A person with one rejected and one completed screening is still counted
-  once, via the completed one (**synthetic**).
-- Organisation is a hard boundary; a programme id reused across two
-  organisations never lets one org's people leak into another's count
-  (**synthetic**, the real sample only has one organisation).
-- An unknown/empty organisation or a period with no activity returns `0`,
-  not `null` and not an error.
-- The natural-key/grain assumptions the query depends on
-  (`participation_id` unique, `(employee_id, programme_id)` unique,
-  `(participation_id, programme_service_id)` unique) are re-asserted
-  directly in `GrainAssumptionTests`, mirroring the EDA's own checks, so a
-  broken fixture fails before it can mask a bug in the metric.
+Completed participants observed:
 
-## What's synthetic vs. what's observed
+- Quivertree Logistics: 60
+- MSK Haulage: 60
+- Ohman Construction Group: 60
+- Kopano Mine: 24
 
-Because the sampled extract has **zero variance** on `status`,
-`organisation_id`, and `consent_status`, the exclusion and multi-org
-isolation tests use fabricated fixture data (marked `SYNTHETIC` in the test
-file's docstrings and comments) to validate the query's *logic*. They are
-not evidence that these paths behave correctly against real multi-status,
-multi-org production data, re-run against real data of that shape once it
-exists, per the Data Analytics Handbook's "Transparent: distinguish
-observed measurements... from modelled estimates" principle.
+Production contained 204 Completed screening rows and 10 Under Review rows at validation time. Under Review records are excluded.
 
-## Before merging
+Date filtering was also verified on the three dashboard-preview organisations: 25 completed participants from 8–11 September and 35 from 12–16 September, totaling 60.
 
-1. Confirm the `'approved'` vs `'completed'` question with product/analytics.
-2. Re-run these fixtures against a real Postgres/Supabase instance (this
-   sandbox has no network access and no Postgres available, so the tests
-   run against SQLite with an equivalent query).
-3. Raise the `screened_at` hour-rollover defect with the check-in/screening
-   ingestion owner.
-4. Confirm RLS/tenant policy restricts `organisation_id` to the caller's
-   authorised organisations before this query is exposed through the API.
+Programme filtering follows `screenings.activation_id -> activations.programme_id`. The current tested organisations did not provide a useful same-organisation multi-programme production case, so that scenario should remain covered by automated integration tests.
+
+## Required backend tests
+
+Test authenticated organisation isolation, cross-organisation rejection, programme ownership, Completed-only filtering, duplicate participant records, empty results, and inclusive-start/exclusive-end date boundaries.
