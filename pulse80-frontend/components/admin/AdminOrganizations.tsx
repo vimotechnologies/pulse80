@@ -849,19 +849,24 @@ function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; labe
 }
 
 function LogoMark({ organization, size = "sm" }: { organization: Organization; size?: "sm" | "lg" | "xl" }) {
+  const logoSource = organization.logo?.startsWith("data:image/")
+    ? organization.logo
+    : organization.logoUrl ?? (/^https?:\/\//i.test(organization.logo ?? "") ? organization.logo : undefined);
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
+        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-contain bg-center bg-no-repeat font-semibold text-black",
         size === "xl"
           ? "h-20 w-20 rounded-md bg-white text-[20px] text-primary shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
           : size === "lg"
           ? "h-20 w-20 rounded-full text-[22px] ring-4 ring-primary/10"
           : "h-9 w-9 rounded-2xl text-[12px]",
       )}
-      style={organization.logo?.startsWith("data:") ? { backgroundImage: `url(${organization.logo})` } : undefined}
+      role={logoSource ? "img" : undefined}
+      aria-label={logoSource ? `${organization.name} logo` : undefined}
+      style={logoSource ? { backgroundImage: `url("${logoSource}")` } : undefined}
     >
-      {organization.logo?.startsWith("data:") ? null : organization.logo ?? initials(organization.name)}
+      {logoSource ? null : initials(organization.name)}
     </span>
   );
 }
@@ -1208,7 +1213,7 @@ function LogoUpload({ value, onChange }: { value?: string; onChange: (value?: st
         Upload or replace logo
         <input
           type="file"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];
