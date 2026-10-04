@@ -22,3 +22,19 @@ export async function createClient() {
     },
   });
 }
+
+export async function getVerifiedSession() {
+  const supabase = await createClient();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session?.access_token) throw new Error("UNAUTHENTICATED");
+
+  const { data, error } = await supabase.auth.getClaims(session.access_token);
+  const claims = data?.claims;
+  if (error || typeof claims?.sub !== "string") throw new Error("UNAUTHENTICATED");
+
+  return {
+    accessToken: session.access_token,
+    userId: claims.sub,
+    email: typeof claims.email === "string" ? claims.email : "",
+  };
+}

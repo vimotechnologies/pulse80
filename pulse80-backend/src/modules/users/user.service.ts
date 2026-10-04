@@ -1,6 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "../../generated/database.types.js";
-import { GraphQLError } from "graphql";
 
 export class UserService {
   constructor(private readonly db: SupabaseClient<Database>) {}
@@ -59,7 +58,7 @@ export class UserService {
     // Do not overwrite an existing member's role while inviting them again.
     const member = await this.db.from("organisation_memberships").select("id").eq("organisation_id", input.organisationId).eq("profile_id", userId).maybeSingle();
     if (member.error) throw new Error(member.error.message);
-    if (member.data) throw new GraphQLError("This user already belongs to the organisation.", { extensions: { code: "BAD_USER_INPUT" } });
+    if (member.data) return;
     const profile = await this.db.from("profiles").upsert({ id: userId, full_name: input.fullName }, { onConflict: "id", ignoreDuplicates: true });
     if (profile.error) throw new Error(profile.error.message);
     const membership = await this.db.from("organisation_memberships").insert({ organisation_id: input.organisationId, profile_id: userId, role: input.role });

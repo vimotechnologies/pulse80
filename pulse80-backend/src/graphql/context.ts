@@ -27,7 +27,7 @@ export interface GraphQLContext {
   request: FastifyRequest;
   reply: FastifyReply;
   accessToken: string | null;
-  user: User | null;
+  user: (Pick<User, "id"> & { email: string | null }) | null;
   supabase: TypedSupabase | null;
   adminSupabase: TypedSupabase;
   identity: RequestIdentity;
@@ -92,15 +92,19 @@ export async function createGraphQLContext({
     return anonymousContext();
   }
 
-  const {
-    data: { user },
-    error,
-  } = await authSupabase.auth.getUser(accessToken);
+  const { data, error } = await authSupabase.auth.getClaims(accessToken);
+  const claims = data?.claims;
+  const subject = claims?.sub;
 
-  if (error || !user) {
+  if (error || typeof subject !== "string") {
     req.log.warn({ authError: error?.message }, "GraphQL authentication failed");
     return anonymousContext();
   }
+
+  const user = {
+    id: subject,
+    email: typeof claims?.email === "string" ? claims.email : null,
+  };
 
   const userSupabase = createUserSupabase(accessToken);
   const authorizationService = new AuthorizationService(userSupabase);
