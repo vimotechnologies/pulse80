@@ -39,6 +39,13 @@ export type Database = {
   }
   public: {
     Tables: {
+      programme_participants: {
+        Row: { id: string; programme_id: string; employee_id: string | null; screening_reference: string | null; eligibility_status: string; registration_status: string }
+        Insert: { id?: string; programme_id: string; employee_id?: string | null; screening_reference?: string | null; eligibility_status?: string; registration_status?: string }
+        Update: { employee_id?: string | null; screening_reference?: string | null; eligibility_status?: string; registration_status?: string }
+        Relationships: [{ foreignKeyName: "programme_participants_programme_id_fkey"; columns: ["programme_id"]; isOneToOne: false; referencedRelation: "programmes"; referencedColumns: ["id"] }]
+      }
+
       services: {
         Row: {
           id: string
@@ -1248,6 +1255,19 @@ export type Database = {
       }
     }
     Functions: {
+      set_programme_roster_status: {
+        Args: { p_programme_id: string; p_organisation_id: string; p_participant_id: string; p_eligibility_status: string; p_registration_status: string }
+        Returns: Database["public"]["Tables"]["programme_participants"]["Row"][]
+      }
+      import_programme_roster: {
+        Args: { p_programme_id: string; p_organisation_id: string; p_rows: Json }
+        Returns: string[]
+      }
+      resolve_programme_screening_participant: {
+        Args: { p_assignment_id: string; p_practitioner_user_id: string; p_participant_reference: string }
+        Returns: string
+      }
+
       save_admin_organisation: {
         Args: { p_organisation_id: string; p_fields: Json; p_contacts?: Json | null }
         Returns: undefined

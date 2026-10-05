@@ -1,3 +1,4 @@
+import { resolveScreeningParticipant } from "./participant-code.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "../../generated/database.types.js";
@@ -74,6 +75,7 @@ export class ScreeningService {
     if (!assignment.organisation_id) throw new Error("The assignment is not linked to an organisation.");
 
     if (!assignment.activation_id) throw new Error("This assignment needs an activation link before screening capture.");
+    await resolveScreeningParticipant(this.supabase, assignment.id, userId, input.participantReference);
 
     const bmi = input.heightCm && input.weightKg
       ? Number((input.weightKg / ((input.heightCm / 100) ** 2)).toFixed(2))

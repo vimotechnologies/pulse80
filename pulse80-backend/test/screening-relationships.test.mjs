@@ -183,3 +183,25 @@ test('roster GraphQL mutation validates input, requires platform permission and 
   const invalid=await graphql({schema,source,variableValues:{input:{...input,screeningReference:' '}},contextValue:context});
   assert.equal(invalid.errors[0].extensions.code,'BAD_USER_INPUT');assert.equal(calls.length,1);
 });
+
+test('anonymous roster foundation upgrades an installation with the full earlier repair', async () => {
+  const {db,insert}=await setup();
+  try {
+    await db.exec(migration);
+    const rosterMigration=await readFile(new URL('../supabase/migrations/20261005103157_anonymous_programme_roster.sql',import.meta.url),'utf8');
+    await db.exec(rosterMigration);
+    const org=await insert('organisations');
+    const service=await insert('services',{code:'BP',name:'Blood pressure'});
+    const programme=await insert('programmes',{organisation_id:org,name:'Anonymous programme',service_names:['BP']});
+    const activation=await insert('activations',{organisation_id:org,programme_id:programme,title:'Day',service_names:['BP']});
+    const user='00000000-0000-4000-8000-000000000001';
+    const assignment=await insert('practitioner_assignments',{organisation_id:org,activation_id:activation,practitioner_user_id:user,status:'Confirmed',service_id:service});
+    const participant=(await db.query('select import_programme_roster($1,$2,$3::jsonb) ids',[programme,org,JSON.stringify([{screening_reference:'ANON',eligibility_status:'Eligible',registration_status:'Registered'}])])).rows[0].ids[0];
+    const ps=(await db.query('select id from programme_services where programme_id=$1',[programme])).rows[0].id;
+    await insert('programme_participant_services',{programme_participant_id:participant,programme_service_id:ps});
+    const screening=await insert('screenings',{organisation_id:org,activation_id:activation,assignment_id:assignment,practitioner_user_id:user,participant_reference:'ANON',service_id:service,status:'Under Review'});
+    assert.equal((await db.query('select programme_participant_id from screenings where id=$1',[screening])).rows[0].programme_participant_id,participant);
+    assert.equal((await db.query('select count(*)::int n from employees')).rows[0].n,0);
+    await assert.rejects(insert('screenings',{organisation_id:org,activation_id:activation,assignment_id:assignment,practitioner_user_id:user,participant_reference:'ANON',service_id:'00000000-0000-4000-8000-000000000099',status:'Under Review'}),/not part of the selected assignment/);
+  } finally {await db.close();}
+});

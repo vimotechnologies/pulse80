@@ -53,6 +53,15 @@ test('anonymous capture code -> PostgreSQL views -> GraphQL dashboard', async ()
  const transport=async(input)=>{
  const url=new URL(String(input)),table=url.pathname.split('/').pop();
  if(table==='activations')return new Response(null,{headers:{'content-range':'*/0'}});
+ if(table==='screenings' && url.searchParams.get('select')?.includes('participant_reference')) {
+   assert.equal(url.searchParams.get('organisation_id'),'eq.'+org);
+   assert.equal(url.searchParams.get('activations.organisation_id'),'eq.'+org);
+   return Response.json((await db.query(`select s.organisation_id,s.participant_reference,
+     json_build_object('organisation_id',a.organisation_id,'programme_id',a.programme_id) activations
+     from screenings s join activations a on a.id=s.activation_id and a.organisation_id=s.organisation_id
+     where s.organisation_id=$1 and lower(s.status)='completed' order by s.id offset $2 limit $3`,
+     [org,Number(url.searchParams.get('offset')),Number(url.searchParams.get('limit'))])).rows);
+ }
  if(table==='screenings'){const r=await db.query("select count(*)::int as n from screenings where organisation_id=$1 and status='Completed'",[org]);return new Response(null,{headers:{'content-range':`*/${r.rows[0].n}`}});}
  if(table==='organisations')return Response.json((await db.query('select workforce_size,wellness_risk_score from organisations where id=$1',[org])).rows[0]);
  assert.ok(['analytics_screening_participation','analytics_screening_completion'].includes(table));

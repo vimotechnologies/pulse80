@@ -428,8 +428,8 @@ function CaptureModal({ assignments, screenings, pending, serverError, onClose, 
           </select>
         </ValidatedField>
 
-        <ValidatedField label="Participant reference" error={showError("participantReference")}>
-          <input className={fieldClass(Boolean(showError("participantReference")))} value={form.participantReference} onChange={(event) => set("participantReference", event.target.value)} aria-invalid={Boolean(showError("participantReference"))} />
+        <ValidatedField label="Anonymous screening code" error={showError("participantReference")}>
+          <input className={fieldClass(Boolean(showError("participantReference")))} placeholder="Code issued for this programme" value={form.participantReference} onChange={(event) => set("participantReference", event.target.value)} aria-invalid={Boolean(showError("participantReference"))} />
         </ValidatedField>
 
         <ValidatedField label="Department" error={showError("department")}>
