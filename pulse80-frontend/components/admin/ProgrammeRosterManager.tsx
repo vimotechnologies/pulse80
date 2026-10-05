@@ -5,7 +5,7 @@ import { createRosterParticipant, importRosterParticipants, loadProgrammeRoster,
 import { readRosterFile, rosterHeaders } from "@/lib/roster/import";
 import type { ProgrammeRoster, RosterEntry, RosterParticipant } from "@/types/programme-roster";
 
-const emptyEntry: RosterEntry = { screeningReference: "", eligibilityStatus: "Eligible", registrationStatus: "Registered" };
+const emptyEntry: RosterEntry = { eligibilityStatus: "Eligible", registrationStatus: "Registered" };
 const inputClass = "w-full rounded-lg border border-card-border bg-white px-3 py-2 text-sm";
 const buttonClass = "rounded-lg border border-card-border px-4 py-2 text-sm disabled:opacity-40";
 export function ProgrammeRosterManager({ initialRoster }: { initialRoster: ProgrammeRoster }) {
@@ -33,7 +33,7 @@ export function ProgrammeRosterManager({ initialRoster }: { initialRoster: Progr
   return <div className="space-y-6">
     <Link href="/admin/programmes" className="text-sm text-primary">← Programmes</Link>
     <header><h1 className="text-xl font-semibold">Participant roster · {roster.programmeName}</h1>
-      <p className="mt-2 text-sm text-muted">Use anonymous screening codes. Names and contact details are not required. Codes are case-sensitive and unique within this programme.</p></header>
+      <p className="mt-2 text-sm text-muted">Pulse80 automatically generates a unique 4-character anonymous code for each participant. Names and contact details are not required.</p></header>
     {message && <p role="status" className="rounded-lg border border-card-border bg-white p-3 text-sm">{message}</p>}
     <form className="space-y-4 rounded-xl border border-card-border bg-white p-5" onSubmit={event => {
       event.preventDefault(); run(async () => {
@@ -41,12 +41,11 @@ export function ProgrammeRosterManager({ initialRoster }: { initialRoster: Progr
           ? await updateRosterParticipantStatus(programmeId, editing.id, { eligibilityStatus: editing.eligibilityStatus, registrationStatus: editing.registrationStatus })
           : await createRosterParticipant(programmeId, entry);
         if (!result.ok) { setMessage(result.error); return; }
-        setEditing(null); setEntry(emptyEntry); setMessage("Participant saved."); await refresh();
+        setEditing(null); setEntry(emptyEntry); setMessage(editing ? "Participant status saved." : "Participant added. Anonymous code generated automatically."); await refresh();
       });
     }}>
       <h2 className="font-semibold">{editing ? "Edit participant status" : "Add participant"}</h2>
-      <fieldset disabled={pending} className="grid gap-4 md:grid-cols-3">
-        <label className="space-y-2 text-sm">Anonymous screening code<input required={!editing} minLength={2} maxLength={80} className={inputClass} value={draft.screeningReference ?? ""} readOnly={Boolean(editing)} onChange={event => setEntry({ ...entry, screeningReference: event.target.value })} autoComplete="off" /></label>
+      <fieldset disabled={pending} className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm">Eligibility<select className={inputClass} value={draft.eligibilityStatus} onChange={event => setStatus("eligibilityStatus", event.target.value)}>{["Eligible", "Not Eligible"].map(value => <option key={value}>{value}</option>)}</select></label>
         <label className="space-y-2 text-sm">Registration<select className={inputClass} value={draft.registrationStatus} onChange={event => setStatus("registrationStatus", event.target.value)}>{["Invited", "Registered", "Declined", "Withdrawn"].map(value => <option key={value}>{value}</option>)}</select></label>
       </fieldset>
