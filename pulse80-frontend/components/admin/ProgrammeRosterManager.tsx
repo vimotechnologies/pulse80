@@ -53,15 +53,15 @@ export function ProgrammeRosterManager({ initialRoster }: { initialRoster: Progr
     </form>
     <section className="space-y-3 rounded-xl border border-card-border bg-white p-5">
       <h2 className="font-semibold">Import participant roster</h2>
-      <p className="text-sm text-muted">CSV, XLS or XLSX · up to 500 rows and 2 MB. This import creates roster entries only; upload screening results separately. Store codes as text to preserve leading zeros.</p>
-      <p className="text-sm">Columns: <code>{rosterHeaders.join(", ")}</code>. Optional: <code>employee_id</code>.</p>
-      <p className="text-sm text-muted">Existing codes are rejected. Use Edit status to update an existing participant. Any invalid row cancels the entire import.</p>
+      <p className="text-sm text-muted">CSV, XLS or XLSX · up to 500 rows and 2 MB. This import creates roster entries only; upload screening results separately. If a code is omitted, Pulse80 generates a 4-character anonymous code automatically.</p>
+      <p className="text-sm">Columns: <code>{rosterHeaders.join(", ")}</code>. Optional: <code>screening_reference</code>, <code>employee_id</code>.</p>
+      <p className="text-sm text-muted">Existing supplied codes are rejected if duplicated. Use Edit status to update an existing participant. Any invalid row cancels the entire import.</p>
       <label className="block text-sm">Choose roster file<input className="mt-2 block" type="file" accept=".csv,.xls,.xlsx" disabled={pending} onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ""; setPreview([]);
         if (file) run(async () => { setPreview(await readRosterFile(file)); });
       }} /></label>
       {preview.length > 0 && <div className="space-y-3"><p className="text-sm font-semibold">Preview: {preview.length} participants for {roster.programmeName}</p>
-        <div className="max-h-60 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Code</th><th>Eligibility</th><th>Registration</th><th>Employee ID (optional)</th></tr></thead><tbody>{preview.map(row => <tr key={row.screeningReference}><td>{row.screeningReference}</td><td>{row.eligibilityStatus}</td><td>{row.registrationStatus}</td><td>{row.employeeId ?? "—"}</td></tr>)}</tbody></table></div>
+        <div className="max-h-60 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Code</th><th>Eligibility</th><th>Registration</th><th>Employee ID (optional)</th></tr></thead><tbody>{preview.map((row, index) => <tr key={row.screeningReference ?? index}><td>{row.screeningReference ?? "Generated on import"}</td><td>{row.eligibilityStatus}</td><td>{row.registrationStatus}</td><td>{row.employeeId ?? "—"}</td></tr>)}</tbody></table></div>
         <button disabled={pending} className={`${buttonClass} bg-primary text-white`} onClick={() => run(async () => {
           const result = await importRosterParticipants(programmeId, preview);
           if (!result.ok) { setMessage(result.error); return; }
