@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requirePermission, requirePlatformPermission } from "../auth/auth.guard.js";
-import { ProgrammeRosterService, parseRoster, rosterEntrySchema, rosterImportSchema, rosterStatusSchema } from "./roster.service.js";\nimport { ProgrammeExportService } from "./programme-export.service.js";
+import { ProgrammeRosterService, parseRoster, rosterEntrySchema, rosterImportSchema, rosterStatusSchema } from "./roster.service.js";
+import { ProgrammeExportService } from "./programme-export.service.js";
 
 function service(context: GraphQLContext) {
   // Tenant IDs are resolved from authenticated context, never mutation input.
@@ -17,6 +18,11 @@ export const rosterResolvers = {
   Query: {
     programmeRoster: (_: unknown, args: { programmeId: string; offset?: number }, context: GraphQLContext) =>
       service(context).list(id(args.programmeId), parseRoster(z.number().int().min(0), args.offset ?? 0)),
+    programmeScreeningExport: (_: unknown, args: { programmeId: string }, context: GraphQLContext) => {
+      if (context.identity.platformRole) { requirePlatformPermission(context, "programme:manage"); return new ProgrammeExportService(context.adminSupabase).screeningRows(id(args.programmeId)); }
+      const { organisationId } = requirePermission(context, "programme:manage");
+      return new ProgrammeExportService(context.adminSupabase, organisationId).screeningRows(id(args.programmeId));
+    },
   },
   Mutation: {
     createProgrammeParticipant: async (_: unknown, args: { programmeId: string; input: unknown }, context: GraphQLContext) => {
