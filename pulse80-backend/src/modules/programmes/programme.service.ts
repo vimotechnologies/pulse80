@@ -37,7 +37,7 @@ const programmeSelect = `
 const activationSelect = `
   id, programme_id, organisation_id, title, description, location,
   starts_at, ends_at, expected_participants, service_names, status,
-  created_at, updated_at, programmes (name, organisations (name)),
+  created_at, updated_at, programmes (name, organisation_id, service_names, organisations (name)),
   activation_readiness_items (id, label, completed, completed_at),
   practitioner_assignments (id)
 `;
@@ -46,20 +46,31 @@ export class ProgrammeService {
   constructor(private readonly supabase: TypedSupabase) {}
 
   async assignmentActivations() {
-    const [activations, catalogue, links] = await Promise.all([
+    const [activations, catalogue] = await Promise.all([
       this.listActivations(),
-      this.supabase.from("services").select("id, name, code").eq("active", true),
-      this.supabase.from("programme_services").select("programme_id, service_id"),
+      this.supabase.from("services").select("id, name, code, active"),
     ]);
     if (catalogue.error) throw new Error(catalogue.error.message);
-    if (links.error) throw new Error(links.error.message);
-    return activations.map((event) => ({
-      id: event.id, organisationId: event.organisation_id, programmeName: event.programmes?.name,
-      title: event.title, location: event.location, startsAt: event.starts_at, endsAt: event.ends_at,
-      services: catalogue.data.filter((service) =>
-        links.data.some((link) => link.programme_id === event.programme_id && link.service_id === service.id) &&
-        event.service_names.some((name) => [service.name.toLowerCase(), service.code.toLowerCase()].includes(name.trim().toLowerCase()))),
+    // Match the migration's roster_service_allowed rule, including ambiguity
+    // across inactive catalogue rows. SQL remains authoritative at write time.
+    const matchingIds = (labels: string[]) => new Set(labels.flatMap((label) => {
+      const normalized = label.trim().toLowerCase();
+      const matches = catalogue.data.filter((service) =>
+        [service.name.trim().toLowerCase(), service.code.trim().toLowerCase()].includes(normalized));
+      const match = matches.length === 1 ? matches[0] : undefined;
+      return match?.active ? [match.id] : [];
     }));
+    return activations.map((event) => {
+      const eventServices = matchingIds(event.service_names);
+      const programmeServices = matchingIds(event.programmes?.service_names ?? []);
+      return {
+        id: event.id, organisationId: event.organisation_id, programmeName: event.programmes?.name,
+        title: event.title, location: event.location, startsAt: event.starts_at, endsAt: event.ends_at,
+        services: event.programmes?.organisation_id === event.organisation_id
+          ? catalogue.data.filter((service) => eventServices.has(service.id) && programmeServices.has(service.id))
+          : [],
+      };
+    });
   }
 
   async saveParticipant(input: { programmeId: string; employeeId: string; screeningReference: string; requiredServiceIds: string[]; eligibilityStatus: string; registrationStatus: string }) {
