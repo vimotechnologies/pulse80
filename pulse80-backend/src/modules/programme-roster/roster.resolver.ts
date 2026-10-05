@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requirePermission, requirePlatformPermission } from "../auth/auth.guard.js";
-import { ProgrammeRosterService, parseRoster, rosterEntrySchema, rosterImportSchema, rosterStatusSchema } from "./roster.service.js";
+import { ProgrammeRosterService, parseRoster, rosterEntrySchema, rosterImportSchema, rosterStatusSchema } from "./roster.service.js";\nimport { ProgrammeExportService } from "./programme-export.service.js";
 
 function service(context: GraphQLContext) {
   // Tenant IDs are resolved from authenticated context, never mutation input.
