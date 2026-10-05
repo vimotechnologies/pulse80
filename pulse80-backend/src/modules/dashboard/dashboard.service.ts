@@ -37,6 +37,48 @@ function requireCount(result: CountResult) {
 export class DashboardService {
   constructor(private readonly supabase: TypedSupabase) {}
 
+  /**
+   * Implements data-analytics/sql/002_participants_screened_calculation.sql
+   * for the dashboards' all-programme, all-time scope. Tenant callers must
+   * supply the organisation ID authorised by the resolver, never client input.
+   * The admin total sums tenant-distinct references (references are not global IDs).
+   */
+  private async countParticipantsScreened(organisationId?: string) {
+    const participants = new Set<string>();
+    const pageSize = 1000;
+    let offset = 0;
+
+    while (true) {
+      let query = this.supabase
+        .from("screenings")
+        .select("organisation_id, participant_reference, activations!screenings_activation_id_fkey!inner(organisation_id, programme_id)")
+        .ilike("status", "completed")
+        .order("id")
+        .range(offset, offset + pageSize - 1);
+
+      if (organisationId !== undefined) {
+        query = query
+          .eq("organisation_id", organisationId)
+          .eq("activations.organisation_id", organisationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (!data?.length) break;
+
+      for (const screening of data) {
+        // Match the SQL join's tenant condition, including for platform admins.
+        if (screening.activations.organisation_id !== screening.organisation_id) continue;
+        if (screening.participant_reference == null) continue;
+        participants.add(JSON.stringify([screening.organisation_id, screening.participant_reference]));
+      }
+      // Continue even after a short page: the server may cap responses below 1000.
+      offset += data.length;
+    }
+
+    return participants.size;
+  }
+
   async getAdminStats() {
     const now = new Date().toISOString();
     const [organisations, workforce, verifiedPractitioners, upcomingAssignments] =
@@ -73,7 +115,8 @@ export class DashboardService {
   }
 
   async getAdminPortalAnalytics() {
-    const [participation, completion, risk, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+    const [participantsScreened, participation, completion, risk, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+      this.countParticipantsScreened(),
       this.supabase
         .from("analytics_screening_participation")
         .select("eligible_participant_count, screened_participant_count")
@@ -117,7 +160,7 @@ export class DashboardService {
       (total, row) => total + (row.eligible_participant_count ?? 0),
       0,
     );
-    const participantsScreened = participationRows.reduce(
+    const participationScreenedParticipants = participationRows.reduce(
       (total, row) => total + (row.screened_participant_count ?? 0),
       0,
     );
@@ -150,7 +193,7 @@ export class DashboardService {
       participantsScreened,
       eligibleParticipants,
       screeningParticipationRate: eligibleParticipants
-        ? (participantsScreened / eligibleParticipants) * 100
+        ? (participationScreenedParticipants / eligibleParticipants) * 100
         : null,
       completedScreenings: requireCount(completedScreenings),
       expectedRequiredScreenings,
@@ -170,6 +213,7 @@ export class DashboardService {
     const now = new Date().toISOString();
     const [
       organisation,
+      participantsScreened,
       completedScreenings,
       upcomingActivations,
       participation,
@@ -181,6 +225,7 @@ export class DashboardService {
           .select("workforce_size, wellness_risk_score")
           .eq("id", organisationId)
           .single(),
+        this.countParticipantsScreened(organisationId),
         this.supabase
           .from("screenings")
           .select("*", { count: "exact", head: true })
@@ -220,7 +265,7 @@ export class DashboardService {
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
       completedScreenings: requireCount(completedScreenings),
-      participantsScreened: participationRow?.screened_participant_count ?? 0,
+      participantsScreened,
       eligibleParticipants: participationRow?.eligible_participant_count ?? 0,
       screeningParticipation:
         participationRow?.screening_participation_rate_pct ?? 0,
