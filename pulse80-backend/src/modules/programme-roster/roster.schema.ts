@@ -14,7 +14,7 @@ export const rosterTypeDefs = /* GraphQL */ `
     participants: [ProgrammeParticipant!]!
   }
   input RosterParticipantInput {
-    screeningReference: String!
+    screeningReference: String
     employeeId: ID
     eligibilityStatus: String!
     registrationStatus: String!
