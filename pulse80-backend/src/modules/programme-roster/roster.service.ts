@@ -1,19 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { randomInt } from "node:crypto";
 import { GraphQLError } from "graphql";
 import { z } from "zod";
 import type { Database } from "../../generated/database.types.js";
+
+const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const CODE_LENGTH = 4;
 
 export const rosterStatusSchema = z.object({
   eligibilityStatus: z.enum(["Eligible", "Not Eligible"]),
   registrationStatus: z.enum(["Invited", "Registered", "Declined", "Withdrawn"]),
 }).strict();
 export const rosterEntrySchema = rosterStatusSchema.extend({
-  screeningReference: z.string().trim().min(2).max(80),
+  screeningReference: z.string().trim().min(2).max(80).optional(),
   employeeId: z.uuid().nullish(),
 });
 export const rosterImportSchema = z.array(rosterEntrySchema).min(1).max(500).superRefine((rows, context) => {
   const seen = new Set<string>();
   rows.forEach((row, index) => {
+    if (!row.screeningReference) return;
     if (seen.has(row.screeningReference)) context.addIssue({ code: "custom", path: [index, "screeningReference"], message: `Row ${index + 1}: duplicate screening code.` });
     seen.add(row.screeningReference);
   });
@@ -35,6 +40,7 @@ const shape = (row: Database["public"]["Tables"]["programme_participants"]["Row"
   id: row.id, programmeId: row.programme_id, employeeId: row.employee_id,
   screeningReference: row.screening_reference, eligibilityStatus: row.eligibility_status, registrationStatus: row.registration_status,
 });
+const randomCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
 
 export class ProgrammeRosterService {
   constructor(private readonly db: SupabaseClient<Database>, private readonly organisationId?: string) {}
@@ -48,6 +54,30 @@ export class ProgrammeRosterService {
     return data;
   }
 
+  private async existingCodes(programmeId: string) {
+    const codes = new Set<string>();
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await this.db.from("programme_participants").select("screening_reference")
+        .eq("programme_id", programmeId).range(offset, offset + 999);
+      if (error) throw new Error(error.message);
+      for (const row of data ?? []) if (row.screening_reference) codes.add(row.screening_reference);
+      if ((data?.length ?? 0) < 1000) break;
+    }
+    return codes;
+  }
+
+  private async withGeneratedCodes(programmeId: string, entries: RosterEntry[]) {
+    const used = await this.existingCodes(programmeId);
+    for (const entry of entries) if (entry.screeningReference) used.add(entry.screeningReference);
+    return entries.map(entry => {
+      if (entry.screeningReference) return entry;
+      let screeningReference = randomCode();
+      while (used.has(screeningReference)) screeningReference = randomCode();
+      used.add(screeningReference);
+      return { ...entry, screeningReference };
+    });
+  }
+
   async list(programmeId: string, offset: number) {
     const programme = await this.programme(programmeId);
     const { data, error, count } = await this.db.from("programme_participants").select(fields, { count: "exact" })
@@ -58,9 +88,10 @@ export class ProgrammeRosterService {
 
   async import(programmeId: string, entries: RosterEntry[]) {
     const programme = await this.programme(programmeId);
+    const prepared = await this.withGeneratedCodes(programme.id, entries);
     const { data, error } = await this.db.rpc("import_programme_roster", {
       p_programme_id: programme.id, p_organisation_id: programme.organisation_id,
-      p_rows: entries.map(row => ({ screening_reference: row.screeningReference, employee_id: row.employeeId ?? null,
+      p_rows: prepared.map(row => ({ screening_reference: row.screeningReference, employee_id: row.employeeId ?? null,
         eligibility_status: row.eligibilityStatus, registration_status: row.registrationStatus })),
     });
     if (error) rosterDatabaseError(error);
