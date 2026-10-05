@@ -7,7 +7,7 @@ export const rosterTypeDefs = /* GraphQL */ `
     eligibilityStatus: String!
     registrationStatus: String!
   }
-  type ProgrammeRoster {
+  type ProgrammeScreeningExportValue { label: String! unit: String value: String }\n  type ProgrammeScreeningExportRow { screeningId: ID! participantCode: String! service: String! department: String status: String! practitioner: String! capturedAt: String! submittedAt: String reviewedAt: String systolicMmhg: Float diastolicMmhg: Float glucoseMmolL: Float cholesterolMmolL: Float heightCm: Float weightKg: Float bmi: Float riskLevel: String escalationRequired: Boolean! referralRequired: Boolean! outcomeSummary: String flexibleResults: [ProgrammeScreeningExportValue!]! }\n  type ProgrammeScreeningExport { programmeName: String! rows: [ProgrammeScreeningExportRow!]! }\n  type ProgrammeRoster {
     programmeId: ID!
     programmeName: String!
     total: Int!
@@ -24,7 +24,7 @@ export const rosterTypeDefs = /* GraphQL */ `
     registrationStatus: String!
   }
   extend type Query {
-    programmeRoster(programmeId: ID!, offset: Int = 0): ProgrammeRoster!
+    programmeRoster(programmeId: ID!, offset: Int = 0): ProgrammeRoster!\n    programmeScreeningExport(programmeId: ID!): ProgrammeScreeningExport!
   }
   extend type Mutation {
     createProgrammeParticipant(programmeId: ID!, input: RosterParticipantInput!): ID!
