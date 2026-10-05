@@ -9,6 +9,19 @@ export async function loadProgrammeRoster(programmeId: string, offset = 0) {
   }`, { variables: { programmeId, offset } });
   return result.programmeRoster;
 }
+export type ProgrammeScreeningExportRow = {
+  screeningId:string; participantCode:string; service:string; department:string|null; status:string; practitioner:string; capturedAt:string; submittedAt:string|null; reviewedAt:string|null;
+  systolicMmhg:number|null; diastolicMmhg:number|null; glucoseMmolL:number|null; cholesterolMmolL:number|null; heightCm:number|null; weightKg:number|null; bmi:number|null;
+  riskLevel:string|null; escalationRequired:boolean; referralRequired:boolean; outcomeSummary:string|null; flexibleResults:Array<{label:string;unit:string|null;value:string|null}>;
+};
+export async function loadProgrammeScreeningExport(programmeId: string) {
+  const result = await graphqlRequest<{ programmeScreeningExport: { programmeName:string; rows:ProgrammeScreeningExportRow[] } }>(`query($programmeId: ID!) {
+    programmeScreeningExport(programmeId: $programmeId) {
+      programmeName rows { screeningId participantCode service department status practitioner capturedAt submittedAt reviewedAt systolicMmhg diastolicMmhg glucoseMmolL cholesterolMmolL heightCm weightKg bmi riskLevel escalationRequired referralRequired outcomeSummary flexibleResults { label unit value } }
+    }
+  }`, { variables: { programmeId } });
+  return result.programmeScreeningExport;
+}
 async function save(query: string, variables: Record<string, unknown>, programmeId: string) {
   try {
     const result = await graphqlRequest(query, { variables });
