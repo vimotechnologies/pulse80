@@ -10,6 +10,16 @@ export const rosterTypeDefs = /* GraphQL */ `
   type ProgrammeScreeningExportValue { label: String! unit: String value: String }
   type ProgrammeScreeningExportRow { screeningId: ID! participantCode: String! service: String! department: String status: String! practitioner: String! capturedAt: String! submittedAt: String reviewedAt: String systolicMmhg: Float diastolicMmhg: Float glucoseMmolL: Float cholesterolMmolL: Float heightCm: Float weightKg: Float bmi: Float riskLevel: String escalationRequired: Boolean! referralRequired: Boolean! outcomeSummary: String flexibleResults: [ProgrammeScreeningExportValue!]! }
   type ProgrammeScreeningExport { programmeName: String! rows: [ProgrammeScreeningExportRow!]! }
+  type ProgrammeInterimServiceActivity { service: String! screeningsCaptured: Int! completedScreenings: Int! participantsScreened: Int! }
+  type ProgrammeInterimRiskDistribution { riskCategory: String! screeningCount: Int! }
+  type ProgrammeInterimReport {
+    reportType: String! generatedAt: String! programmeId: ID! programmeName: String! programmeStatus: String!
+    startsOn: String! endsOn: String! organisationId: ID! organisationName: String! organisationLogoUrl: String
+    location: String activationStatus: String registeredParticipants: Int! participantsScreened: Int!
+    participationRate: Float screeningsCaptured: Int! completedScreenings: Int!
+    serviceActivity: [ProgrammeInterimServiceActivity!]! riskDistribution: [ProgrammeInterimRiskDistribution!]!
+    referralsRequired: Int! escalationsRequired: Int! disclaimer: String!
+  }
   type ProgrammeRoster {
     programmeId: ID!
     programmeName: String!
@@ -29,6 +39,7 @@ export const rosterTypeDefs = /* GraphQL */ `
   extend type Query {
     programmeRoster(programmeId: ID!, offset: Int = 0): ProgrammeRoster!
     programmeScreeningExport(programmeId: ID!): ProgrammeScreeningExport!
+    programmeInterimReport(programmeId: ID!): ProgrammeInterimReport!
   }
   extend type Mutation {
     createProgrammeParticipant(programmeId: ID!, input: RosterParticipantInput!): ID!
