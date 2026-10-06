@@ -9,7 +9,7 @@ export class ProgrammeInterimReportService {
   constructor(private readonly db: Db, private readonly organisationId?: string) {}
 
   async get(programmeId: string) {
-    let programmeQuery = this.db.from("programmes").select("id, organisation_id, name, status, starts_on, ends_on, target_participants, service_names, organisations(name, logo_url)").eq("id", programmeId);
+    let programmeQuery = this.db.from("programmes").select("id, organisation_id, name, status, starts_on, ends_on, target_participants, service_names, organisations(name, logo_path)").eq("id", programmeId);
     if (this.organisationId !== undefined) programmeQuery = programmeQuery.eq("organisation_id", this.organisationId);
     const { data: programme, error: programmeError } = await programmeQuery.maybeSingle();
     if (programmeError) throw new Error(programmeError.message);
@@ -72,7 +72,7 @@ export class ProgrammeInterimReportService {
       endsOn: programme.ends_on,
       organisationId: programme.organisation_id,
       organisationName: organisation?.name ?? "Client organisation",
-      organisationLogoUrl: organisation?.logo_url ?? null,
+      organisationLogoUrl: organisation?.logo_path ?? null,
       location: primaryActivation?.location ?? null,
       activationStatus: primaryActivation?.status ?? null,
       registeredParticipants: registered.length,
