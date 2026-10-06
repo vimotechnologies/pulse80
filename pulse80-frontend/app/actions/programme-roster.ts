@@ -1,4 +1,14 @@
 "use server";
+export type ProgrammeInterimReport = {
+  reportType: string; generatedAt: string; programmeId: string; programmeName: string; programmeStatus: string;
+  startsOn: string; endsOn: string; organisationId: string; organisationName: string; organisationLogoUrl: string | null;
+  location: string | null; activationStatus: string | null; registeredParticipants: number; participantsScreened: number;
+  participationRate: number | null; screeningsCaptured: number; completedScreenings: number;
+  serviceActivity: Array<{ service:string; screeningsCaptured:number; completedScreenings:number; participantsScreened:number }>;
+  riskDistribution: Array<{ riskCategory:string; screeningCount:number }>;
+  referralsRequired:number; escalationsRequired:number; disclaimer:string;
+};
+
 import { revalidatePath } from "next/cache";
 import { graphqlRequest } from "@/lib/graphql/client";
 import type { ProgrammeRoster, RosterEntry } from "@/types/programme-roster";
@@ -40,4 +50,17 @@ export async function importRosterParticipants(programmeId: string, rows: Roster
 }
 export async function updateRosterParticipantStatus(programmeId: string, id: string, input: Pick<RosterEntry, "eligibilityStatus" | "registrationStatus">) {
   return save(`mutation($programmeId: ID!, $id: ID!, $input: ParticipantStatusInput!) { updateProgrammeParticipantStatus(programmeId: $programmeId, id: $id, input: $input) { id } }`, { programmeId, id, input }, programmeId);
+}
+
+export async function loadProgrammeInterimReport(programmeId: string) {
+  const result = await graphqlRequest<{ programmeInterimReport: ProgrammeInterimReport }>(`query($programmeId: ID!) {
+    programmeInterimReport(programmeId: $programmeId) {
+      reportType generatedAt programmeId programmeName programmeStatus startsOn endsOn organisationId organisationName organisationLogoUrl
+      location activationStatus registeredParticipants participantsScreened participationRate screeningsCaptured completedScreenings
+      serviceActivity { service screeningsCaptured completedScreenings participantsScreened }
+      riskDistribution { riskCategory screeningCount }
+      referralsRequired escalationsRequired disclaimer
+    }
+  }`, { variables: { programmeId } });
+  return result.programmeInterimReport;
 }

@@ -56,6 +56,14 @@ export const programmeResolvers = {
       requirePlatformPermission(context, "programme:read");
       return (await new ProgrammeService(context.adminSupabase).listActivations()).map(activationShape);
     },
+    adminOrganisationProgrammes: async (_parent: unknown, args: { organisationId: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationProgrammes(parse(idSchema, args.organisationId))).map(programmeShape);
+    },
+    organisationProgrammes: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationProgrammes(organisationId)).map(programmeShape);
+    },
     adminOrganisationActivations: async (_parent: unknown, args: { organisationId: string }, context: GraphQLContext) => {
       requirePlatformPermission(context, "programme:read");
       return (await new ProgrammeService(context.adminSupabase).listOrganisationActivations(parse(idSchema, args.organisationId))).map(activationShape);
