@@ -65,7 +65,7 @@ export async function createReportPdf(report: PdfReport) {
     for (const line of section.lines) write(line);
     y -= 14;
   }
-  const pulse80LogoUrl = "/images/pulse80-logo.png";
+  const pulse80LogoUrl = "/brand/pulse80-logo-full.png";
   const pages = pdf.getPages();
   const logos = new Map<string, Awaited<ReturnType<typeof pdf.embedPng>>>();
   for (const client of pageClients) {
