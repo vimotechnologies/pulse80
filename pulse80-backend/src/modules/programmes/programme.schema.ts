@@ -81,6 +81,8 @@ export const programmeTypeDefs = /* GraphQL */ `
     adminProgrammes: [Programme!]!
     adminActivations: [Activation!]!
     adminOrganisationActivations(organisationId: ID!): [Activation!]!
+    adminOrganisationProgrammes(organisationId: ID!): [Programme!]!
+    organisationProgrammes: [Programme!]!
     organisationActivations: [Activation!]!
   }
 
