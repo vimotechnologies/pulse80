@@ -46,12 +46,20 @@ export class UserService {
     })) };
   }
   async invite(input: { organisationId: string; email: string; fullName: string; role: string }, redirectTo: string) {
-    const org = await this.db.from("organisations").select("id").eq("id", input.organisationId).single();
+    const org = await this.db.from("organisations").select("id,name").eq("id", input.organisationId).single();
     if (org.error) throw new Error(org.error.message);
     const existing = (await this.authUsers()).find(user => user.email?.toLowerCase() === input.email);
     let userId = existing?.id;
     if (!userId) {
-      const result = await this.db.auth.admin.inviteUserByEmail(input.email, { redirectTo, data: { full_name: input.fullName } });
+      const firstName = input.fullName.trim().split(/\\s+/)[0] || "there";
+      const result = await this.db.auth.admin.inviteUserByEmail(input.email, {
+        redirectTo,
+        data: {
+          full_name: input.fullName,
+          first_name: firstName,
+          organisation_name: org.data.name,
+        },
+      });
       if (result.error) throw new Error(result.error.message);
       userId = result.data.user.id;
     }
