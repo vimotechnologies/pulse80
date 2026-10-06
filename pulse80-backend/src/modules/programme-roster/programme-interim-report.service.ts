@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { GraphQLError } from "graphql";
 import type { Database } from "../../generated/database.types.js";
+import { env } from "../../config/env.js";
 
 type Db = SupabaseClient<Database>;
 type Risk = "Low" | "Moderate" | "High" | "Not Calculated";
@@ -72,7 +73,7 @@ export class ProgrammeInterimReportService {
       endsOn: programme.ends_on,
       organisationId: programme.organisation_id,
       organisationName: organisation?.name ?? "Client organisation",
-      organisationLogoUrl: organisation?.logo_path ?? null,
+      organisationLogoUrl: organisation?.logo_path ? `${env.SUPABASE_URL}/storage/v1/object/public/organisation-logos/${organisation.logo_path}` : null,
       location: primaryActivation?.location ?? null,
       activationStatus: primaryActivation?.status ?? null,
       registeredParticipants: registered.length,
