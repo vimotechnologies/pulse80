@@ -3,6 +3,7 @@ import type { GraphQLContext } from "../../graphql/context.js";
 import { requirePermission, requirePlatformPermission } from "../auth/auth.guard.js";
 import { ProgrammeRosterService, parseRoster, rosterEntrySchema, rosterImportSchema, rosterStatusSchema } from "./roster.service.js";
 import { ProgrammeExportService } from "./programme-export.service.js";
+import { ProgrammeInterimReportService } from "./programme-interim-report.service.js";
 
 function service(context: GraphQLContext) {
   // Tenant IDs are resolved from authenticated context, never mutation input.
@@ -18,6 +19,11 @@ export const rosterResolvers = {
   Query: {
     programmeRoster: (_: unknown, args: { programmeId: string; offset?: number }, context: GraphQLContext) =>
       service(context).list(id(args.programmeId), parseRoster(z.number().int().min(0), args.offset ?? 0)),
+    programmeInterimReport: (_: unknown, args: { programmeId: string }, context: GraphQLContext) => {
+      if (context.identity.platformRole) { requirePlatformPermission(context, "programme:manage"); return new ProgrammeInterimReportService(context.adminSupabase).get(id(args.programmeId)); }
+      const { organisationId } = requirePermission(context, "programme:manage");
+      return new ProgrammeInterimReportService(context.adminSupabase, organisationId).get(id(args.programmeId));
+    },
     programmeScreeningExport: (_: unknown, args: { programmeId: string }, context: GraphQLContext) => {
       if (context.identity.platformRole) { requirePlatformPermission(context, "programme:manage"); return new ProgrammeExportService(context.adminSupabase).screeningRows(id(args.programmeId)); }
       const { organisationId } = requirePermission(context, "programme:manage");
