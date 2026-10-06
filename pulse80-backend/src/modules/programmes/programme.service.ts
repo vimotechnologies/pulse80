@@ -95,6 +95,12 @@ export class ProgrammeService {
     return data;
   }
 
+  async listOrganisationProgrammes(organisationId: string) {
+    const { data, error } = await this.supabase.from("programmes").select(programmeSelect).eq("organisation_id", organisationId).order("starts_on", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async listOrganisationActivations(organisationId: string) {
     const { data, error } = await this.supabase
       .from("activations")
