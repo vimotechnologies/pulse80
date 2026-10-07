@@ -35,12 +35,13 @@ export function PortalSidebar({
         .map((item) => item.label),
     [items, pathname],
   );
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [groupOpenOverrides, setGroupOpenOverrides] = useState<Record<string, boolean>>({});
 
-  function toggleGroup(label: string) {
-    setOpenGroups((current) =>
-      current.includes(label) ? current.filter((item) => item !== label) : [...current, label],
-    );
+  function toggleGroup(label: string, currentlyOpen: boolean) {
+    setGroupOpenOverrides((current) => ({
+      ...current,
+      [label]: !currentlyOpen,
+    }));
   }
 
   return (
@@ -105,15 +106,21 @@ export function PortalSidebar({
           collapsed ? "px-3" : "px-3",
         )}
       >
-        {items.map((item) => (
-          <SidebarEntry
-            key={item.type === "group" ? item.label : item.href}
-            entry={item}
-            collapsed={collapsed}
-            open={item.type === "group" ? activeGroups.includes(item.label) || openGroups.includes(item.label) : false}
-            onToggle={() => item.type === "group" && toggleGroup(item.label)}
-          />
-        ))}
+        {items.map((item) => {
+          const open = item.type === "group"
+            ? groupOpenOverrides[item.label] ?? activeGroups.includes(item.label)
+            : false;
+
+          return (
+            <SidebarEntry
+              key={item.type === "group" ? item.label : item.href}
+              entry={item}
+              collapsed={collapsed}
+              open={open}
+              onToggle={() => item.type === "group" && toggleGroup(item.label, open)}
+            />
+          );
+        })}
       </nav>
 
       <div className="px-3 pb-4">

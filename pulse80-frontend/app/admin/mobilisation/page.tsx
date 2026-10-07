@@ -1,6 +1,8 @@
-import { PortalPlaceholderPage } from "@/components/portal/PortalPlaceholderPage";
-import { placeholderPages } from "@/data/portal-phase-two";
+import { loadProgrammeOperations } from "@/app/actions/programme-operations";
+import { AdminMobilisation } from "@/components/admin/ProgrammeOperations";
 
-export default function AdminMobilisationPage() {
-  return <PortalPlaceholderPage {...placeholderPages["/admin/mobilisation"]} />;
+export default async function AdminMobilisationPage() {
+  const data = await loadProgrammeOperations();
+
+  return <AdminMobilisation activations={data.adminActivations} />;
 }

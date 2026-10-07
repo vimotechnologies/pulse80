@@ -8,12 +8,35 @@ import {
 } from "@/components/icons/IconsaxIcons";
 import type { PortalMetric } from "@/data/portal-phase-two";
 import { graphqlRequest } from "@/lib/graphql/client";
+import type { RiskDistributionEntry } from "@/components/dashboard/RiskDistribution";
+
+export async function loadAdminRiskDistribution(): Promise<RiskDistributionEntry[]> {
+  const result = await graphqlRequest<{ adminRiskDistribution: RiskDistributionEntry[] }>(
+    `query AdminRiskDistribution { adminRiskDistribution { riskCategory participantCount } }`,
+  );
+  return result.adminRiskDistribution;
+}
 
 type AdminDashboardStats = {
   totalOrganisations: number;
   representedEmployees: number;
   verifiedPractitioners: number;
   upcomingAssignments: number;
+};
+
+export type AdminPortalAnalytics = {
+  participantsScreened: number;
+  eligibleParticipants: number;
+  screeningParticipationRate: number | null;
+  completedScreenings: number;
+  expectedRequiredScreenings: number;
+  completedRequiredScreenings: number;
+  screeningCompletionRate: number | null;
+  riskDistribution: { riskCategory: string; participantCount: number }[];
+  requiredReferralCount: number;
+  missingReferralCount: number;
+  followUpCount: number;
+  followedUpReferralCount: number;
 };
 
 const adminDashboardStatsQuery = /* GraphQL */ `
@@ -23,6 +46,25 @@ const adminDashboardStatsQuery = /* GraphQL */ `
       representedEmployees
       verifiedPractitioners
       upcomingAssignments
+    }
+  }
+`;
+
+const adminPortalAnalyticsQuery = /* GraphQL */ `
+  query AdminPortalAnalytics {
+    adminPortalAnalytics {
+      participantsScreened
+      eligibleParticipants
+      screeningParticipationRate
+      completedScreenings
+      expectedRequiredScreenings
+      completedRequiredScreenings
+      screeningCompletionRate
+      riskDistribution { riskCategory participantCount }
+      requiredReferralCount
+      missingReferralCount
+      followUpCount
+      followedUpReferralCount
     }
   }
 `;
@@ -64,4 +106,25 @@ export async function loadAdminDashboardMetrics(): Promise<PortalMetric[]> {
       icon: CalendarCheck,
     },
   ];
+}
+
+export async function loadAdminPortalAnalytics(): Promise<AdminPortalAnalytics> {
+  const { adminPortalAnalytics } = await graphqlRequest<{
+    adminPortalAnalytics: AdminPortalAnalytics;
+  }>(adminPortalAnalyticsQuery);
+
+  return adminPortalAnalytics;
+}
+
+export async function loadAdminDashboardActivations() {
+  const { adminActivations } = await graphqlRequest<{
+    adminActivations: Pick<import("@/types/programme").Activation,
+      "id" | "organisationName" | "title" | "location" | "startsAt" |
+      "expectedParticipants" | "status" | "readinessScore">[];
+  }>(`query AdminDashboardActivations {
+    adminActivations {
+      id organisationName title location startsAt expectedParticipants status readinessScore
+    }
+  }`);
+  return adminActivations;
 }

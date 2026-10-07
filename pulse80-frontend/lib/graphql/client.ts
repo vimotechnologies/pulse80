@@ -1,6 +1,8 @@
 import "server-only";
 
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+import { createClient, getVerifiedSession } from "@/lib/supabase/server";
 
 export type OrganisationRole =
   | "owner"
@@ -42,14 +44,7 @@ export async function graphqlRequest<T>(
   let accessToken = options.accessToken;
 
   if (!accessToken) {
-    const supabase = await createClient();
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    const { data: sessionData } = await supabase.auth.getSession();
-    accessToken = sessionData.session?.access_token;
-
-    if (userError || !userData.user || !accessToken) {
-      throw new Error("UNAUTHENTICATED");
-    }
+    accessToken = (await getVerifiedSession()).accessToken;
   }
 
   const graphqlUrl = process.env.BACKEND_GRAPHQL_URL ?? "http://localhost:4000/graphql";
@@ -62,16 +57,38 @@ export async function graphqlRequest<T>(
     headers["x-organisation-id"] = options.organisationId;
   }
 
-  const response = await fetch(graphqlUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query, variables: options.variables }),
-    cache: "no-store",
-  });
-  const payload = (await response.json()) as GraphQLResponse<T>;
+  const protectionBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (protectionBypassSecret) {
+    headers["x-vercel-protection-bypass"] = protectionBypassSecret;
+  }
+
+  const sendRequest = async (token: string) => {
+    const response = await fetch(graphqlUrl, {
+      method: "POST",
+      headers: { ...headers, authorization: `Bearer ${token}` },
+      body: JSON.stringify({ query, variables: options.variables }),
+      cache: "no-store",
+    });
+    return { response, payload: (await response.json()) as GraphQLResponse<T> };
+  };
+
+  let { response, payload } = await sendRequest(accessToken);
+  const authFailed = payload.errors?.[0]?.extensions?.code === "UNAUTHENTICATED";
+  if (authFailed) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.refreshSession();
+    const refreshedToken = data.session?.access_token;
+    if (!error && refreshedToken) {
+      accessToken = refreshedToken;
+      ({ response, payload } = await sendRequest(accessToken));
+    }
+  }
 
   if (!response.ok || payload.errors?.length || !payload.data) {
-    throw new Error(payload.errors?.[0]?.extensions?.code ?? "GRAPHQL_REQUEST_FAILED");
+    const graphQLError = payload.errors?.[0];
+    const errorCode = graphQLError?.extensions?.code ?? "GRAPHQL_REQUEST_FAILED";
+    if (errorCode === "UNAUTHENTICATED") redirect("/login");
+    throw new Error(errorCode === "BAD_USER_INPUT" && graphQLError?.message ? graphQLError.message : errorCode);
   }
 
   return payload.data;

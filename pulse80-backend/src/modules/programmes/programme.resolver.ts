@@ -2,7 +2,7 @@ import { GraphQLError } from "graphql";
 import { z } from "zod";
 
 import type { GraphQLContext } from "../../graphql/context.js";
-import { requirePlatformPermission } from "../auth/auth.guard.js";
+import { requirePermission, requirePlatformPermission } from "../auth/auth.guard.js";
 import { ProgrammeService, type ActivationInput, type ProgrammeInput } from "./programme.service.js";
 
 const idSchema = z.uuid();
@@ -44,6 +44,10 @@ function activationShape(row: Awaited<ReturnType<ProgrammeService["listActivatio
 
 export const programmeResolvers = {
   Query: {
+    adminAssignmentActivations: async (_p: unknown, _a: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:read");
+      return new ProgrammeService(context.adminSupabase).assignmentActivations();
+    },
     adminProgrammes: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "programme:read");
       return (await new ProgrammeService(context.adminSupabase).listProgrammes()).map(programmeShape);
@@ -52,8 +56,34 @@ export const programmeResolvers = {
       requirePlatformPermission(context, "programme:read");
       return (await new ProgrammeService(context.adminSupabase).listActivations()).map(activationShape);
     },
+    adminOrganisationProgrammes: async (_parent: unknown, args: { organisationId: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationProgrammes(parse(idSchema, args.organisationId))).map(programmeShape);
+    },
+    organisationProgrammes: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationProgrammes(organisationId)).map(programmeShape);
+    },
+    adminOrganisationActivations: async (_parent: unknown, args: { organisationId: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationActivations(parse(idSchema, args.organisationId))).map(activationShape);
+    },
+    organisationActivations: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "programme:read");
+      return (await new ProgrammeService(context.adminSupabase).listOrganisationActivations(organisationId)).map(activationShape);
+    },
   },
   Mutation: {
+    saveProgrammeParticipant: async (_p: unknown, args: { input: unknown }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "programme:manage");
+      const input = parse(z.object({
+        programmeId: z.uuid(), employeeId: z.uuid(), screeningReference: z.string().trim().min(2).max(80),
+        requiredServiceIds: z.array(z.uuid()).max(100),
+        eligibilityStatus: z.enum(["Eligible", "Not Eligible"]),
+        registrationStatus: z.enum(["Invited", "Registered", "Declined", "Withdrawn"]),
+      }), args.input);
+      return new ProgrammeService(context.adminSupabase).saveParticipant(input);
+    },
     createProgramme: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       requirePlatformPermission(context, "programme:manage");
       const service = new ProgrammeService(context.adminSupabase);

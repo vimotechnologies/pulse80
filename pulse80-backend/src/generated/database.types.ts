@@ -39,6 +39,157 @@ export type Database = {
   }
   public: {
     Tables: {
+      programme_participants: {
+        Row: { id: string; programme_id: string; employee_id: string | null; screening_reference: string | null; eligibility_status: string; registration_status: string }
+        Insert: { id?: string; programme_id: string; employee_id?: string | null; screening_reference?: string | null; eligibility_status?: string; registration_status?: string }
+        Update: { employee_id?: string | null; screening_reference?: string | null; eligibility_status?: string; registration_status?: string }
+        Relationships: [{ foreignKeyName: "programme_participants_programme_id_fkey"; columns: ["programme_id"]; isOneToOne: false; referencedRelation: "programmes"; referencedColumns: ["id"] }]
+      }
+
+      services: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          category: string
+          description: string | null
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          name: string
+          category: string
+          description?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          name?: string
+          category?: string
+          description?: string | null
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_services: {
+        Row: {
+          id: string
+          programme_id: string
+          service_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          programme_id: string
+          service_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          programme_id?: string
+          service_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      organisation_units: {
+        Row: {
+          id: string
+          organisation_id: string
+          parent_id: string | null
+          kind: string
+          name: string
+          location: string
+          employees: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organisation_id: string
+          parent_id?: string | null
+          kind: string
+          name: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organisation_id?: string
+          parent_id?: string | null
+          kind?: string
+          name?: string
+          location?: string
+          employees?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portal_records: {
+        Row: {
+          id: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id: string | null
+          title: string
+          description: string
+          status: string
+          amount: number | null
+          currency: string
+          due_on: string | null
+          created_by: string
+          updated_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          organisation_id: string
+          practitioner_user_id?: string | null
+          title: string
+          description?: string
+          status: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by: string
+          updated_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          organisation_id?: string
+          practitioner_user_id?: string | null
+          title?: string
+          description?: string
+          status?: string
+          amount?: number | null
+          currency?: string
+          due_on?: string | null
+          created_by?: string
+          updated_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "portal_records_organisation_id_fkey"; columns: ["organisation_id"]; isOneToOne: false; referencedRelation: "organisations"; referencedColumns: ["id"] },
+          { foreignKeyName: "portal_records_practitioner_user_id_fkey"; columns: ["practitioner_user_id"]; isOneToOne: false; referencedRelation: "practitioner_profiles"; referencedColumns: ["user_id"] }
+        ]
+      }
       activation_readiness_items: {
         Row: {
           activation_id: string
@@ -356,6 +507,7 @@ export type Database = {
       practitioner_assignments: {
         Row: {
           activation_id: string | null
+          service_id: string | null
           activity_name: string
           created_at: string
           ends_at: string | null
@@ -364,13 +516,18 @@ export type Database = {
           organisation_id: string | null
           practitioner_user_id: string
           programme_name: string
+          responded_at: string | null
+          response_reason: string | null
+          role_name: string | null
           service_name: string
           starts_at: string
           status: string
           updated_at: string
+          withdrawal_urgent: boolean
         }
         Insert: {
           activation_id?: string | null
+          service_id?: string | null
           activity_name: string
           created_at?: string
           ends_at?: string | null
@@ -379,13 +536,18 @@ export type Database = {
           organisation_id?: string | null
           practitioner_user_id: string
           programme_name: string
+          responded_at?: string | null
+          response_reason?: string | null
+          role_name?: string | null
           service_name: string
           starts_at: string
           status?: string
           updated_at?: string
+          withdrawal_urgent?: boolean
         }
         Update: {
           activation_id?: string | null
+          service_id?: string | null
           activity_name?: string
           created_at?: string
           ends_at?: string | null
@@ -394,10 +556,14 @@ export type Database = {
           organisation_id?: string | null
           practitioner_user_id?: string
           programme_name?: string
+          responded_at?: string | null
+          response_reason?: string | null
+          role_name?: string | null
           service_name?: string
           starts_at?: string
           status?: string
           updated_at?: string
+          withdrawal_urgent?: boolean
         }
         Relationships: [
           {
@@ -420,6 +586,137 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "practitioner_profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          changed_at: string
+          change_type: string
+          id: string
+          message: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          urgent: boolean
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          changed_at?: string
+          change_type: string
+          id?: string
+          message: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          urgent?: boolean
+        }
+        Update: {
+          acknowledged_at?: string | null
+          changed_at?: string
+          change_type?: string
+          id?: string
+          message?: string
+          practitioner_assignment_id?: string
+          practitioner_user_id?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_alerts_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_assignment_alerts_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_responses: {
+        Row: {
+          id: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          previous_status: string
+          reason: string | null
+          responded_at: string
+          response_status: string
+          urgent: boolean
+        }
+        Insert: {
+          id?: string
+          practitioner_assignment_id: string
+          practitioner_user_id: string
+          previous_status: string
+          reason?: string | null
+          responded_at?: string
+          response_status: string
+          urgent?: boolean
+        }
+        Update: {
+          id?: string
+          practitioner_assignment_id?: string
+          practitioner_user_id?: string
+          previous_status?: string
+          reason?: string | null
+          responded_at?: string
+          response_status?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_responses_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_assignment_responses_practitioner_user_id_fkey"
+            columns: ["practitioner_user_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      practitioner_assignment_services: {
+        Row: {
+          created_at: string
+          id: string
+          practitioner_assignment_id: string
+          service_code: string | null
+          service_id: string | null
+          service_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          practitioner_assignment_id: string
+          service_code?: string | null
+          service_id?: string | null
+          service_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          practitioner_assignment_id?: string
+          service_code?: string | null
+          service_id?: string | null
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_assignment_services_practitioner_assignment_id_fkey"
+            columns: ["practitioner_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_assignments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -768,6 +1065,8 @@ export type Database = {
       screenings: {
         Row: {
           activation_id: string | null
+          programme_participant_id: string | null
+          service_id: string | null
           assignment_id: string
           captured_at: string
           consent_confirmed: boolean
@@ -787,6 +1086,8 @@ export type Database = {
         }
         Insert: {
           activation_id?: string | null
+          programme_participant_id?: string | null
+          service_id?: string | null
           assignment_id: string
           captured_at?: string
           consent_confirmed?: boolean
@@ -806,6 +1107,8 @@ export type Database = {
         }
         Update: {
           activation_id?: string | null
+          programme_participant_id?: string | null
+          service_id?: string | null
           assignment_id?: string
           captured_at?: string
           consent_confirmed?: boolean
@@ -854,16 +1157,228 @@ export type Database = {
           },
         ]
       }
+      screening_correction_errors: {
+        Row: {
+          field_name: string
+          id: string
+          message: string
+          resolved_at: string | null
+          returned_at: string
+          screening_id: string
+        }
+        Insert: {
+          field_name: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          returned_at?: string
+          screening_id: string
+        }
+        Update: {
+          field_name?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          returned_at?: string
+          screening_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_correction_errors_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "screenings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      analytics_screening_participation: {
+        Row: {
+          eligible_participant_count: number | null
+          organisation_id: string | null
+          screened_participant_count: number | null
+          screening_participation_rate_pct: number | null
+        }
+        Relationships: []
+      }
+      analytics_screening_completion: {
+        Row: {
+          completed_required_screenings: number | null
+          expected_required_screenings: number | null
+          organisation_id: string | null
+          screening_completion_rate: number | null
+        }
+        Relationships: []
+      }
+      analytics_risk_metrics: {
+        Row: {
+          organisation_id: string | null
+          participant_count: number | null
+          percentage: number | null
+          risk_category: string | null
+          total_participants: number | null
+        }
+        Relationships: []
+      }
+      analytics_referrals: {
+        Row: {
+          completed_at: string | null
+          due_at: string | null
+          organisation_id: string | null
+          referral_created: boolean | null
+          referral_id: string | null
+          referral_missing: boolean | null
+          referral_required: boolean | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_date: string | null
+          screening_id: string | null
+          urgency: string | null
+        }
+        Relationships: []
+      }
+      analytics_referral_followups: {
+        Row: {
+          follow_up_completed: boolean | null
+          follow_up_count: number | null
+          latest_follow_up_at: string | null
+          next_follow_up_at: string | null
+          organisation_id: string | null
+          referral_id: string | null
+          referral_status: string | null
+          referred_at: string | null
+          screening_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      set_programme_roster_status: {
+        Args: { p_programme_id: string; p_organisation_id: string; p_participant_id: string; p_eligibility_status: string; p_registration_status: string }
+        Returns: Database["public"]["Tables"]["programme_participants"]["Row"][]
+      }
+      import_programme_roster: {
+        Args: { p_programme_id: string; p_organisation_id: string; p_rows: Json }
+        Returns: string[]
+      }
+      resolve_programme_screening_participant: {
+        Args: { p_assignment_id: string; p_practitioner_user_id: string; p_participant_reference: string }
+        Returns: string
+      }
+
+      save_admin_organisation: {
+        Args: { p_organisation_id: string; p_fields: Json; p_contacts?: Json | null }
+        Returns: undefined
+      }
+      capture_screening_with_result: {
+        Args: {
+          p_assignment_id: string
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
       is_organisation_member: {
         Args: { target_organisation_id: string }
         Returns: boolean
       }
       is_platform_staff: { Args: never; Returns: boolean }
+      respond_to_practitioner_assignment: {
+        Args: {
+          p_assignment_id: string
+          p_practitioner_user_id: string
+          p_reason: string | null
+          p_responded_at: string
+          p_response: string
+          p_urgent: boolean
+        }
+        Returns: string
+      }
+      resubmit_screening_with_result: {
+        Args: {
+          p_bmi: number | null
+          p_cholesterol_mmol_l: number | null
+          p_department: string | null
+          p_diastolic_mmhg: number | null
+          p_escalation_required: boolean
+          p_glucose_mmol_l: number | null
+          p_height_cm: number | null
+          p_participant_reference: string
+          p_practitioner_note: string | null
+          p_practitioner_user_id: string
+          p_risk_level: string
+          p_screening_id: string
+          p_submitted_at: string
+          p_systolic_mmhg: number | null
+          p_weight_kg: number | null
+        }
+        Returns: string
+      }
+      review_screening_with_errors: {
+        Args: {
+          p_errors: Json
+          p_review_note: string | null
+          p_reviewed_at: string
+          p_reviewer_id: string
+          p_screening_id: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_practitioner_assignment: {
+        Args: {
+          p_activity_name: string
+          p_assignment_id: string | null
+          p_ends_at: string | null
+          p_location: string
+          p_organisation_id: string
+          p_practitioner_user_id: string
+          p_programme_name: string
+          p_role_name: string
+          p_service_name: string
+          p_service_names: string[]
+          p_starts_at: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_linked_practitioner_assignment: {
+        Args: {
+          p_activation_id: string
+          p_service_ids: string[]
+          p_activity_name: string
+          p_assignment_id: string | null
+          p_ends_at: string | null
+          p_location: string
+          p_organisation_id: string
+          p_practitioner_user_id: string
+          p_programme_name: string
+          p_role_name: string
+          p_service_name: string
+          p_service_names: string[]
+          p_starts_at: string
+          p_status: string
+        }
+        Returns: string
+      }
+      save_programme_participant: {
+        Args: { p_programme_id: string; p_employee_id: string; p_screening_reference: string; p_service_ids: string[]; p_eligibility_status: string; p_registration_status: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -7,6 +7,7 @@ import { RequestsPipelineCard } from "@/components/portal/RequestsPipelineCard";
 import {
   ThisWeeksWellnessDaysCard,
   WellnessCalendarCard,
+  type WellnessDay,
 } from "@/components/portal/WellnessDaysCard";
 import { cn } from "@/lib/utils/cn";
 
@@ -26,14 +27,14 @@ const defaultDashboardCardOrder: DashboardCardId[] = [
 ];
 
 const dashboardCards: Record<DashboardCardId, ReactNode> = {
-  "wellness-days": <ThisWeeksWellnessDaysCard />,
-  calendar: <WellnessCalendarCard />,
+  "wellness-days": null,
+  calendar: null,
   "high-risk-insights": <HighRiskClientInsightsCard />,
   "requests-pipeline": <RequestsPipelineCard />,
   "practitioner-mobilisation": <PractitionerMobilisationStatusCard />,
 };
 
-export function AdminDashboardDraggableCards() {
+export function AdminDashboardDraggableCards({ events, today }: { events: WellnessDay[]; today: string }) {
   const [dashboardCardOrder, setDashboardCardOrder] = useState(defaultDashboardCardOrder);
   const [draggingId, setDraggingId] = useState<DashboardCardId | null>(null);
   const [dragOverId, setDragOverId] = useState<DashboardCardId | null>(null);
@@ -62,7 +63,7 @@ export function AdminDashboardDraggableCards() {
             setDragOverId(null);
           }}
         >
-          {dashboardCards[cardId]}
+          {cardId === "wellness-days" ? <ThisWeeksWellnessDaysCard events={events} today={today} /> : cardId === "calendar" ? <WellnessCalendarCard events={events} today={today} /> : dashboardCards[cardId]}
         </DraggableCard>
       ))}
     </section>

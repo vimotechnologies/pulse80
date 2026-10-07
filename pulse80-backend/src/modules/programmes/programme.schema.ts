@@ -67,12 +67,27 @@ export const programmeTypeDefs = /* GraphQL */ `
     readinessLabels: [String!]!
   }
 
+  type AssignmentServiceOption { id: ID! name: String! code: String! }
+  type AssignmentActivationOption {
+    id: ID! organisationId: ID! programmeName: String! title: String! location: String!
+    startsAt: String! endsAt: String! services: [AssignmentServiceOption!]!
+  }
+  input ProgrammeParticipantInput {
+    programmeId: ID! employeeId: ID! screeningReference: String! requiredServiceIds: [ID!]!
+    eligibilityStatus: String! registrationStatus: String!
+  }
   extend type Query {
+    adminAssignmentActivations: [AssignmentActivationOption!]!
     adminProgrammes: [Programme!]!
     adminActivations: [Activation!]!
+    adminOrganisationActivations(organisationId: ID!): [Activation!]!
+    adminOrganisationProgrammes(organisationId: ID!): [Programme!]!
+    organisationProgrammes: [Programme!]!
+    organisationActivations: [Activation!]!
   }
 
   extend type Mutation {
+    saveProgrammeParticipant(input: ProgrammeParticipantInput!): ID!
     createProgramme(input: ProgrammeInput!): Programme!
     updateProgramme(id: ID!, input: ProgrammeInput!): Programme!
     createActivation(input: ActivationInput!): Activation!

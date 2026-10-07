@@ -1,0 +1,206 @@
+// Pulse80 Analytics Data Relationship Map
+// Source: EDA datasets on the analytics branch
+// Purpose: show the verified analytical entities, keys and joins.
+
+Project Pulse80_Analytics {
+  database_type: 'PostgreSQL'
+  Note: 'ERD based on the datasets and joins validated by Pulse80 analytics EDA.'
+}
+
+Table organisations {
+  organisation_id varchar [pk]
+  name varchar
+  industry varchar
+  country varchar
+  employee_count int
+  status varchar
+  plan varchar
+  contract_start_date timestamp
+  contract_end_date timestamp
+  created_at timestamp
+}
+
+Table branches {
+  branch_id varchar [pk]
+  organisation_id varchar [not null]
+  name varchar
+  city varchar
+  country varchar
+  created_at timestamp
+}
+
+Table departments {
+  department_id varchar [pk]
+  organisation_id varchar [not null]
+  name varchar
+  created_at timestamp
+
+  indexes {
+    (organisation_id, name) [unique]
+  }
+}
+
+Table employees {
+  employee_id varchar [pk]
+  organisation_id varchar [not null]
+  branch_id varchar [not null]
+  department_id varchar [not null]
+  employee_reference varchar
+  year_of_birth int
+  sex varchar
+  employment_type varchar
+  status varchar
+  created_at timestamp
+}
+
+Table programmes {
+  programme_id varchar [pk]
+  organisation_id varchar [not null]
+  branch_id varchar [not null]
+  name varchar
+  programme_type varchar
+  start_date timestamp
+  end_date timestamp
+  venue varchar
+  status varchar
+  target_participants int
+  created_at timestamp
+}
+
+Table services {
+  service_id varchar [pk]
+  code varchar [unique]
+  name varchar
+  category varchar
+  default_unit varchar
+  active boolean
+}
+
+Table programme_services {
+  programme_service_id varchar [pk]
+  programme_id varchar [not null]
+  service_id varchar [not null]
+  target_capacity int
+  display_order int
+
+  indexes {
+    (programme_id, service_id) [unique]
+  }
+}
+
+Table participations {
+  participation_id varchar [pk]
+  programme_id varchar [not null]
+  employee_id varchar [not null]
+  checked_in_at timestamp
+  check_in_method varchar
+  consent_status varchar
+  consented_at timestamp
+  attendance_status varchar
+  created_at timestamp
+}
+
+Table providers {
+  provider_id varchar [pk]
+  name varchar
+  provider_type varchar
+  country varchar
+  verification_status varchar
+  active boolean
+}
+
+Table practitioners {
+  practitioner_id varchar [pk]
+  provider_id varchar [not null]
+  practitioner_code varchar [unique]
+  practitioner_type varchar
+  registration_body varchar
+  registration_number varchar [unique]
+  verification_status varchar
+  active boolean
+}
+
+Table screenings {
+  screening_id varchar [pk]
+  participation_id varchar [not null]
+  programme_service_id varchar [not null]
+  practitioner_id varchar [not null]
+  screened_at timestamp
+  status varchar
+  notes text
+  created_at timestamp
+}
+
+Table measurements {
+  measurement_id varchar [pk]
+  screening_id varchar [not null]
+  metric_code varchar [not null]
+  numeric_value decimal
+  text_value text
+  unit varchar
+  validation_status varchar
+  captured_at timestamp
+
+  indexes {
+    (screening_id, metric_code) [unique]
+  }
+}
+
+Table risk_assessments {
+  risk_assessment_id varchar [pk]
+  screening_id varchar [not null, unique]
+  risk_level varchar
+  risk_code varchar
+  requires_referral boolean
+  assessment_source varchar
+  rules_version varchar
+  assessed_at timestamp
+}
+
+Table referrals {
+  referral_id varchar [pk]
+  risk_assessment_id varchar [not null, unique]
+  referral_type varchar
+  urgency varchar
+  status varchar
+  referred_at timestamp
+  due_date timestamp
+}
+
+Table follow_ups {
+  follow_up_id varchar [pk]
+  referral_id varchar [not null, unique]
+  follow_up_date timestamp
+  outcome varchar
+  notes text
+  next_follow_up_date timestamp
+}
+
+// Organisation structure
+Ref: branches.organisation_id > organisations.organisation_id
+Ref: departments.organisation_id > organisations.organisation_id
+Ref: employees.organisation_id > organisations.organisation_id
+Ref: employees.branch_id > branches.branch_id
+Ref: employees.department_id > departments.department_id
+
+// Programme structure
+Ref: programmes.organisation_id > organisations.organisation_id
+Ref: programmes.branch_id > branches.branch_id
+Ref: programme_services.programme_id > programmes.programme_id
+Ref: programme_services.service_id > services.service_id
+Ref: participations.programme_id > programmes.programme_id
+Ref: participations.employee_id > employees.employee_id
+
+// Delivery network
+Ref: practitioners.provider_id > providers.provider_id
+Ref: screenings.practitioner_id > practitioners.practitioner_id
+
+// Screening event
+Ref: screenings.participation_id > participations.participation_id
+Ref: screenings.programme_service_id > programme_services.programme_service_id
+Ref: measurements.screening_id > screenings.screening_id
+Ref: risk_assessments.screening_id - screenings.screening_id
+
+// Referral and follow-up pathway
+Ref: referrals.risk_assessment_id - risk_assessments.risk_assessment_id
+Ref: follow_ups.referral_id - referrals.referral_id

@@ -19,6 +19,7 @@ import { DashboardWidget } from "@/components/portal/DashboardWidget";
 import { FormInput } from "@/components/portal/FormInput";
 import { PortalPageHeader } from "@/components/portal/PortalPageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToastMessage } from "@/components/ui/ToastMessage";
 import {
   UnifiedTablePagination,
   UnifiedTableSurface,
@@ -36,6 +37,8 @@ import {
   UnifiedFilterSort,
 } from "@/components/ui/UnifiedFilterCard";
 import type { IconsaxIcon } from "@/components/icons/IconsaxIcons";
+import { loadPdfBranding } from "@/app/actions/pdf-branding";
+import { downloadPdf } from "@/lib/pdf/download";
 import { cn } from "@/lib/utils/cn";
 
 type RecordTone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -108,8 +111,17 @@ type DataListPageProps<RecordType extends DataRecord> = {
   detailEyebrow?: string;
   featuredTitle?: string;
   enableBulkActions?: boolean;
+  readOnly?: boolean;
+  allowExport?: boolean;
   onCycleStatus?: (record: RecordType) => Partial<RecordType>;
   onRoleChange?: (record: RecordType, role: string) => Partial<RecordType>;
+  onOpenRecord?: (record: RecordType) => void;
+  rowActions?: {
+    edit?: boolean;
+    archive?: boolean;
+    download?: boolean;
+    cycleStatus?: boolean;
+  };
 };
 
 function field(record: DataRecord, label: string) {
@@ -127,10 +139,15 @@ export function DataListPage<RecordType extends DataRecord>({
   detailEyebrow = "Record details",
   featuredTitle = "Featured latest report",
   enableBulkActions = false,
+  readOnly = false,
+  allowExport = !readOnly,
   onCycleStatus,
   onRoleChange,
+  onOpenRecord,
+  rowActions,
 }: DataListPageProps<RecordType>) {
-  const [records, setRecords] = useState<RecordType[]>(() => config.records);
+  const [localRecords, setRecords] = useState<RecordType[]>(() => config.records);
+  const records = readOnly ? config.records : localRecords;
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>(() =>
     Object.fromEntries(config.filters.map((item) => [item.key, "All"])),
@@ -140,6 +157,7 @@ export function DataListPage<RecordType extends DataRecord>({
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState(columns[0]?.key ?? "title");
@@ -193,9 +211,67 @@ export function DataListPage<RecordType extends DataRecord>({
     window.setTimeout(() => setToast(null), 2400);
   }
 
+  const isDownloadAction = (label: string) => /^(download|export)\b/i.test(label);
+
+  async function downloadRecords(items: RecordType[], title = config.title, includeSummary = false) {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const branding = await loadPdfBranding();
+      const recordClient = (record: RecordType) => {
+        if (branding.client) return branding.client;
+        const name = record.filters.organization || record.filters.organisation
+          || field(record, "Organization") || field(record, "Organisation")
+          || detail(record, "Organization") || detail(record, "Organisation")
+          || (config.id === "billing" ? record.subtitle.split(" · ")[0] : "");
+        const matchingClient = branding.clients.find((client) => name
+          ? client.name.toLowerCase() === name.toLowerCase()
+          : record.subtitle.startsWith(`${client.name} · `) || record.title === client.name);
+        return matchingClient ?? (name ? { name } : undefined);
+      };
+      const clients = items.map(recordClient);
+      const client = clients.length && clients.every((item) => item?.name === clients[0]?.name) ? clients[0] : branding.client;
+      await downloadPdf({
+        title,
+        client,
+        subtitle: config.description,
+        sections: [
+          ...(includeSummary ? [{ title: "Summary", lines: metrics.map((metric) => `${metric.label}: ${metric.value} - ${metric.detail}`) }] : []),
+          ...items.map((record) => ({
+            title: record.title,
+            client: recordClient(record),
+            lines: [record.subtitle, record.meta, `Status: ${record.status}`,
+              ...record.fields.map((item) => `${item.label}: ${item.value}`),
+              ...record.details.map((item) => `${item.label}: ${item.value}`),
+              ...(record.progress === undefined ? [] : [`Progress: ${record.progress}%`]),
+              ...(record.checklist ?? []).map((item) => `${item.done ? "Completed" : "Pending"}: ${item.label}`),
+              ...(record.warning ? [`Warning: ${record.warning}`] : []),
+            ].filter(Boolean),
+          })),
+        ],
+      });
+      showToast("PDF download started.");
+    } catch (error) {
+      console.error("[pdf-download] Failed to generate PDF", error);
+      showToast(error instanceof Error && error.message === "Could not load the client logo."
+        ? "The client logo could not be loaded. Please check the uploaded logo and try again."
+        : "Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   function updateRecord(id: string, patch: Partial<RecordType>) {
     setRecords((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
     setSelected((item) => (item?.id === id ? { ...item, ...patch } : item));
+  }
+
+  function openRecord(record: RecordType) {
+    if (onOpenRecord) {
+      onOpenRecord(record);
+      return;
+    }
+    setSelected(record);
   }
 
   function resetFilters() {
@@ -300,31 +376,27 @@ export function DataListPage<RecordType extends DataRecord>({
         description={config.description}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <ActionButton variant="secondary" loading={loading} onClick={refreshList}>
+            {!readOnly ? <ActionButton variant="secondary" loading={loading} onClick={refreshList}>
               <Refresh className="mr-2 h-5 w-5" aria-hidden="true" />
               Refresh
-            </ActionButton>
-            <ActionButton onClick={() => setModalMode("create")}>
-              <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />
+            </ActionButton> : null}
+            {config.primaryAction ? <ActionButton loading={isDownloadAction(config.primaryAction) && downloading} onClick={() => isDownloadAction(config.primaryAction) ? void downloadRecords(sortedRecords, `${config.title} summary`, true) : setModalMode("create")}>
+              {isDownloadAction(config.primaryAction) ? <Download className="mr-2 h-5 w-5" aria-hidden="true" /> : <AddCircle className="mr-2 h-5 w-5" aria-hidden="true" />}
               {config.primaryAction}
-            </ActionButton>
+            </ActionButton> : null}
           </div>
         }
       />
 
-      {toast ? (
-        <div className="rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm font-semibold text-success shadow-sm">
-          {toast}
-        </div>
-      ) : null}
+      <ToastMessage message={toast} />
 
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.slice(0, 5).map((metric) => (
+      {metrics.length ? <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
           <ListSummaryMetric key={metric.label} metric={metric} />
         ))}
-      </section>
+      </section> : null}
 
       {config.featured ? (
         <DashboardWidget interactive className="overflow-hidden">
@@ -341,7 +413,7 @@ export function DataListPage<RecordType extends DataRecord>({
                 <Eye className="mr-2 h-5 w-5" aria-hidden="true" />
                 Preview
               </ActionButton>
-              <ActionButton onClick={() => showToast("Download prepared as a placeholder.")}>
+              <ActionButton loading={downloading} onClick={() => config.featured && void downloadRecords([config.featured], config.featured.title)}>
                 <Download className="mr-2 h-5 w-5" aria-hidden="true" />
                 Download
               </ActionButton>
@@ -377,10 +449,10 @@ export function DataListPage<RecordType extends DataRecord>({
           setPage(1);
         }}
         onClear={resetFilters}
-        onExport={() => showToast("Export prepared as a placeholder.")}
+        onExport={allowExport ? () => void downloadRecords(sortedRecords) : undefined}
       />
 
-      {selectedIds.length > 0 ? (
+      {!readOnly && selectedIds.length > 0 ? (
         <BulkActionBar
           count={selectedIds.length}
           onClear={() => setSelectedIds([])}
@@ -402,7 +474,7 @@ export function DataListPage<RecordType extends DataRecord>({
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
-            onOpen={setSelected}
+            onOpen={openRecord}
             enableBulkActions={enableBulkActions}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
@@ -422,19 +494,19 @@ export function DataListPage<RecordType extends DataRecord>({
             renderActions={(record) => (
               <RowActionMenu
                 record={record}
-                onView={() => setSelected(record)}
-                onEdit={() => {
+                onView={() => openRecord(record)}
+                onEdit={readOnly || rowActions?.edit === false ? undefined : () => {
                   setSelected(record);
                   setModalMode("edit");
                 }}
-                onArchive={() => {
+                onArchive={readOnly || rowActions?.archive === false ? undefined : () => {
                   setSelected(record);
                   setModalMode("archive");
                 }}
-                onDownload={() => showToast("Download prepared as a placeholder.")}
-                onCycleStatus={() => cycleStatus(record)}
+                onDownload={readOnly || rowActions?.download === false ? undefined : () => void downloadRecords([record], record.title)}
+                onCycleStatus={readOnly || rowActions?.cycleStatus === false ? undefined : () => cycleStatus(record)}
                 onRoleChange={
-                  onRoleChange
+                  onRoleChange && !readOnly
                     ? (role) => {
                         updateRecord(record.id, onRoleChange(record, role));
                         showToast("Role changed locally.");
@@ -454,9 +526,9 @@ export function DataListPage<RecordType extends DataRecord>({
           title={selected.title}
           subtitle={selected.subtitle}
           onClose={() => setSelected(null)}
-          onEdit={() => setModalMode("edit")}
-          onArchive={() => setModalMode("archive")}
-          onAction={() => showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
+          onEdit={readOnly || rowActions?.edit === false ? undefined : () => setModalMode("edit")}
+          onArchive={readOnly || rowActions?.archive === false ? undefined : () => setModalMode("archive")}
+          onAction={readOnly ? undefined : () => isDownloadAction(config.secondaryAction ?? "") ? void downloadRecords(sortedRecords) : showToast(`${config.secondaryAction ?? config.primaryAction} completed locally.`)}
           actionLabel={config.secondaryAction ?? "Run action"}
         />
       ) : null}
@@ -522,7 +594,7 @@ export function DataToolbar<RecordType extends DataRecord>({
   sortDirection: "asc" | "desc";
   onSortChange: (value: string) => void;
   onClear: () => void;
-  onExport: () => void;
+  onExport?: () => void;
 }) {
   return (
     <UnifiedFilterCard>
@@ -551,7 +623,7 @@ export function DataToolbar<RecordType extends DataRecord>({
           }))}
           onChange={onSortChange}
         />
-        <UnifiedFilterAction onClick={onExport}>Export</UnifiedFilterAction>
+        {onExport ? <UnifiedFilterAction onClick={onExport}>Export</UnifiedFilterAction> : null}
         <UnifiedFilterClear onClick={onClear} />
       </div>
     </UnifiedFilterCard>
@@ -805,13 +877,14 @@ export function RowActionMenu<RecordType extends DataRecord>({
 }: {
   record: RecordType;
   onView: () => void;
-  onEdit: () => void;
-  onArchive: () => void;
-  onDownload: () => void;
-  onCycleStatus: () => void;
+  onEdit?: () => void;
+  onArchive?: () => void;
+  onDownload?: () => void;
+  onCycleStatus?: () => void;
   onRoleChange?: (role: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const hasMenuActions = Boolean(onEdit || onArchive || onDownload || onCycleStatus || onRoleChange);
 
   return (
     <div className="relative inline-flex items-center justify-end gap-1">
@@ -826,7 +899,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
       >
         <Eye className="h-4 w-4" aria-hidden="true" />
       </button>
-      <button
+      {hasMenuActions ? <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
@@ -836,13 +909,13 @@ export function RowActionMenu<RecordType extends DataRecord>({
         aria-label={`Open actions for ${record.title}`}
       >
         <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-      </button>
-      {open ? (
+      </button> : null}
+      {open && hasMenuActions ? (
         <div className="absolute right-0 top-10 z-20 w-52 rounded-lg border border-card-border bg-surface p-1 text-left shadow-[0_18px_44px_rgba(7,22,51,0.14)]">
           <ActionItem icon={Eye} label="View details" onClick={onView} />
-          <ActionItem icon={Edit} label="Edit locally" onClick={onEdit} />
-          <ActionItem icon={Download} label="Download" onClick={onDownload} />
-          <ActionItem icon={Refresh} label={record.status === "Published" ? "Unpublish" : "Update status"} onClick={onCycleStatus} />
+          {onEdit ? <ActionItem icon={Edit} label="Edit locally" onClick={onEdit} /> : null}
+          {onDownload ? <ActionItem icon={Download} label="Download" onClick={onDownload} /> : null}
+          {onCycleStatus ? <ActionItem icon={Refresh} label={record.status === "Published" ? "Unpublish" : "Update status"} onClick={onCycleStatus} /> : null}
           {onRoleChange ? (
             <label className="mt-1 block border-t border-card-border px-3 py-2 text-xs font-semibold text-muted">
               Role
@@ -857,7 +930,7 @@ export function RowActionMenu<RecordType extends DataRecord>({
               </select>
             </label>
           ) : null}
-          <ActionItem icon={Trash} label="Archive locally" danger onClick={onArchive} />
+          {onArchive ? <ActionItem icon={Trash} label="Archive locally" danger onClick={onArchive} /> : null}
         </div>
       ) : null}
     </div>
@@ -910,9 +983,9 @@ export function DetailModal<RecordType extends DataRecord>({
   record: RecordType;
   actionLabel: string;
   onClose: () => void;
-  onEdit: () => void;
-  onArchive: () => void;
-  onAction: () => void;
+  onEdit?: () => void;
+  onArchive?: () => void;
+  onAction?: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
@@ -1003,16 +1076,16 @@ export function DetailModal<RecordType extends DataRecord>({
         </div>
 
         <div className="flex flex-wrap gap-2 border-t border-card-border p-5">
-          <ActionButton onClick={onEdit}>
+          {onEdit ? <ActionButton onClick={onEdit}>
             <Edit className="mr-2 h-5 w-5" aria-hidden="true" />
             Edit details
-          </ActionButton>
-          <ActionButton variant="secondary" onClick={onAction}>
+          </ActionButton> : null}
+          {onAction ? <ActionButton variant="secondary" onClick={onAction}>
             {actionLabel}
-          </ActionButton>
-          <ActionButton variant="secondary" className="text-pulse-red" onClick={onArchive}>
+          </ActionButton> : null}
+          {onArchive ? <ActionButton variant="secondary" className="text-pulse-red" onClick={onArchive}>
             Archive
-          </ActionButton>
+          </ActionButton> : null}
         </div>
       </section>
     </div>

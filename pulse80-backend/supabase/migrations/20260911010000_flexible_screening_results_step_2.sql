@@ -1,0 +1,8 @@
+-- Intentionally empty.
+--
+-- The tables, policies and data changes originally repeated here
+-- are already created by:
+-- 20260911004741_flexible_screening_results_step_2.sql
+--
+-- Keep this migration version to preserve the migration sequence.
+-- No additional database changes are needed.

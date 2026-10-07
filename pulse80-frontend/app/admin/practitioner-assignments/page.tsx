@@ -3,5 +3,5 @@ import { AdminPractitionerAssignments } from "@/components/admin/AdminPractition
 
 export default async function AdminPractitionerAssignmentsPage() {
   const data = await loadPractitionerAssignmentPage();
-  return <AdminPractitionerAssignments assignments={data.adminPractitionerAssignments} practitioners={data.adminPractitioners} organisations={data.adminOrganisations} />;
+  return <AdminPractitionerAssignments activations={data.adminAssignmentActivations} assignments={data.adminPractitionerAssignments} practitioners={data.adminPractitioners} organisations={data.adminOrganisations} />;
 }

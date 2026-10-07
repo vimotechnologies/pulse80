@@ -1,3 +1,10 @@
+import { rosterTypeDefs } from "../modules/programme-roster/roster.schema.js";
+import { rosterResolvers } from "../modules/programme-roster/roster.resolver.js";
+import { unitTypeDefs, unitResolvers } from "../modules/organisation-units/organisation-unit.js";
+import { userTypeDefs } from "../modules/users/user.schema.js";
+import { userResolvers } from "../modules/users/user.resolver.js";
+import { portalRecordTypeDefs } from "../modules/portal-records/portal-record.schema.js";
+import { portalRecordResolvers } from "../modules/portal-records/portal-record.resolver.js";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import { authResolvers } from "../modules/auth/auth.resolver.js";
@@ -44,6 +51,6 @@ const rootResolvers = {
 };
 
 export const schema = makeExecutableSchema({
-  typeDefs: [rootTypeDefs, authTypeDefs, dashboardTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
-  resolvers: [rootResolvers, authResolvers, dashboardResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
+  typeDefs: [rosterTypeDefs, unitTypeDefs, userTypeDefs, portalRecordTypeDefs, rootTypeDefs, authTypeDefs, dashboardTypeDefs, organisationTypeDefs, practitionerTypeDefs, programmeTypeDefs, screeningTypeDefs],
+  resolvers: [rosterResolvers, unitResolvers, userResolvers, portalRecordResolvers, rootResolvers, authResolvers, dashboardResolvers, organisationResolvers, practitionerResolvers, programmeResolvers, screeningResolvers],
 });

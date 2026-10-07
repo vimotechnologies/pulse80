@@ -1,10 +1,9 @@
 import type { PortalConfig, PortalDashboardData } from "@/data/portal-phase-two";
-import { AdminDashboardDraggableCards } from "@/components/portal/AdminDashboardDraggableCards";
 import { MetricWidget } from "@/components/portal/MetricWidget";
 
 type PortalDashboardProps = {
   config: PortalConfig;
-  data: PortalDashboardData;
+  data: Pick<PortalDashboardData, "metrics">;
 };
 
 export function PortalDashboard({ data }: PortalDashboardProps) {
@@ -26,8 +25,6 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
           <MetricWidget key={metric.label} {...metric} />
         ))}
       </section>
-
-      <AdminDashboardDraggableCards />
     </div>
   );
 }

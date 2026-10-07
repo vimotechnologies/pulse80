@@ -21,6 +21,15 @@ const statuses = [
   "Archived",
 ] as const;
 const methods = ["Email", "Phone", "WhatsApp", "Portal"] as const;
+const botswanaDistricts = ["Central", "Chobe", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng", "North-East", "North-West", "South-East", "Southern"];
+const botswanaMunicipalities: Record<string, string> = {
+  francistown: "North-East",
+  gaborone: "South-East",
+  jwaneng: "Southern",
+  lobatse: "South-East",
+  "selebi-phikwe": "Central",
+  "sowa town": "Central",
+};
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const logoSchema = z.string().max(2_800_000);
 const contactSchema = z.object({
@@ -48,6 +57,14 @@ const sharedFields = {
   customPackageNotes: z.string().trim().max(3000).nullish(),
 };
 
+function isValidLocation(country: string, region: string, town: string) {
+  if (country.trim().toLowerCase() !== "botswana") return true;
+  const district = region.trim().toLowerCase();
+  if (!botswanaDistricts.some((knownDistrict) => knownDistrict.toLowerCase() === district)) return false;
+  const expectedDistrict = botswanaMunicipalities[town.trim().toLowerCase()];
+  return !expectedDistrict || expectedDistrict.toLowerCase() === district;
+}
+
 const createSchema = z
   .object({
     ...sharedFields,
@@ -59,6 +76,9 @@ const createSchema = z
   })
   .refine((value) => value.contacts.filter((contact) => contact.primary).length === 1, {
     message: "Exactly one primary contact is required.",
+  })
+  .refine((value) => isValidLocation(value.country, value.region, value.primaryLocation), {
+    message: "Choose a Botswana district and a city or town within it.",
   });
 
 const updateSchema = z
@@ -81,6 +101,14 @@ const updateSchema = z
   })
   .refine((value) => !value.contacts || value.contacts.filter((contact) => contact.primary).length === 1, {
     message: "Exactly one primary contact is required.",
+  })
+  .refine((value) => {
+    const locationChanged = value.country !== undefined || value.region !== undefined || value.primaryLocation !== undefined;
+    if (!locationChanged) return true;
+    return value.country !== undefined && value.region !== undefined && value.primaryLocation !== undefined &&
+      isValidLocation(value.country, value.region, value.primaryLocation);
+  }, {
+    message: "Choose a Botswana district and a city or town within it.",
   });
 
 type OrganisationRow = Awaited<ReturnType<OrganisationService["getById"]>>;
@@ -139,8 +167,26 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   return parsed.data;
 }
 
+function toBranding(row: { name: string; logo_path: string | null }) {
+  return {
+    name: row.name,
+    logoUrl: row.logo_path
+      ? `${env.SUPABASE_URL}/storage/v1/object/public/organisation-logos/${row.logo_path}`
+      : null,
+  };
+}
+
 export const organisationResolvers = {
   Query: {
+    organisationBranding: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "organisation:read");
+      return toBranding(await new OrganisationService(context.supabase!).getBrandingById(organisationId));
+    },
+    adminOrganisationBranding: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "organisation:read");
+      const rows = await new OrganisationService(context.adminSupabase).listBranding();
+      return rows.map(toBranding);
+    },
     organisation: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       const { organisationId } = requirePermission(context, "organisation:read");
       return toOrganisation(await new OrganisationService(context.supabase!).getById(organisationId));

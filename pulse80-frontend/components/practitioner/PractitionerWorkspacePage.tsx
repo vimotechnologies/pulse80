@@ -8,40 +8,78 @@ import {
   listField,
   type DataColumn,
 } from "@/components/portal/DataListPage";
+import { useRouter } from "next/navigation";
+import { CalendarDays, Clock, Location } from "@/components/icons/IconsaxIcons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   practitionerPageConfigs,
   type PractitionerPageConfig,
+  type PractitionerMetric,
   type PractitionerRecord,
 } from "@/data/practitioner-portal-ui";
 
 type PractitionerWorkspacePageProps = {
   configId: PractitionerPageConfig["id"];
+  records?: PractitionerRecord[];
 };
 
-export function PractitionerWorkspacePage({ configId }: PractitionerWorkspacePageProps) {
-  const config = practitionerPageConfigs[configId];
+export function PractitionerWorkspacePage({ configId, records }: PractitionerWorkspacePageProps) {
+  const router = useRouter();
+  const baseConfig = practitionerPageConfigs[configId];
+  const liveAssignments = configId === "assignments" && records !== undefined;
+  const config = records
+    ? {
+        ...baseConfig,
+        primaryAction: liveAssignments ? "Download assignments summary" : baseConfig.primaryAction,
+        secondaryAction: undefined,
+        records,
+        filters: baseConfig.filters.map(filter => ({ ...filter, options: ["All", ...new Set(records.map(record => record.filters[filter.key]).filter(Boolean))] })),
+        metrics: liveAssignments ? buildAssignmentMetrics(records, baseConfig.metrics) : baseConfig.metrics,
+      }
+    : { ...baseConfig, records: [], metrics: [], filters: [], primaryAction: "", secondaryAction: undefined };
 
   return (
     <DataListPage
       config={config}
       columns={practitionerColumns(config.id)}
       detailEyebrow={`${config.eyebrow} details`}
-      onCycleStatus={(record) => cyclePractitionerStatus(config.id, record)}
+      readOnly={liveAssignments}
+      allowExport={false}
+      onCycleStatus={liveAssignments ? undefined : (record) => cyclePractitionerStatus(config.id, record)}
+      onOpenRecord={config.id === "assignments" ? (record) => router.push(`/practitioner/assignments/${record.id}`) : undefined}
+      rowActions={config.id === "assignments" ? { edit: false, archive: false, download: false } : undefined}
     />
   );
+}
+
+function buildAssignmentMetrics(records: PractitionerRecord[], source: PractitionerMetric[]): PractitionerMetric[] {
+  const now = Date.now();
+  const confirmed = records.filter((record) => record.status === "Confirmed").length;
+  const needsAction = records.filter((record) => ["Action Required", "Needs Correction"].includes(record.status)).length;
+  const upcoming = records.filter((record) => {
+    const startsAt = new Date(record.fields.find((field) => field.label === "Starts at")?.value ?? "").getTime();
+    return startsAt >= now && !["Completed", "Cancelled"].includes(record.status);
+  }).length;
+  const sites = new Set(records.map((record) => record.filters.location).filter(Boolean));
+  const number = new Intl.NumberFormat("en-BW");
+
+  return [
+    { ...source[0], label: "Confirmed", value: number.format(confirmed), detail: "Assignments confirmed" },
+    { ...source[1], label: "Needs action", value: number.format(needsAction), detail: "Require practitioner response" },
+    { ...source[2], label: "Upcoming", value: number.format(upcoming), detail: "Future assignments not completed or cancelled" },
+    { ...source[3], label: "Sites", value: number.format(sites.size), detail: "Distinct assignment locations" },
+  ];
 }
 
 function practitionerColumns(configId: PractitionerPageConfig["id"]): DataColumn<PractitionerRecord>[] {
   if (configId === "assignments") {
     return [
-      identityColumn("Assignment"),
-      textColumn("Organization", (record) => record.title.replace(/ wellness activation| screening day| follow-up clinic/g, "")),
-      textColumn("Date", (record) => record.subtitle.split(" · ")[0]),
-      textColumn("Location", (record) => record.filters.location),
-      textColumn("Services", (record) => listDetailFromMeta(record.meta) || listDetailFromDetails(record, "Services")),
+      assignmentColumn(),
+      textColumn("Organisation", getAssignmentOrganisation, "min-w-40"),
+      assignmentProgrammeColumn(),
+      assignmentDateTimeColumn(),
+      assignmentLocationColumn(),
       statusColumn(),
-      progressColumn("Readiness"),
     ];
   }
 
@@ -87,6 +125,85 @@ function practitionerColumns(configId: PractitionerPageConfig["id"]): DataColumn
   ];
 }
 
+function assignmentColumn(): DataColumn<PractitionerRecord> {
+  return {
+    key: "title",
+    label: "Assignment",
+    className: "min-w-60",
+    render: (record) => (
+      <div className="space-y-1">
+        <p className="text-sm font-semibold leading-5 text-navy">{record.title}</p>
+        <p className="text-xs leading-4 text-muted">{getAssignmentSecondaryText(record)}</p>
+      </div>
+    ),
+    sortValue: (record) => record.title,
+  };
+}
+
+function assignmentProgrammeColumn(): DataColumn<PractitionerRecord> {
+  return {
+    key: "programme",
+    label: "Programme",
+    className: "min-w-64 max-w-80",
+    render: (record) => <p className="max-w-72 whitespace-normal text-sm font-medium leading-5 text-navy">{getAssignmentProgramme(record) || "Not set"}</p>,
+    sortValue: getAssignmentProgramme,
+  };
+}
+
+function assignmentDateTimeColumn(): DataColumn<PractitionerRecord> {
+  return {
+    key: "date-time",
+    label: "Date & Time",
+    className: "min-w-40",
+    render: (record) => {
+      const { date, time } = getAssignmentDateTime(record);
+      return (
+        <div className="space-y-1.5 text-navy">
+          <span className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />{date}</span>
+          <span className="flex items-center gap-2 text-xs text-muted"><Clock className="h-4 w-4 shrink-0" aria-hidden="true" />{time}</span>
+        </div>
+      );
+    },
+    sortValue: (record) => `${getAssignmentDateTime(record).date} ${getAssignmentDateTime(record).time}`,
+  };
+}
+
+function assignmentLocationColumn(): DataColumn<PractitionerRecord> {
+  return {
+    key: "location",
+    label: "Location",
+    className: "min-w-36",
+    render: (record) => (
+      <span className="flex items-center gap-2 text-sm font-medium text-navy">
+        <Location className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+        {record.filters.location || "Not set"}
+      </span>
+    ),
+    sortValue: (record) => record.filters.location,
+  };
+}
+
+function getAssignmentOrganisation(record: PractitionerRecord) {
+  return listDetailFromDetails(record, "Organisation") || record.title.replace(/ wellness activation| screening day| follow-up clinic/g, "");
+}
+
+function getAssignmentSecondaryText(record: PractitionerRecord) {
+  const team = record.fields.find((item) => item.label === "Team")?.value;
+  const expected = record.fields.find((item) => item.label === "Expected")?.value;
+  return [team ? `Team of ${team}` : "", expected ? `${expected} expected` : ""].filter(Boolean).join(" · ")
+    || listDetailFromDetails(record, "Service")
+    || record.id;
+}
+
+function getAssignmentProgramme(record: PractitionerRecord) {
+  return listDetailFromDetails(record, "Programme") || listDetailFromMeta(record.meta);
+}
+
+function getAssignmentDateTime(record: PractitionerRecord) {
+  const [date = "Date not set", time = "Time not set"] = record.subtitle.split(" · ");
+  return { date, time };
+}
+
 function identityColumn(label: string): DataColumn<PractitionerRecord> {
   return {
     key: "title",
@@ -96,10 +213,11 @@ function identityColumn(label: string): DataColumn<PractitionerRecord> {
   };
 }
 
-function textColumn(label: string, value: (record: PractitionerRecord) => string): DataColumn<PractitionerRecord> {
+function textColumn(label: string, value: (record: PractitionerRecord) => string, className?: string): DataColumn<PractitionerRecord> {
   return {
     key: label.toLowerCase().replace(/\s+/g, "-"),
     label,
+    className,
     render: (record) => <span className="font-medium text-navy">{value(record) || "Not set"}</span>,
     sortValue: value,
   };

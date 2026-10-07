@@ -37,13 +37,51 @@ const programmeSelect = `
 const activationSelect = `
   id, programme_id, organisation_id, title, description, location,
   starts_at, ends_at, expected_participants, service_names, status,
-  created_at, updated_at, programmes (name, organisations (name)),
+  created_at, updated_at, programmes (name, organisation_id, service_names, organisations (name)),
   activation_readiness_items (id, label, completed, completed_at),
   practitioner_assignments (id)
 `;
 
 export class ProgrammeService {
   constructor(private readonly supabase: TypedSupabase) {}
+
+  async assignmentActivations() {
+    const [activations, catalogue] = await Promise.all([
+      this.listActivations(),
+      this.supabase.from("services").select("id, name, code, active"),
+    ]);
+    if (catalogue.error) throw new Error(catalogue.error.message);
+    // Match the migration's roster_service_allowed rule, including ambiguity
+    // across inactive catalogue rows. SQL remains authoritative at write time.
+    const matchingIds = (labels: string[]) => new Set(labels.flatMap((label) => {
+      const normalized = label.trim().toLowerCase();
+      const matches = catalogue.data.filter((service) =>
+        [service.name.trim().toLowerCase(), service.code.trim().toLowerCase()].includes(normalized));
+      const match = matches.length === 1 ? matches[0] : undefined;
+      return match?.active ? [match.id] : [];
+    }));
+    return activations.map((event) => {
+      const eventServices = matchingIds(event.service_names);
+      const programmeServices = matchingIds(event.programmes?.service_names ?? []);
+      return {
+        id: event.id, organisationId: event.organisation_id, programmeName: event.programmes?.name,
+        title: event.title, location: event.location, startsAt: event.starts_at, endsAt: event.ends_at,
+        services: event.programmes?.organisation_id === event.organisation_id
+          ? catalogue.data.filter((service) => eventServices.has(service.id) && programmeServices.has(service.id))
+          : [],
+      };
+    });
+  }
+
+  async saveParticipant(input: { programmeId: string; employeeId: string; screeningReference: string; requiredServiceIds: string[]; eligibilityStatus: string; registrationStatus: string }) {
+    const { data, error } = await this.supabase.rpc("save_programme_participant", {
+      p_programme_id: input.programmeId, p_employee_id: input.employeeId,
+      p_screening_reference: input.screeningReference, p_service_ids: input.requiredServiceIds,
+      p_eligibility_status: input.eligibilityStatus, p_registration_status: input.registrationStatus,
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  }
 
   async listProgrammes() {
     const { data, error } = await this.supabase.from("programmes").select(programmeSelect).order("starts_on", { ascending: false });
@@ -53,6 +91,22 @@ export class ProgrammeService {
 
   async listActivations() {
     const { data, error } = await this.supabase.from("activations").select(activationSelect).order("starts_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async listOrganisationProgrammes(organisationId: string) {
+    const { data, error } = await this.supabase.from("programmes").select(programmeSelect).eq("organisation_id", organisationId).order("starts_on", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async listOrganisationActivations(organisationId: string) {
+    const { data, error } = await this.supabase
+      .from("activations")
+      .select(activationSelect)
+      .eq("organisation_id", organisationId)
+      .order("starts_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data;
   }

@@ -7,6 +7,14 @@ import { DashboardService } from "./dashboard.service.js";
 
 export const dashboardResolvers = {
   Query: {
+    adminRiskDistribution: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "analytics:read");
+      return new DashboardService(context.adminSupabase).getRiskDistribution();
+    },
+    organisationRiskDistribution: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      const { organisationId } = requirePermission(context, "analytics:read");
+      return new DashboardService(context.adminSupabase).getRiskDistribution(organisationId);
+    },
     adminDashboardStats: async (
       _parent: unknown,
       _arguments: unknown,
@@ -15,6 +23,15 @@ export const dashboardResolvers = {
       requirePlatformPermission(context, "analytics:read");
 
       return new DashboardService(context.adminSupabase).getAdminStats();
+    },
+    adminPortalAnalytics: async (
+      _parent: unknown,
+      _arguments: unknown,
+      context: GraphQLContext,
+    ) => {
+      requirePlatformPermission(context, "analytics:read");
+
+      return new DashboardService(context.adminSupabase).getAdminPortalAnalytics();
     },
     organisationDashboardStats: async (
       _parent: unknown,
