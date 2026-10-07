@@ -6,6 +6,9 @@ import type { Database } from "../../generated/database.types.js";
 import { dashboardResolvers } from "./dashboard.resolver.js";
 import type { GraphQLContext } from "../../graphql/context.js";
 import { DashboardService } from "./dashboard.service.js";
+import { graphql } from "graphql";
+import { makeExecutableSchema } from "@graphql-tools/schema";
+import { dashboardTypeDefs } from "./dashboard.schema.js";
 
 type SupabaseClientOptions = NonNullable<Parameters<typeof createClient>[2]>;
 type RealtimeTransport = NonNullable<NonNullable<SupabaseClientOptions["realtime"]>["transport"]>;
@@ -179,6 +182,7 @@ test("admin portal analytics aggregates production view rows and counts", async 
           ]);
         }
         if (resource === "analytics_risk_metrics") {
+          if (Number(url.searchParams.get("offset") ?? 0) > 0) return Response.json([]);
           return Response.json([
             { risk_category: "Low", participant_count: 7 },
             { risk_category: "High", participant_count: 3 },
@@ -312,4 +316,56 @@ test("unauthenticated callers and callers without tenant access are rejected", a
   unauthorised.identity.organisationRole = null;
   await assert.rejects(dashboardResolvers.Query.organisationDashboardStats(null, {}, unauthorised), /do not have access/);
   await assert.rejects(dashboardResolvers.Query.adminPortalAnalytics(null, {}, context()), /do not have permission/);
+});
+
+test("risk GraphQL queries isolate organisations, aggregate all admin pages and expose empty categories", async () => {
+  const rows = [
+    { organisation_id: "org-a", risk_category: "High", participant_count: 2 },
+    { organisation_id: "org-a", risk_category: "Not Calculated", participant_count: 3 },
+    { organisation_id: "org-b", risk_category: "High", participant_count: 7 },
+    { organisation_id: "org-b", risk_category: "Low", participant_count: 1 },
+  ];
+  const supabase = createClient<Database>("https://test.supabase.co", "test-key", {
+    realtime: { transport: websocketTransport },
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: async input => {
+      const url = new URL(String(input));
+      assert.ok(url.pathname.endsWith("/analytics_risk_metrics"));
+      const tenant = url.searchParams.get("organisation_id")?.slice(3);
+      const matching = rows.filter(row => !tenant || row.organisation_id === tenant);
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      return Response.json(matching.slice(offset, offset + 1));
+    } },
+  });
+  const schema = makeExecutableSchema({ typeDefs: ["type Query { _empty: Boolean }", dashboardTypeDefs], resolvers: dashboardResolvers });
+  const run = (contextValue: GraphQLContext, admin = false) => graphql({ schema, contextValue,
+    source: `{ ${admin ? "adminRiskDistribution" : "organisationRiskDistribution"} { riskCategory participantCount } }`,
+  });
+  const ctx = context(); ctx.adminSupabase = supabase;
+  const a = await run(ctx);
+  assert.equal(a.errors, undefined);
+  assert.deepEqual(JSON.parse(JSON.stringify(a.data)), { organisationRiskDistribution: [
+    { riskCategory: "Low", participantCount: 0 }, { riskCategory: "Moderate", participantCount: 0 },
+    { riskCategory: "High", participantCount: 2 }, { riskCategory: "Not Calculated", participantCount: 3 },
+  ] });
+  ctx.identity.organisationId = "org-b";
+  const b = await run(ctx);
+  assert.equal((b.data?.organisationRiskDistribution as { participantCount: number }[])[2]?.participantCount, 7);
+  ctx.identity.organisationId = "org-empty";
+  const empty = await run(ctx);
+  assert.ok((empty.data?.organisationRiskDistribution as { participantCount: number }[]).every(row => row.participantCount === 0));
+  assert.equal((await run(ctx, true)).errors?.[0]?.extensions.code, "FORBIDDEN");
+  ctx.identity.platformRole = "super_admin";
+  const admin = await run(ctx, true);
+  assert.equal((admin.data?.adminRiskDistribution as { participantCount: number }[])[2]?.participantCount, 9);
+  ctx.user = null;
+  assert.equal((await run(ctx)).errors?.[0]?.extensions.code, "UNAUTHENTICATED");
+});
+
+test("risk database errors propagate rather than reporting zero risk", async () => {
+  const supabase = createClient<Database>("https://test.supabase.co", "test-key", {
+    realtime: { transport: websocketTransport }, auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: async () => Response.json({ message: "Risk view unavailable" }, { status: 500 }) },
+  });
+  await assert.rejects(new DashboardService(supabase).getRiskDistribution("org-a"), /Risk view unavailable/);
 });
