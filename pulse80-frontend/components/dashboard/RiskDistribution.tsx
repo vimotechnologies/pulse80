@@ -6,7 +6,7 @@ export function RiskDistribution({ entries, scope }: { entries: RiskDistribution
   return (
     <section aria-label="Screening risk distribution" className="rounded-2xl border border-card-border bg-white p-5">
       <h2 className="text-lg font-semibold text-navy">Screening risk distribution</h2>
-      <p className="mt-2 text-sm text-muted">{scope} · All time · Latest applicable completed screening per participant</p>
+      <p className="mt-2 text-sm text-muted">{scope} · All time · Latest completed value per supported measurement</p>
       {total === 0 ? <p role="status" className="mt-4 text-sm">No completed screenings available for risk analysis.</p> : (
         <table className="mt-4 w-full text-left text-sm">
           <caption className="sr-only">Risk categories for {number.format(total)} screened participants</caption>
