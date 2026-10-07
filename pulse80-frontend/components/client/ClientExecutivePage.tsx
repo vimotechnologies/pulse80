@@ -25,6 +25,7 @@ import {
   type ClientRecord,
 } from "@/data/client-portal-ui";
 import type { ClientDashboardStats } from "@/app/actions/client-dashboard";
+import { RiskDistribution } from "@/components/dashboard/RiskDistribution";
 import type { Activation } from "@/types/programme";
 
 type ClientExecutivePageProps = {
@@ -72,6 +73,7 @@ export function ClientExecutivePage({ configId, stats, activations }: ClientExec
       : config.metrics;
 
   return (
+    <div className="space-y-5">
     <DataListPage
       config={config}
       metrics={metrics}
@@ -85,6 +87,8 @@ export function ClientExecutivePage({ configId, stats, activations }: ClientExec
         ? undefined
         : (record) => cycleClientStatus(config.id, record)}
     />
+    {usesAnalytics && configId !== "reports" ? <RiskDistribution entries={stats!.riskDistribution} scope="Your organisation" /> : null}
+    </div>
   );
 }
 
@@ -148,6 +152,7 @@ function buildActivationRecords(activations: Activation[]): ClientRecord[] {
 }
 
 function buildAnalyticsMetrics(configId: ClientPageConfig["id"], stats: ClientDashboardStats): ClientMetric[] {
+  const riskCount = (category: string) => String(stats.riskDistribution.find(entry => entry.riskCategory === category)?.participantCount ?? 0);
   const participation = stats.eligibleParticipants
     ? `${stats.screeningParticipation}%`
     : "Not available";
@@ -173,7 +178,7 @@ function buildAnalyticsMetrics(configId: ClientPageConfig["id"], stats: ClientDa
   if (configId === "insights") {
     return [
       { label: "Workforce size", value: String(stats.workforceSize), detail: "Employees in this organisation", tone: "primary", icon: UsersRound },
-      { label: "Wellness risk", value: stats.wellnessRisk, detail: `Risk score ${stats.wellnessRiskScore} of 100`, tone: "warning", icon: HeartPulse },
+      { label: "High risk participants", value: riskCount("High"), detail: "Based on completed screening measurements", tone: "warning", icon: HeartPulse },
       { label: "Screening participation", value: participation, detail: participationDetail, tone: "primary", icon: ClipboardCheck },
       { label: "Upcoming activations", value: String(stats.upcomingActivations), detail: "Scheduled or planned", tone: "success", icon: CalendarCheck },
     ];
@@ -181,8 +186,8 @@ function buildAnalyticsMetrics(configId: ClientPageConfig["id"], stats: ClientDa
 
   return [
     { label: "Workforce size", value: String(stats.workforceSize), detail: "Employees in this organisation", tone: "primary", icon: UsersRound },
-    { label: "Wellness risk score", value: String(stats.wellnessRiskScore), detail: "Stored organisation risk score (0–100)", tone: "warning", icon: HeartPulse },
-    { label: "Wellness risk", value: stats.wellnessRisk, detail: `Risk score ${stats.wellnessRiskScore} of 100`, tone: "warning", icon: Activity },
+    { label: "High risk participants", value: riskCount("High"), detail: "Based on completed screening measurements", tone: "warning", icon: HeartPulse },
+    { label: "Risk not calculated", value: riskCount("Not Calculated"), detail: "No supported completed measurements", tone: "warning", icon: Activity },
     { label: "Participants screened", value: String(stats.participantsScreened), detail: "Unique participants with completed screenings", tone: "primary", icon: ClipboardCheck },
     { label: "Screening participation", value: participation, detail: participationDetail, tone: "primary", icon: ClipboardCheck },
     { label: "Screening completion", value: completion, detail: completionDetail, tone: "primary", icon: FileBarChart },

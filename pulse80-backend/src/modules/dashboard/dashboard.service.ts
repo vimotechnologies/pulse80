@@ -21,11 +21,6 @@ type CompletionViewRow = {
   screening_completion_rate: number | null;
 };
 
-type RiskMetricsRow = {
-  risk_category: string | null;
-  participant_count: number | null;
-};
-
 function requireCount(result: CountResult) {
   if (result.error) {
     throw new Error(result.error.message);
@@ -36,6 +31,29 @@ function requireCount(result: CountResult) {
 
 export class DashboardService {
   constructor(private readonly supabase: TypedSupabase) {}
+
+  async getRiskDistribution(organisationId?: string) {
+    const counts = new Map<string, number>();
+    let offset = 0;
+    while (true) {
+      let query = this.supabase.from("analytics_risk_metrics")
+        .select("organisation_id, risk_category, participant_count")
+        .order("organisation_id").order("risk_category")
+        .range(offset, offset + 999);
+      if (organisationId !== undefined) query = query.eq("organisation_id", organisationId);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (!data?.length) break;
+      for (const row of data) {
+        if (row.risk_category) counts.set(row.risk_category,
+          (counts.get(row.risk_category) ?? 0) + (row.participant_count ?? 0));
+      }
+      offset += data.length;
+    }
+    return ["Low", "Moderate", "High", "Not Calculated"].map(riskCategory => ({
+      riskCategory, participantCount: counts.get(riskCategory) ?? 0,
+    }));
+  }
 
   /**
    * Implements data-analytics/sql/002_participants_screened_calculation.sql
@@ -115,7 +133,7 @@ export class DashboardService {
   }
 
   async getAdminPortalAnalytics() {
-    const [participantsScreened, participation, completion, risk, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+    const [participantsScreened, participation, completion, riskDistribution, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
       this.countParticipantsScreened(),
       this.supabase
         .from("analytics_screening_participation")
@@ -125,10 +143,7 @@ export class DashboardService {
         .from("analytics_screening_completion")
         .select("expected_required_screenings, completed_required_screenings")
         .range(0, 9999),
-      this.supabase
-        .from("analytics_risk_metrics")
-        .select("risk_category, participant_count")
-        .range(0, 9999),
+      this.getRiskDistribution(),
       this.supabase
         .from("screenings")
         .select("id", { count: "exact", head: true })
@@ -149,13 +164,12 @@ export class DashboardService {
         .eq("follow_up_completed", true),
     ]);
 
-    for (const result of [participation, completion, risk]) {
+    for (const result of [participation, completion]) {
       if (result.error) throw new Error(result.error.message);
     }
 
     const participationRows = participation.data as unknown as ParticipationViewRow[];
     const completionRows = completion.data as unknown as CompletionViewRow[];
-    const riskRows = risk.data as unknown as RiskMetricsRow[];
     const eligibleParticipants = participationRows.reduce(
       (total, row) => total + (row.eligible_participant_count ?? 0),
       0,
@@ -172,13 +186,6 @@ export class DashboardService {
       (total, row) => total + (row.completed_required_screenings ?? 0),
       0,
     );
-    const riskCategories = ["Low", "Moderate", "High", "Not Calculated"];
-    const riskDistribution = riskCategories.map((riskCategory) => ({
-      riskCategory,
-      participantCount: riskRows
-        .filter((row) => row.risk_category === riskCategory)
-        .reduce((total, row) => total + (row.participant_count ?? 0), 0),
-    }));
 
     for (const result of [completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals]) {
       if (result.error) throw new Error(result.error.message);

@@ -204,4 +204,8 @@ inner join organisation_totals ot
 comment on view public.analytics_risk_metrics is
     'Reports organisation-level participant risk distribution using the latest applicable Completed screening. Supported indicators are blood pressure, glucose, cholesterol and BMI. Categories are Low, Moderate, High and Not Calculated. Not Calculated means the participant has Completed screening activity but no Completed screening containing a supported risk measurement.';
 
+-- Aggregated metrics are read by the authorised GraphQL backend only.
+revoke all on public.analytics_risk_metrics from public, anon, authenticated;
+grant select on public.analytics_risk_metrics to service_role;
+
 commit;
