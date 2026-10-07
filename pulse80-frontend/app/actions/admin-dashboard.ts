@@ -8,6 +8,14 @@ import {
 } from "@/components/icons/IconsaxIcons";
 import type { PortalMetric } from "@/data/portal-phase-two";
 import { graphqlRequest } from "@/lib/graphql/client";
+import type { RiskDistributionEntry } from "@/components/dashboard/RiskDistribution";
+
+export async function loadAdminRiskDistribution(): Promise<RiskDistributionEntry[]> {
+  const result = await graphqlRequest<{ adminRiskDistribution: RiskDistributionEntry[] }>(
+    `query AdminRiskDistribution { adminRiskDistribution { riskCategory participantCount } }`,
+  );
+  return result.adminRiskDistribution;
+}
 
 type AdminDashboardStats = {
   totalOrganisations: number;

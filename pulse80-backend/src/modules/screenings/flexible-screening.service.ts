@@ -1,3 +1,4 @@
+import { resolveScreeningParticipant } from "./participant-code.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type FlexibleResultValue = { fieldId: string; valueNumber?: number | null; valueText?: string | null; valueBoolean?: boolean | null; valueCode?: string | null };
@@ -38,13 +39,14 @@ export class FlexibleScreeningService {
     if (!a?.organisation_id) throw new Error("Screenings can only be captured for your confirmed or active assignments.");
 
     if (!a.activation_id) throw new Error("This assignment needs an activation link before screening capture.");
+    const participantId = await resolveScreeningParticipant(this.db, a.id, userId, input.participantReference);
     const services = await this.assignmentServices(userId, input.assignmentId);
     if (!services.some((service: any) => service.id === input.serviceId)) throw new Error("This service is not part of the selected assignment.");
     const fields = await this.fieldsForService(input.serviceId);
     if (!fields.length) throw new Error("This service does not have screening fields configured yet.");
     validateValues(fields, input.values);
 
-    const { data: screening, error: screeningError } = await this.db.from("screenings").insert({ organisation_id: a.organisation_id, activation_id: a.activation_id, assignment_id: a.id, practitioner_user_id: userId, service_id: input.serviceId, participant_reference: input.participantReference.trim(), department: input.department || null, consent_confirmed: true, practitioner_note: input.practitionerNote || null, status: "Under Review", submitted_at: new Date().toISOString() }).select("id").single();
+    const { data: screening, error: screeningError } = await this.db.from("screenings").insert({ organisation_id: a.organisation_id, activation_id: a.activation_id, assignment_id: a.id, practitioner_user_id: userId, service_id: input.serviceId, programme_participant_id: participantId, participant_reference: input.participantReference.trim(), department: input.department || null, consent_confirmed: true, practitioner_note: input.practitionerNote || null, status: "Under Review", submitted_at: new Date().toISOString() }).select("id").single();
     if (screeningError) throw new Error(screeningError.message);
     try {
       const rows = input.values.map((value) => ({ screening_id: screening.id, service_result_field_id: value.fieldId, value_number: value.valueNumber ?? null, value_text: value.valueText ?? null, value_boolean: value.valueBoolean ?? null, value_code: value.valueCode ?? null }));

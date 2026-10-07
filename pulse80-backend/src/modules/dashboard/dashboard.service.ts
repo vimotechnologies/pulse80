@@ -21,11 +21,6 @@ type CompletionViewRow = {
   screening_completion_rate: number | null;
 };
 
-type RiskMetricsRow = {
-  risk_category: string | null;
-  participant_count: number | null;
-};
-
 function requireCount(result: CountResult) {
   if (result.error) {
     throw new Error(result.error.message);
@@ -36,6 +31,71 @@ function requireCount(result: CountResult) {
 
 export class DashboardService {
   constructor(private readonly supabase: TypedSupabase) {}
+
+  async getRiskDistribution(organisationId?: string) {
+    const counts = new Map<string, number>();
+    let offset = 0;
+    while (true) {
+      let query = this.supabase.from("analytics_risk_metrics")
+        .select("organisation_id, risk_category, participant_count")
+        .order("organisation_id").order("risk_category")
+        .range(offset, offset + 999);
+      if (organisationId !== undefined) query = query.eq("organisation_id", organisationId);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (!data?.length) break;
+      for (const row of data) {
+        if (row.risk_category) counts.set(row.risk_category,
+          (counts.get(row.risk_category) ?? 0) + (row.participant_count ?? 0));
+      }
+      offset += data.length;
+    }
+    return ["Low", "Moderate", "High", "Not Calculated"].map(riskCategory => ({
+      riskCategory, participantCount: counts.get(riskCategory) ?? 0,
+    }));
+  }
+
+  /**
+   * Implements data-analytics/sql/002_participants_screened_calculation.sql
+   * for the dashboards' all-programme, all-time scope. Tenant callers must
+   * supply the organisation ID authorised by the resolver, never client input.
+   * The admin total sums tenant-distinct references (references are not global IDs).
+   */
+  private async countParticipantsScreened(organisationId?: string) {
+    const participants = new Set<string>();
+    const pageSize = 1000;
+    let offset = 0;
+
+    while (true) {
+      let query = this.supabase
+        .from("screenings")
+        .select("organisation_id, participant_reference, activations!screenings_activation_id_fkey!inner(organisation_id, programme_id)")
+        .ilike("status", "completed")
+        .order("id")
+        .range(offset, offset + pageSize - 1);
+
+      if (organisationId !== undefined) {
+        query = query
+          .eq("organisation_id", organisationId)
+          .eq("activations.organisation_id", organisationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (!data?.length) break;
+
+      for (const screening of data) {
+        // Match the SQL join's tenant condition, including for platform admins.
+        if (screening.activations.organisation_id !== screening.organisation_id) continue;
+        if (screening.participant_reference == null) continue;
+        participants.add(JSON.stringify([screening.organisation_id, screening.participant_reference]));
+      }
+      // Continue even after a short page: the server may cap responses below 1000.
+      offset += data.length;
+    }
+
+    return participants.size;
+  }
 
   async getAdminStats() {
     const now = new Date().toISOString();
@@ -73,7 +133,8 @@ export class DashboardService {
   }
 
   async getAdminPortalAnalytics() {
-    const [participation, completion, risk, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+    const [participantsScreened, participation, completion, riskDistribution, completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals] = await Promise.all([
+      this.countParticipantsScreened(),
       this.supabase
         .from("analytics_screening_participation")
         .select("eligible_participant_count, screened_participant_count")
@@ -82,10 +143,7 @@ export class DashboardService {
         .from("analytics_screening_completion")
         .select("expected_required_screenings, completed_required_screenings")
         .range(0, 9999),
-      this.supabase
-        .from("analytics_risk_metrics")
-        .select("risk_category, participant_count")
-        .range(0, 9999),
+      this.getRiskDistribution(),
       this.supabase
         .from("screenings")
         .select("id", { count: "exact", head: true })
@@ -106,18 +164,17 @@ export class DashboardService {
         .eq("follow_up_completed", true),
     ]);
 
-    for (const result of [participation, completion, risk]) {
+    for (const result of [participation, completion]) {
       if (result.error) throw new Error(result.error.message);
     }
 
     const participationRows = participation.data as unknown as ParticipationViewRow[];
     const completionRows = completion.data as unknown as CompletionViewRow[];
-    const riskRows = risk.data as unknown as RiskMetricsRow[];
     const eligibleParticipants = participationRows.reduce(
       (total, row) => total + (row.eligible_participant_count ?? 0),
       0,
     );
-    const participantsScreened = participationRows.reduce(
+    const participationScreenedParticipants = participationRows.reduce(
       (total, row) => total + (row.screened_participant_count ?? 0),
       0,
     );
@@ -129,13 +186,6 @@ export class DashboardService {
       (total, row) => total + (row.completed_required_screenings ?? 0),
       0,
     );
-    const riskCategories = ["Low", "Moderate", "High", "Not Calculated"];
-    const riskDistribution = riskCategories.map((riskCategory) => ({
-      riskCategory,
-      participantCount: riskRows
-        .filter((row) => row.risk_category === riskCategory)
-        .reduce((total, row) => total + (row.participant_count ?? 0), 0),
-    }));
 
     for (const result of [completedScreenings, referrals, missingReferrals, followUps, followedUpReferrals]) {
       if (result.error) throw new Error(result.error.message);
@@ -150,7 +200,7 @@ export class DashboardService {
       participantsScreened,
       eligibleParticipants,
       screeningParticipationRate: eligibleParticipants
-        ? (participantsScreened / eligibleParticipants) * 100
+        ? (participationScreenedParticipants / eligibleParticipants) * 100
         : null,
       completedScreenings: requireCount(completedScreenings),
       expectedRequiredScreenings,
@@ -170,6 +220,7 @@ export class DashboardService {
     const now = new Date().toISOString();
     const [
       organisation,
+      participantsScreened,
       completedScreenings,
       upcomingActivations,
       participation,
@@ -181,6 +232,7 @@ export class DashboardService {
           .select("workforce_size, wellness_risk_score")
           .eq("id", organisationId)
           .single(),
+        this.countParticipantsScreened(organisationId),
         this.supabase
           .from("screenings")
           .select("*", { count: "exact", head: true })
@@ -220,7 +272,7 @@ export class DashboardService {
       wellnessRiskScore,
       wellnessRisk: riskLabel(wellnessRiskScore),
       completedScreenings: requireCount(completedScreenings),
-      participantsScreened: participationRow?.screened_participant_count ?? 0,
+      participantsScreened,
       eligibleParticipants: participationRow?.eligible_participant_count ?? 0,
       screeningParticipation:
         participationRow?.screening_participation_rate_pct ?? 0,

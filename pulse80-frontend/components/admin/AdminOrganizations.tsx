@@ -4,10 +4,10 @@ import Link from "next/link";
 import { inviteOrganisationUser } from "@/app/actions/users";
 import { OrganisationOperations } from "@/components/admin/OrganisationOperations";
 import { OrganisationUnits } from "@/components/admin/OrganisationUnits";
-import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
   createAdminOrganisation,
+  saveAdminOrganisationContacts,
   updateAdminOrganisation,
 } from "@/app/actions/admin-organisations";
 import {
@@ -16,7 +16,6 @@ import {
   ArrowDown,
   ArrowLeft2,
   Building2,
-  CalendarCheck,
   CalendarDays,
   ClipboardCheck,
   CloseSquare,
@@ -24,9 +23,7 @@ import {
   Download,
   Edit,
   Eye,
-  FileText,
   Globe2,
-  HeartPulse,
   Location,
   MoreHorizontal,
   ShieldCheck,
@@ -234,9 +231,8 @@ const organizationCountryOptions = ["Botswana", "South Africa"];
 
 const districtsByCountry: Record<string, string[]> = {
   Botswana: [
-    "Central", "Chobe", "Francistown", "Gaborone", "Ghanzi", "Jwaneng",
-    "Kgalagadi", "Kgatleng", "Kweneng", "Lobatse", "North-East",
-    "North-West", "Selebi-Phikwe", "South-East", "Southern", "Sowa Town",
+    "Central", "Chobe", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng",
+    "North-East", "North-West", "South-East", "Southern",
   ],
   "South Africa": [
     "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
@@ -246,22 +242,16 @@ const districtsByCountry: Record<string, string[]> = {
 
 const citiesByCountryAndRegion: Record<string, Record<string, string[]>> = {
   Botswana: {
-    Central: ["Bobonong", "Gweta", "Letlhakane", "Mahalapye", "Mmadinare", "Nata", "Orapa", "Palapye", "Rakops", "Serowe", "Shoshong", "Tonota", "Tutume"],
+    Central: ["Bobonong", "Gweta", "Letlhakane", "Mahalapye", "Mmadinare", "Nata", "Orapa", "Palapye", "Rakops", "Selebi-Phikwe", "Serowe", "Shoshong", "Sowa Town", "Tonota", "Tutume"],
     Chobe: ["Kasane", "Kazungula", "Pandamatenga"],
-    Francistown: ["Francistown"],
-    Gaborone: ["Gaborone"],
     Ghanzi: ["Charles Hill", "Ghanzi"],
-    Jwaneng: ["Jwaneng"],
     Kgalagadi: ["Bokspits", "Hukuntsi", "Kang", "Tsabong"],
     Kgatleng: ["Artesia", "Mochudi", "Oodi", "Pilane"],
     Kweneng: ["Gabane", "Letlhakeng", "Molepolole", "Thamaga"],
-    Lobatse: ["Lobatse"],
-    "North-East": ["Masunga", "Matsiloje", "Tati Siding"],
+    "North-East": ["Francistown", "Masunga", "Matsiloje", "Tati Siding"],
     "North-West": ["Etsha", "Gumare", "Maun", "Shakawe"],
-    "Selebi-Phikwe": ["Selebi-Phikwe"],
-    "South-East": ["Mogoditshane", "Mmopane", "Ramotswa", "Tlokweng"],
-    Southern: ["Goodhope", "Kanye", "Moshupa"],
-    "Sowa Town": ["Sowa Town"],
+    "South-East": ["Gaborone", "Lobatse", "Mogoditshane", "Mmopane", "Ramotswa", "Tlokweng"],
+    Southern: ["Goodhope", "Jwaneng", "Kanye", "Moshupa"],
   },
   "South Africa": {
     "Eastern Cape": ["East London", "Gqeberha", "Grahamstown (Makhanda)", "King William's Town (Qonce)", "Komani", "Mthatha", "Port Alfred"],
@@ -422,7 +412,7 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
 
   async function inviteClientUser(payload: InvitePayload) {
     const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
-    if (!result.ok) { showToast(result.error); return; }
+    if (!result.ok) { showToast(result.error.replaceAll("_", " ")); return; }
     setInviteOpen(false);
     showToast("User access saved. New users receive a setup email.");
   }
@@ -437,6 +427,14 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => { setInviteOrganizationId(null); setInviteOpen(true); }}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-card-border bg-white px-4 text-[12px] font-semibold text-black shadow-[0_4px_14px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fafc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+            >
+              <User className="h-4 w-4" aria-hidden="true" />
+              Invite Client User
+            </button>
             <button
               type="button"
               disabled={exporting}
@@ -606,11 +604,15 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
 export function AdminOrganizationDetails({ organizationId, initialOrganization }: { organizationId: string; initialOrganization: Organization | null }) {
   const [organization, setOrganization] = useState<Organization | null>(initialOrganization);
   const [draft, setDraft] = useState<Organization | null>(initialOrganization);
+  const [contactDraft, setContactDraft] = useState<OrganizationContact[]>(initialOrganization?.contacts ?? []);
   const [activeTab, setActiveTab] = useState("Overview");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const contactsEditing = editingContactId !== null;
   const [toast, setToast] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingContacts, setIsSavingContacts] = useState(false);
 
   function showToast(message: string) {
     setToast(message);
@@ -619,9 +621,25 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
 
   async function inviteClientUser(payload: InvitePayload) {
     const result = await inviteOrganisationUser({ organisationId: payload.organizationId, fullName: payload.name, email: payload.email, role: payload.role === "Client Admin" ? "client_admin" : "executive" });
-    if (!result.ok) { showToast(result.error); return; }
+    if (!result.ok) { showToast(result.error.replaceAll("_", " ")); return; }
     setInviteOpen(false);
-    showToast("User access saved. New users receive a setup email.");
+    showToast("User access saved. New accounts receive a setup email.");
+  }
+
+  async function saveContacts() {
+    if (!organization || isSavingContacts) return;
+    setIsSavingContacts(true);
+    try {
+      const result = await saveAdminOrganisationContacts(organization.id, contactDraft);
+      if (!result.ok) { showToast(result.error); return; }
+      setOrganization(result.organisation);
+      setDraft(result.organisation);
+      setContactDraft(result.organisation.contacts);
+      setEditingContactId(null);
+      showToast("Organization contacts were saved.");
+    } finally {
+      setIsSavingContacts(false);
+    }
   }
 
   if (!organization) {
@@ -685,18 +703,22 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
                       return;
                     }
                     setIsSaving(true);
-                    const result = await updateAdminOrganisation(
-                      organizationId,
-                      draft,
-                      draft.logo?.startsWith("data:") ? draft.logo : undefined,
-                      Boolean(organization.logo && !draft.logo),
-                    );
-                    setIsSaving(false);
-                    if (!result.ok) { showToast("Changes could not be saved."); return; }
-                    setOrganization(result.organisation);
-                    setDraft(result.organisation);
-                    setIsEditing(false);
-                    showToast("Organization changes were saved.");
+                    try {
+                      const result = await updateAdminOrganisation(
+                        organizationId,
+                        draft,
+                        draft.logo?.startsWith("data:") ? draft.logo : undefined,
+                        Boolean(organization.logo && !draft.logo),
+                      );
+                      if (!result.ok) { showToast(result.error); return; }
+                      setOrganization(result.organisation);
+                      setDraft(result.organisation);
+                      setContactDraft(result.organisation.contacts);
+                      setIsEditing(false);
+                      showToast("Organization changes were saved.");
+                    } finally {
+                      setIsSaving(false);
+                    }
                   }}
                   className="inline-flex h-7 items-center rounded-md bg-primary px-3 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                   style={{ fontSize: 12, lineHeight: "12px" }}
@@ -708,6 +730,7 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
               <button
                 type="button"
                 onClick={() => { setDraft({ ...organization, industry: cleanOrganizationValue(organization.industry), country: cleanOrganizationValue(organization.country), region: cleanOrganizationValue(organization.region), primaryLocation: cleanOrganizationValue(organization.primaryLocation) }); setIsEditing(true); }}
+                disabled={contactsEditing}
                 className="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-2.5 text-[12px] font-medium leading-3 text-white shadow-[0_8px_20px_rgba(0,102,255,0.22)] transition hover:bg-black"
                 style={{ fontSize: 12, lineHeight: "12px" }}
               >
@@ -752,7 +775,27 @@ export function AdminOrganizationDetails({ organizationId, initialOrganization }
             </div>
           ) : (
             <div className="p-5">
-            {activeTab === "Contacts" ? <ContactsTab organization={draft ?? organization} editable={isEditing} onChange={setDraft} /> : null}
+            {activeTab === "Contacts" ? (
+              <ContactsTab
+                contacts={contactDraft}
+                editingContactId={editingContactId}
+                saving={isSavingContacts}
+                onChange={setContactDraft}
+                onEdit={(id) => { setIsEditing(false); setDraft(organization); setContactDraft(organization.contacts); setEditingContactId(id); }}
+                onAdd={() => {
+                  const contact: OrganizationContact = {
+                    id: `new-${crypto.randomUUID()}`, name: "", roleLabel: "HR Manager", email: "", phone: "",
+                    method: "Email", primary: organization.contacts.length === 0, notes: "",
+                  };
+                  setIsEditing(false);
+                  setDraft(organization);
+                  setContactDraft([...organization.contacts, contact]);
+                  setEditingContactId(contact.id);
+                }}
+                onCancel={() => { setContactDraft(organization.contacts); setEditingContactId(null); }}
+                onSave={saveContacts}
+              />
+            ) : null}
             {activeTab === "Branches & Departments" ? (
               <OrganisationUnits organisationId={organization.id} />
             ) : null}
@@ -806,19 +849,24 @@ function HeaderMeta({ icon: Icon, label, value }: { icon: typeof Building2; labe
 }
 
 function LogoMark({ organization, size = "sm" }: { organization: Organization; size?: "sm" | "lg" | "xl" }) {
+  const logoSource = organization.logo?.startsWith("data:image/")
+    ? organization.logo
+    : organization.logoUrl ?? (/^https?:\/\//i.test(organization.logo ?? "") ? organization.logo : undefined);
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-cover bg-center font-semibold text-black",
+        "flex shrink-0 items-center justify-center border border-card-border bg-[#f2f4f7] bg-contain bg-center bg-no-repeat font-semibold text-black",
         size === "xl"
           ? "h-20 w-20 rounded-md bg-white text-[20px] text-primary shadow-[0_4px_14px_rgba(15,23,42,0.04)]"
           : size === "lg"
           ? "h-20 w-20 rounded-full text-[22px] ring-4 ring-primary/10"
           : "h-9 w-9 rounded-2xl text-[12px]",
       )}
-      style={organization.logo?.startsWith("data:") ? { backgroundImage: `url(${organization.logo})` } : undefined}
+      role={logoSource ? "img" : undefined}
+      aria-label={logoSource ? `${organization.name} logo` : undefined}
+      style={logoSource ? { backgroundImage: `url("${logoSource}")` } : undefined}
     >
-      {organization.logo?.startsWith("data:") ? null : organization.logo ?? initials(organization.name)}
+      {logoSource ? null : initials(organization.name)}
     </span>
   );
 }
@@ -955,45 +1003,50 @@ function ReadonlyField({
   );
 }
 
-function ContactsTab({ organization, editable, onChange }: { organization: Organization; editable: boolean; onChange: (organization: Organization) => void }) {
+function ContactsTab({ contacts, editingContactId, saving, onChange, onEdit, onAdd, onCancel, onSave }: {
+  contacts: OrganizationContact[];
+  editingContactId: string | null;
+  saving: boolean;
+  onChange: (contacts: OrganizationContact[]) => void;
+  onEdit: (id: string) => void;
+  onAdd: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  const editable = editingContactId !== null;
+  const canSave = contacts.length > 0 && contacts.length <= 10 && contacts.filter((contact) => contact.primary).length === 1 &&
+    contacts.every((contact) => contact.name.trim().length >= 2 && contact.roleLabel.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim()));
   function updateContact(index: number, values: Partial<OrganizationContact>) {
-    onChange({
-      ...organization,
-      contacts: organization.contacts.map((contact, contactIndex) => contactIndex === index ? { ...contact, ...values } : contact),
-    });
+    onChange(contacts.map((contact, contactIndex) => contactIndex === index ? { ...contact, ...values } : contact));
   }
   return (
     <div className="space-y-3">
-      {editable ? (
-        <button type="button" onClick={() => onChange({
-          ...organization,
-          contacts: [...organization.contacts, {
-            id: `new-${Date.now()}`,
-            name: "",
-            roleLabel: "HR Manager",
-            email: "",
-            phone: "",
-            method: "Email",
-            primary: organization.contacts.length === 0,
-            notes: "",
-          }],
-        })} className="rounded-lg border border-primary/25 px-3 py-2 text-[12px] font-semibold text-primary">Add contact</button>
-      ) : null}
-      <div className="overflow-hidden rounded-2xl border border-card-border">
-      <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
-        <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span>
+      <div className="flex flex-wrap justify-end gap-2">
+        {!editable ? <button type="button" onClick={onAdd} disabled={saving || contacts.length >= 10} className="rounded-lg bg-primary px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-45">Add contact</button> : null}
+        {editable ? <>
+          <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-card-border px-3 py-2 text-[12px] font-semibold text-black disabled:opacity-50">Cancel</button>
+          <button type="button" onClick={onSave} disabled={!canSave || saving} className="rounded-lg bg-primary px-3 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45">{saving ? "Saving…" : "Save contact"}</button>
+        </> : null}
       </div>
-      {organization.contacts.map((contact, index) => (
-        <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
-          {editable ? <input value={contact.name} onChange={(event) => updateContact(index, { name: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>}
-          {editable ? <input value={contact.roleLabel} onChange={(event) => updateContact(index, { roleLabel: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span>{contact.roleLabel}</span>}
-          {editable ? <input type="email" value={contact.email} onChange={(event) => updateContact(index, { email: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="truncate">{contact.email}</span>}
-          {editable ? <select value={contact.method} onChange={(event) => updateContact(index, { method: event.target.value as ContactMethod })} className="h-9 rounded-lg border border-primary/30 px-2">{["Email", "Phone", "WhatsApp", "Portal"].map((method) => <option key={method}>{method}</option>)}</select> : <span>{contact.method}</span>}
-          <span>{contact.primary ? "Yes" : "No"}</span>
-          {editable ? <><input value={contact.phone} onChange={(event) => updateContact(index, { phone: event.target.value })} placeholder="Phone" className="col-span-2 h-9 rounded-lg border border-primary/30 px-2" /><input value={contact.notes} onChange={(event) => updateContact(index, { notes: event.target.value })} placeholder="Notes" className="col-span-3 h-9 rounded-lg border border-primary/30 px-2" /></> : <span className="col-span-5 text-black/60">{contact.notes}</span>}
+      <div className="overflow-hidden rounded-2xl border border-card-border">
+      <div className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr_auto] gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
+        <span>Full name</span><span>Role label</span><span>Email</span><span>Preferred</span><span>Primary</span><span />
+      </div>
+      {contacts.map((contact, index) => {
+        const rowEditable = contact.id === editingContactId;
+        return (
+        <div key={contact.id} className="grid grid-cols-[1fr_0.9fr_1.2fr_0.8fr_0.6fr_auto] gap-3 border-t border-card-border px-4 py-3 text-[12px] text-black">
+          {rowEditable ? <input value={contact.name} onChange={(event) => updateContact(index, { name: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="font-semibold">{contact.name}<span className="block font-normal text-black/55">{contact.phone}</span></span>}
+          {rowEditable ? <input value={contact.roleLabel} onChange={(event) => updateContact(index, { roleLabel: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span>{contact.roleLabel}</span>}
+          {rowEditable ? <input type="email" value={contact.email} onChange={(event) => updateContact(index, { email: event.target.value })} className="h-9 rounded-lg border border-primary/30 px-2" /> : <span className="truncate">{contact.email}</span>}
+          {rowEditable ? <select value={contact.method} onChange={(event) => updateContact(index, { method: event.target.value as ContactMethod })} className="h-9 rounded-lg border border-primary/30 px-2">{["Email", "Phone", "WhatsApp", "Portal"].map((method) => <option key={method}>{method}</option>)}</select> : <span>{contact.method}</span>}
+          {rowEditable ? <label className="flex items-center gap-2"><input type="radio" name="primary-organisation-contact" checked={contact.primary} onChange={() => onChange(contacts.map((item, itemIndex) => ({ ...item, primary: itemIndex === index })))} /><span className="sr-only">Primary contact</span></label> : <span>{contact.primary ? "Yes" : "No"}</span>}
+          {rowEditable ? <button type="button" disabled={contacts.length <= 1 || contact.primary || saving} title={contact.primary ? "Choose another primary contact before removing this contact." : undefined} onClick={() => onChange(contacts.filter((_, contactIndex) => contactIndex !== index))} aria-label={`Remove ${contact.name || "contact"}`} className="text-pulse-red disabled:opacity-30">Remove</button> : <button type="button" onClick={() => onEdit(contact.id)} disabled={editable || saving} aria-label={`Edit contact ${contact.name}`} className="font-semibold text-primary disabled:opacity-45">Edit contact</button>}
+          {rowEditable ? <><input value={contact.phone} onChange={(event) => updateContact(index, { phone: event.target.value })} placeholder="Phone" aria-label={`${contact.name || "Contact"} phone`} className="col-span-2 h-9 rounded-lg border border-primary/30 px-2" /><input value={contact.notes} onChange={(event) => updateContact(index, { notes: event.target.value })} placeholder="Notes" aria-label={`${contact.name || "Contact"} notes`} className="col-span-3 h-9 rounded-lg border border-primary/30 px-2" /></> : <span className="col-span-6 text-black/60">{contact.notes}</span>}
         </div>
-      ))}
-      {!organization.contacts.length ? <p className="border-t border-card-border px-4 py-6 text-[12px] text-black/55">No contacts have been added yet.</p> : null}
+      );
+      })}
+      {!contacts.length ? <p className="border-t border-card-border px-4 py-6 text-[12px] text-black/55">No contacts have been added yet.</p> : null}
       </div>
     </div>
   );
@@ -1160,7 +1213,7 @@ function LogoUpload({ value, onChange }: { value?: string; onChange: (value?: st
         Upload or replace logo
         <input
           type="file"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];

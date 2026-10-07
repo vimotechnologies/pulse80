@@ -65,6 +65,7 @@ export async function createReportPdf(report: PdfReport) {
     for (const line of section.lines) write(line);
     y -= 14;
   }
+  const pulse80LogoUrl = "/brand/pulse80-logo-full.png";
   const pages = pdf.getPages();
   const logos = new Map<string, Awaited<ReturnType<typeof pdf.embedPng>>>();
   for (const client of pageClients) {
@@ -89,6 +90,15 @@ export async function createReportPdf(report: PdfReport) {
     }
     logos.set(client.logoUrl, isJpeg ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes));
   }
+  let pulse80Logo: Awaited<ReturnType<typeof pdf.embedPng>> | undefined;
+  try {
+    const response = await fetch(pulse80LogoUrl);
+    if (response.ok) {
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+      pulse80Logo = isJpeg ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes);
+    }
+  } catch { /* Text footer remains as a safe fallback. */ }
   pages.forEach((item, index) => {
     const client = pageClients[index];
     if (client) {
@@ -118,7 +128,13 @@ export async function createReportPdf(report: PdfReport) {
     }
     item.drawText("PULSE80 | Insights", { x: 44, y: 810, size: 9, font: bold, color: navy });
     item.drawLine({ start: { x: 44, y: 48 }, end: { x: 551, y: 48 }, thickness: 0.5, color: muted });
-    item.drawText(`Pulse80 | Page ${index + 1} of ${pages.length}`, { x: 44, y: 32, size: 8, font: regular, color: muted });
+    if (pulse80Logo) {
+      const logoSize = pulse80Logo.scaleToFit(62, 20);
+      item.drawImage(pulse80Logo, { x: 44, y: 20, ...logoSize });
+      item.drawText(`Page ${index + 1} of ${pages.length}`, { x: 490, y: 28, size: 8, font: regular, color: muted });
+    } else {
+      item.drawText(`Pulse80 | Page ${index + 1} of ${pages.length}`, { x: 44, y: 32, size: 8, font: regular, color: muted });
+    }
   });
   return pdf.save();
 }

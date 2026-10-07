@@ -4,8 +4,10 @@ import { cookies } from "next/headers";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { ORGANISATION_COOKIE } from "@/lib/auth/session";
 import type { Activation } from "@/types/programme";
+import type { RiskDistributionEntry } from "@/components/dashboard/RiskDistribution";
 
 export type ClientDashboardStats = {
+  riskDistribution: RiskDistributionEntry[];
   workforceSize: number;
   wellnessRiskScore: number;
   wellnessRisk: string;
@@ -21,6 +23,7 @@ export type ClientDashboardStats = {
 
 const clientDashboardStatsQuery = /* GraphQL */ `
   query OrganisationDashboardStats {
+    organisationRiskDistribution { riskCategory participantCount }
     organisationDashboardStats {
       workforceSize
       wellnessRiskScore
@@ -43,12 +46,13 @@ async function selectedOrganisationId() {
 
 export async function loadClientDashboardStats() {
   const result = await graphqlRequest<{
+    organisationRiskDistribution: RiskDistributionEntry[];
     organisationDashboardStats: ClientDashboardStats;
   }>(clientDashboardStatsQuery, {
     organisationId: await selectedOrganisationId(),
   });
 
-  return result.organisationDashboardStats;
+  return { ...result.organisationDashboardStats, riskDistribution: result.organisationRiskDistribution };
 }
 
 export async function loadClientActivations(): Promise<Activation[]> {

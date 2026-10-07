@@ -41,6 +41,8 @@ export const dashboardTypeDefs = /* GraphQL */ `
   }
 
   extend type Query {
+    adminRiskDistribution: [RiskDistributionEntry!]!
+    organisationRiskDistribution: [RiskDistributionEntry!]!
     adminDashboardStats: AdminDashboardStats!
     organisationDashboardStats: OrganisationDashboardStats!
     adminPortalAnalytics: AdminPortalAnalytics!

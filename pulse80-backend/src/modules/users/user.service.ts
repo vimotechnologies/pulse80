@@ -1,6 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "../../generated/database.types.js";
-import { GraphQLError } from "graphql";
 
 export class UserService {
   constructor(private readonly db: SupabaseClient<Database>) {}
@@ -47,19 +46,27 @@ export class UserService {
     })) };
   }
   async invite(input: { organisationId: string; email: string; fullName: string; role: string }, redirectTo: string) {
-    const org = await this.db.from("organisations").select("id").eq("id", input.organisationId).single();
+    const org = await this.db.from("organisations").select("id,name").eq("id", input.organisationId).single();
     if (org.error) throw new Error(org.error.message);
     const existing = (await this.authUsers()).find(user => user.email?.toLowerCase() === input.email);
     let userId = existing?.id;
     if (!userId) {
-      const result = await this.db.auth.admin.inviteUserByEmail(input.email, { redirectTo, data: { full_name: input.fullName } });
+      const firstName = input.fullName.trim().split(/\\s+/)[0] || "there";
+      const result = await this.db.auth.admin.inviteUserByEmail(input.email, {
+        redirectTo,
+        data: {
+          full_name: input.fullName,
+          first_name: firstName,
+          organisation_name: org.data.name,
+        },
+      });
       if (result.error) throw new Error(result.error.message);
       userId = result.data.user.id;
     }
     // Do not overwrite an existing member's role while inviting them again.
     const member = await this.db.from("organisation_memberships").select("id").eq("organisation_id", input.organisationId).eq("profile_id", userId).maybeSingle();
     if (member.error) throw new Error(member.error.message);
-    if (member.data) throw new GraphQLError("This user already belongs to the organisation.", { extensions: { code: "BAD_USER_INPUT" } });
+    if (member.data) return;
     const profile = await this.db.from("profiles").upsert({ id: userId, full_name: input.fullName }, { onConflict: "id", ignoreDuplicates: true });
     if (profile.error) throw new Error(profile.error.message);
     const membership = await this.db.from("organisation_memberships").insert({ organisation_id: input.organisationId, profile_id: userId, role: input.role });
