@@ -285,7 +285,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     uploadPractitionerDocument(documentType: String!, expiryDate: String, file: PractitionerFileInput!): PractitionerDocument!
     registerPractitioner(input: RegisterPractitionerInput!): RegisteredPractitioner!
     setPractitionerRegistrationStatus(id: ID!, status: String!): RegisteredPractitioner!
-    inviteRegisteredPractitioner(id: ID!): RegisteredPractitioner!
+    inviteRegisteredPractitioner(id: ID!, fullName: String!, email: String!): RegisteredPractitioner!
     updatePractitionerVerification(userId: ID!, input: PractitionerVerificationInput!): AdminPractitioner!
     reviewPractitionerDocument(documentId: ID!, status: String!): AdminPractitioner!
     createPractitionerAssignment(input: PractitionerAssignmentInput!): AdminPractitionerAssignment!
