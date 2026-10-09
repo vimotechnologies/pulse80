@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { registerPractitioner, type RegisteredPractitioner } from "@/app/actions/admin-practitioners";
 import { useRouter } from "next/navigation";
 
 import { Building2, ClipboardCheck, ShieldCheck, Stethoscope } from "@/components/icons/IconsaxIcons";
@@ -9,8 +10,13 @@ import { ListSummaryMetric } from "@/components/portal/DataListPage";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AdminPractitioner } from "@/types/admin-practitioner";
 
-export function AdminPractitionerDirectory({ practitioners }: { practitioners: AdminPractitioner[] }) {
+export function AdminPractitionerDirectory({ practitioners, registrations }: { practitioners: AdminPractitioner[]; registrations: RegisteredPractitioner[] }) {
   const router = useRouter();
+  const [adding, setAdding] = useState(false);
+  const [saving, startSaving] = useTransition();
+  const [error, setError] = useState("");
+  const [draft, setDraft] = useState({ fullName: "", profession: "", country: "Botswana", city: "", capabilities: [] as string[] });
+  const options = ["Blood Pressure", "BMI", "Glucose", "Cholesterol", "HIV Testing", "Eye Screening", "Dental Screening", "Physiotherapy"];
   const [query, setQuery] = useState("");
   const [verification, setVerification] = useState("All");
   const [selected, setSelected] = useState<AdminPractitioner | null>(null);
@@ -28,15 +34,17 @@ export function AdminPractitionerDirectory({ practitioners }: { practitioners: A
         title="Practitioners"
         description="Manage the verified practitioner network, credentials, capabilities, and delivery readiness."
         actions={(
+          <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => { setError(""); setAdding(true); }} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white">Add Practitioner</button>
           <button type="button" onClick={() => router.push("/admin/practitioner-verification")} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white shadow-sm">
             Open verification queue
-          </button>
+          </button></div>
         )}
       />
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <ListSummaryMetric metric={{ label: "Practitioners", value: String(practitioners.length), detail: "Professional profiles", tone: "primary", icon: Stethoscope }} />
+        <ListSummaryMetric metric={{ label: "Practitioners", value: String(practitioners.length + registrations.length), detail: "Professional profiles", tone: "primary", icon: Stethoscope }} />
         <ListSummaryMetric metric={{ label: "Verified", value: String(practitioners.filter((item) => item.verificationStatus === "Verified").length), detail: "Approved to deliver", tone: "success", icon: ShieldCheck }} />
-        <ListSummaryMetric metric={{ label: "Awaiting review", value: String(pending), detail: "Need verification action", tone: "warning", icon: ClipboardCheck }} />
+        <ListSummaryMetric metric={{ label: "Awaiting review", value: String(pending + registrations.length), detail: "Need verification action", tone: "warning", icon: ClipboardCheck }} />
         <ListSummaryMetric metric={{ label: "Assignments", value: String(practitioners.reduce((total, item) => total + item.assignmentCount, 0)), detail: "Across the network", tone: "primary", icon: Building2 }} />
       </section>
       <section className="rounded-2xl border border-card-border bg-surface p-4 shadow-sm">
@@ -68,6 +76,32 @@ export function AdminPractitionerDirectory({ practitioners }: { practitioners: A
         </div>
         {!filtered.length ? <p className="p-8 text-center text-sm text-muted">No practitioners match these filters.</p> : null}
       </section>
+      {registrations.length ? <section className="rounded-2xl border border-card-border bg-surface p-5 shadow-sm">
+        <h2 className="mb-3 font-semibold text-navy">Registered practitioners awaiting onboarding</h2>
+        <div className="space-y-2">{registrations.map((item) => <div key={item.id} className="flex flex-wrap justify-between gap-3 border-b border-card-border py-3 text-sm">
+          <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p></div>
+          <StatusBadge status={item.verificationStatus} tone="warning" />
+        </div>)}</div>
+      </section> : null}
+      {adding ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
+        <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
+          const result = await registerPractitioner(draft);
+          if (!result.ok) { setError(result.error); return; }
+          setAdding(false); setDraft({ fullName: "", profession: "", country: "Botswana", city: "", capabilities: [] }); router.refresh();
+        }); }} className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-navy">Add Practitioner</h2>
+          <p className="text-sm text-muted">Register a practitioner without creating a login or granting screening access.</p>
+          <label className="block text-sm font-medium">Name<input required minLength={2} maxLength={160} value={draft.fullName} onChange={e => setDraft({ ...draft, fullName: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
+          <label className="block text-sm font-medium">Profession<select required value={draft.profession} onChange={e => setDraft({ ...draft, profession: e.target.value })} className="mt-1 w-full rounded-lg border p-3"><option value="">Select profession</option>{["Nurse","Doctor","Physiotherapist","Phlebotomist","Optometrist","Dentist","Dietitian","Psychologist","Counsellor","Fitness Coach","Occupational Health Practitioner"].map(v => <option key={v}>{v}</option>)}</select></label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium">Country<input required value={draft.country} onChange={e => setDraft({ ...draft, country: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
+            <label className="block text-sm font-medium">City/Town<input required value={draft.city} onChange={e => setDraft({ ...draft, city: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
+          </div>
+          <fieldset><legend className="text-sm font-medium">Capabilities (choose at least one)</legend><div className="mt-2 grid grid-cols-2 gap-2">{options.map(v => <label key={v} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.capabilities.includes(v)} onChange={e => setDraft({ ...draft, capabilities: e.target.checked ? [...draft.capabilities,v] : draft.capabilities.filter(x => x !== v) })}/>{v}</label>)}</div></fieldset>
+          {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+          <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => setAdding(false)} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !draft.capabilities.length} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save Practitioner"}</button></div>
+        </form>
+      </div> : null}
       {selected ? <PractitionerDetail practitioner={selected} onClose={() => setSelected(null)} /> : null}
     </div>
   );
