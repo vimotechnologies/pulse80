@@ -126,13 +126,13 @@ export async function setPractitionerRegistrationStatus(id: string, status: "Act
   }
 }
 
-export async function inviteRegisteredPractitioner(id: string) {
+export async function inviteRegisteredPractitioner(id: string, fullName: string, email: string) {
   try {
     await graphqlRequest(
-      `mutation InviteRegisteredPractitioner($id: ID!) {
-        inviteRegisteredPractitioner(id: $id) { id invitedAt }
+      `mutation InviteRegisteredPractitioner($id: ID!, $fullName: String!, $email: String!) {
+        inviteRegisteredPractitioner(id: $id, fullName: $fullName, email: $email) { id invitedAt }
       }`,
-      { variables: { id } },
+      { variables: { id, fullName, email } },
     );
     revalidatePath("/admin/practitioners");
     return { ok: true as const };
