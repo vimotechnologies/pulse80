@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import Link from "next/link";
 import { inviteOrganisationUser } from "@/app/actions/users";
 import { OrganisationOperations } from "@/components/admin/OrganisationOperations";
@@ -468,12 +471,12 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCardGroup>
           <SummaryCard title="Total Organizations" value={String(organizations.length)} detail="All client organizations" icon={Building2} />
           <SummaryCard title="Active Contracts" value={String(organizations.filter((item) => item.status === "Active").length)} detail="With active contracts" icon={ClipboardCheck} tone="success" />
           <SummaryCard title="Contracts Expiring Soon" value={String(contractsExpiringSoon(organizations))} detail="Within 60 days" icon={Clock} tone="warning" />
           <SummaryCard title="High-Risk Organizations" value={String(organizations.filter((item) => item.risk === "High" || item.risk === "Critical").length)} detail="High or critical risk" icon={ShieldCheck} tone="danger" />
-        </section>
+        </MetricCardGroup>
 
       <UnifiedFilterCard>
         <div className="grid gap-3 xl:grid-cols-[minmax(220px,1.7fr)_repeat(5,minmax(118px,1fr))]">
@@ -1188,7 +1191,7 @@ function InviteClientUserModal({
 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true">
+    <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" role="dialog" aria-modal="true">
       <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-card-border bg-white shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
         <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
           <h2 className="text-[14px] font-semibold text-black">{title}</h2>

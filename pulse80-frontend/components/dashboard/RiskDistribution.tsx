@@ -8,7 +8,7 @@ export function RiskDistribution({ entries, scope }: { entries: RiskDistribution
       <h2 className="text-lg font-semibold text-navy">Screening risk distribution</h2>
       <p className="mt-2 text-sm text-muted">{scope} · All time · Latest completed value per supported measurement</p>
       {total === 0 ? <p role="status" className="mt-4 text-sm">No completed screenings available for risk analysis.</p> : (
-        <table className="mt-4 w-full text-left text-sm">
+        <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable risk distribution"><table className="w-full min-w-[360px] text-left text-sm">
           <caption className="sr-only">Risk categories for {number.format(total)} screened participants</caption>
           <thead><tr><th scope="col" className="py-2">Risk category</th><th scope="col">Participants</th><th scope="col">Percentage</th></tr></thead>
           <tbody>{entries.map(entry => <tr key={entry.riskCategory} className="border-t border-card-border">
@@ -16,7 +16,7 @@ export function RiskDistribution({ entries, scope }: { entries: RiskDistribution
             <td>{number.format(entry.participantCount)}</td>
             <td>{((entry.participantCount / total) * 100).toFixed(2)}%</td>
           </tr>)}</tbody>
-        </table>
+        </table></div>
       )}
       <p className="mt-4 text-sm text-muted">Based on recorded blood pressure, glucose, cholesterol and BMI. Not Calculated means no supported measurements are available; it does not mean low risk.</p>
     </section>

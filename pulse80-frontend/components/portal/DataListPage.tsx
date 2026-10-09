@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -392,11 +395,11 @@ export function DataListPage<RecordType extends DataRecord>({
 
       {error ? <ErrorState message={error} onRetry={() => setError(null)} /> : null}
 
-      {metrics.length ? <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {metrics.length ? <MetricCardGroup>
         {metrics.map((metric) => (
           <ListSummaryMetric key={metric.label} metric={metric} />
         ))}
-      </section> : null}
+      </MetricCardGroup> : null}
 
       {config.featured ? (
         <DashboardWidget interactive className="overflow-hidden">
@@ -988,7 +991,7 @@ export function DetailModal<RecordType extends DataRecord>({
   onAction?: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
+    <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
       <button
         type="button"
         className="absolute inset-0 cursor-default"
@@ -1227,7 +1230,7 @@ function ListModal<RecordType extends DataRecord>({
 }) {
   const isArchive = mode === "archive";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
+    <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-navy/30 p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl rounded-lg border border-card-border bg-surface shadow-[0_24px_70px_rgba(7,22,51,0.18)]">
         <div className="border-b border-card-border p-5">
           <p className="text-xs font-semibold uppercase tracking-[var(--pulse-tracking-eyebrow)] text-primary">

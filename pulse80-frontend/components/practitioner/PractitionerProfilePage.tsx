@@ -91,7 +91,7 @@ export function PractitionerProfilePage({ initialProfile }: Props) {
 
     <ToastMessage message={message} />
     {photoToCrop ? <TouchPhotoCropDialog file={photoToCrop} onCancel={() => setPhotoToCrop(null)} onConfirm={async (file) => { setPhotoToCrop(null); await uploadCroppedPhoto(file); }} /> : null}
-    {photoPreviewOpen && profile.profilePhotoUrl ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/70 p-5" role="dialog" aria-modal="true" aria-label="Profile picture preview" onClick={() => setPhotoPreviewOpen(false)}><div className="flex flex-col items-center gap-5" onClick={(event) => event.stopPropagation()}><div className="relative h-72 w-72 overflow-hidden rounded-full border-4 border-white bg-white shadow-2xl sm:h-96 sm:w-96"><Image src={profile.profilePhotoUrl} alt={`${profile.fullName} profile picture`} fill unoptimized className="object-cover" /></div><ActionButton variant="secondary" onClick={() => setPhotoPreviewOpen(false)}>Close</ActionButton></div></div> : null}
+    {photoPreviewOpen && profile.profilePhotoUrl ? <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-navy/70 p-5" role="dialog" aria-modal="true" aria-label="Profile picture preview" onClick={() => setPhotoPreviewOpen(false)}><div className="flex flex-col items-center gap-5" onClick={(event) => event.stopPropagation()}><div className="relative h-60 w-60 overflow-hidden rounded-full border-4 border-white bg-white shadow-2xl sm:h-96 sm:w-96"><Image src={profile.profilePhotoUrl} alt={`${profile.fullName} profile picture`} fill unoptimized className="object-cover" /></div><ActionButton variant="secondary" onClick={() => setPhotoPreviewOpen(false)}>Close</ActionButton></div></div> : null}
   </div>;
 }
 
