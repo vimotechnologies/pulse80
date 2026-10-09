@@ -153,15 +153,26 @@ export const practitionerResolvers = {
     },
     registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
-      const { data, error } = await (context.adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
-        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status")
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data, error } = await db.from("practitioner_registrations")
+        .select("id,full_name,email,account_status,invited_at,invited_user_id,profession,country,city,capabilities,verification_status")
         .order("created_at", { ascending: false });
       if (error) throw new GraphQLError(error.message);
-      return (data ?? []).map((row) => ({
-        id: row.id, fullName: row.full_name, email: row.email, accountStatus: row.account_status, invitedAt: row.invited_at, profession: row.profession,
-        country: row.country, city: row.city, capabilities: row.capabilities,
-        verificationStatus: row.verification_status,
-      }));
+      const userIds = [...new Set((data ?? []).map((row) => row.invited_user_id).filter((id): id is string => Boolean(id)))];
+      const { data: representatives, error: representativesError } = userIds.length
+        ? await db.from("practitioner_profiles").select("user_id,verification_status,practitioner_status").in("user_id", userIds)
+        : { data: [], error: null };
+      if (representativesError) throw new GraphQLError(representativesError.message);
+      const representativeById = new Map((representatives ?? []).map((row) => [row.user_id, row]));
+      return (data ?? []).map((row) => {
+        const representative = row.invited_user_id ? representativeById.get(row.invited_user_id) : null;
+        return {
+          id: row.id, fullName: row.full_name, email: row.email, accountStatus: row.account_status,
+          invitedAt: row.invited_at, profession: row.profession, country: row.country,
+          city: row.city, capabilities: row.capabilities,
+          verificationStatus: representative?.verification_status ?? row.verification_status,
+        };
+      });
     },
     adminPractitionerAssignments: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
