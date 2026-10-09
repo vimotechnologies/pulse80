@@ -185,7 +185,10 @@ export const practitionerResolvers = {
     selectedServices: (parent: { selectedServices?: unknown[] }) => parent.selectedServices ?? [],
     specialisations: (parent: { specialisations?: unknown[] }) => parent.specialisations ?? [],
     assignments: async (_parent: unknown, arguments_: { limit?: number }, context: GraphQLContext) => {
-      const { service, userId } = await loadProfile(context);
+      const { service, userId, profile } = await loadProfile(context);
+      if (profile.verification_status !== "Verified" || profile.practitioner_status !== "Active") {
+        throw new GraphQLError("Practitioner verification is required before accessing assignments.", { extensions: { code: "FORBIDDEN" } });
+      }
       return service.getAssignments(userId, Math.min(Math.max(arguments_.limit ?? 5, 1), 20));
     },
     documents: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
