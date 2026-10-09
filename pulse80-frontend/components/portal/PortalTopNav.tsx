@@ -21,7 +21,7 @@ export function PortalTopNav({
     <header className="sticky top-0 z-20 border-b border-card-border bg-surface/95 backdrop-blur">
       <div
         className={cn(
-          "flex h-20 items-center gap-4 px-4 transition-[margin] duration-300 sm:px-6 lg:px-8",
+          "flex h-16 min-w-0 items-center gap-2 px-3 transition-[margin] duration-300 sm:h-20 sm:gap-4 sm:px-6 lg:px-8",
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64",
         )}
       >
