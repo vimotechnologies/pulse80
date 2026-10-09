@@ -24,12 +24,15 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
   const [query, setQuery] = useState("");
   const [verification, setVerification] = useState("All");
   const [selected, setSelected] = useState<AdminPractitioner | null>(null);
-  const filtered = useMemo(() => practitioners.filter((practitioner) => {
+  // An invited user is a login for the registered provider, not a second directory practitioner.
+  const providerLoginEmails = useMemo(() => new Set(registrations.filter((item) => item.invitedAt && item.email).map((item) => item.email.toLowerCase())), [registrations]);
+  const directoryPractitioners = useMemo(() => practitioners.filter((practitioner) => !providerLoginEmails.has(practitioner.professionalEmail.toLowerCase())), [practitioners, providerLoginEmails]);
+  const filtered = useMemo(() => directoryPractitioners.filter((practitioner) => {
     const searchable = `${practitioner.fullName} ${practitioner.professionalEmail} ${practitioner.profession} ${practitioner.specialisation ?? ""} ${practitioner.city ?? ""}`.toLowerCase();
     return searchable.includes(query.trim().toLowerCase()) &&
       (verification === "All" || practitioner.verificationStatus === verification);
-  }), [practitioners, query, verification]);
-  const pending = practitioners.filter((item) => item.verificationStatus !== "Verified").length;
+  }), [directoryPractitioners, query, verification]);
+  const pending = directoryPractitioners.filter((item) => item.verificationStatus !== "Verified").length;
 
   return (
     <div className="space-y-6">
@@ -46,10 +49,10 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
         )}
       />
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <ListSummaryMetric metric={{ label: "Practitioners", value: String(practitioners.length + registrations.length), detail: "Professional profiles", tone: "primary", icon: Stethoscope }} />
-        <ListSummaryMetric metric={{ label: "Verified", value: String(practitioners.filter((item) => item.verificationStatus === "Verified").length), detail: "Approved to deliver", tone: "success", icon: ShieldCheck }} />
+        <ListSummaryMetric metric={{ label: "Practitioners", value: String(directoryPractitioners.length + registrations.length), detail: "Professional profiles", tone: "primary", icon: Stethoscope }} />
+        <ListSummaryMetric metric={{ label: "Verified", value: String(directoryPractitioners.filter((item) => item.verificationStatus === "Verified").length), detail: "Approved to deliver", tone: "success", icon: ShieldCheck }} />
         <ListSummaryMetric metric={{ label: "Awaiting review", value: String(pending + registrations.length), detail: "Need verification action", tone: "warning", icon: ClipboardCheck }} />
-        <ListSummaryMetric metric={{ label: "Assignments", value: String(practitioners.reduce((total, item) => total + item.assignmentCount, 0)), detail: "Across the network", tone: "primary", icon: Building2 }} />
+        <ListSummaryMetric metric={{ label: "Assignments", value: String(directoryPractitioners.reduce((total, item) => total + item.assignmentCount, 0)), detail: "Across the network", tone: "primary", icon: Building2 }} />
       </section>
       <section className="rounded-2xl border border-card-border bg-surface p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[1fr_240px]">
