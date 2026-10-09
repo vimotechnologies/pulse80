@@ -149,7 +149,17 @@ export const practitionerResolvers = {
       requirePlatformPermission(context, "provider:manage");
       const service = new PractitionerService(context.adminSupabase);
       const practitioners = await service.listForAdmin();
-      return practitioners.map((practitioner) => adminProfileShape(service, practitioner));
+      // Provider registrations own the public-facing admin identity; the linked
+      // user retains their personal name on the practitioner profile.
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data: registrations, error } = await db.from("practitioner_registrations")
+        .select("invited_user_id,full_name").not("invited_user_id", "is", null);
+      if (error) throw new Error(error.message);
+      const providerNames = new Map((registrations ?? []).map((registration) => [registration.invited_user_id, registration.full_name]));
+      return practitioners.map((practitioner) => ({
+        ...adminProfileShape(service, practitioner),
+        fullName: providerNames.get(practitioner.user_id) ?? adminProfileShape(service, practitioner).fullName,
+      }));
     },
     registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
