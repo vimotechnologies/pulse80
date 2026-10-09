@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import { useMemo, useState, useTransition } from "react";
 import { registerPractitioner, setPractitionerRegistrationStatus, inviteRegisteredPractitioner, type RegisteredPractitioner } from "@/app/actions/admin-practitioners";
 import { useRouter } from "next/navigation";
@@ -48,12 +51,12 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           </button></div>
         )}
       />
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <MetricCardGroup>
         <ListSummaryMetric metric={{ label: "Practitioners", value: String(directoryPractitioners.length + registrations.length), detail: "Professional profiles", tone: "primary", icon: Stethoscope }} />
         <ListSummaryMetric metric={{ label: "Verified", value: String(directoryPractitioners.filter((item) => item.verificationStatus === "Verified").length), detail: "Approved to deliver", tone: "success", icon: ShieldCheck }} />
         <ListSummaryMetric metric={{ label: "Awaiting review", value: String(pending + registrations.length), detail: "Need verification action", tone: "warning", icon: ClipboardCheck }} />
         <ListSummaryMetric metric={{ label: "Assignments", value: String(directoryPractitioners.reduce((total, item) => total + item.assignmentCount, 0)), detail: "Across the network", tone: "primary", icon: Building2 }} />
-      </section>
+      </MetricCardGroup>
       <section className="rounded-2xl border border-card-border bg-surface p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[1fr_240px]">
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search practitioners, professions, locations" className="h-11 rounded-lg border border-card-border bg-white px-4 text-sm text-navy outline-none focus:border-primary" />
@@ -109,7 +112,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
         </section>;
       })}
       {error && !adding ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
-      {inviting ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
+      {inviting ? <div role="dialog" aria-modal="true" aria-label="Invite practitioner" className="pulse-modal fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
         <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
           const result = await inviteRegisteredPractitioner(inviting.id, inviteName.trim(), inviteEmail.trim());
           if (!result.ok) { setError(result.error); return; }
@@ -123,7 +126,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => { setInviting(null); setError(""); }} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !inviteName.trim() || !inviteEmail.trim()} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Sending..." : "Send Invitation"}</button></div>
         </form>
       </div> : null}
-      {adding ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
+      {adding ? <div role="dialog" aria-modal="true" aria-label="Add practitioner" className="pulse-modal fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
         <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
           const result = await registerPractitioner(draft);
           if (!result.ok) { setError(result.error); return; }
@@ -134,11 +137,11 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           <label className="block text-sm font-medium">Name<input required minLength={2} maxLength={160} value={draft.fullName} onChange={e => setDraft({ ...draft, fullName: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Email<input type="email" required value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Profession<select required value={draft.profession} onChange={e => setDraft({ ...draft, profession: e.target.value })} className="mt-1 w-full rounded-lg border p-3"><option value="">Select profession</option>{["Nurse","Doctor","Physiotherapist","Phlebotomist","Optometrist","Dentist","Dietitian","Psychologist","Counsellor","Fitness Coach","Occupational Health Practitioner"].map(v => <option key={v}>{v}</option>)}</select></label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="block text-sm font-medium">Country<input required value={draft.country} onChange={e => setDraft({ ...draft, country: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
             <label className="block text-sm font-medium">City/Town<input required value={draft.city} onChange={e => setDraft({ ...draft, city: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           </div>
-          <fieldset><legend className="text-sm font-medium">Capabilities (choose at least one)</legend><div className="mt-2 grid grid-cols-2 gap-2">{options.map(v => <label key={v} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.capabilities.includes(v)} onChange={e => setDraft({ ...draft, capabilities: e.target.checked ? [...draft.capabilities,v] : draft.capabilities.filter(x => x !== v) })}/>{v}</label>)}</div></fieldset>
+          <fieldset><legend className="text-sm font-medium">Capabilities (choose at least one)</legend><div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">{options.map(v => <label key={v} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.capabilities.includes(v)} onChange={e => setDraft({ ...draft, capabilities: e.target.checked ? [...draft.capabilities,v] : draft.capabilities.filter(x => x !== v) })}/>{v}</label>)}</div></fieldset>
           {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => setAdding(false)} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !draft.capabilities.length} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save Practitioner"}</button></div>
         </form>
@@ -149,7 +152,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
 }
 
 function PractitionerDetail({ practitioner, onClose }: { practitioner: AdminPractitioner; onClose: () => void }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold text-primary">Practitioner details</p><h2 className="mt-2 text-xl font-semibold text-navy">{practitioner.fullName}</h2><p className="mt-1 text-sm text-muted">{practitioner.profession} · {practitioner.specialisation ?? "General practice"}</p></div><button type="button" onClick={onClose} className="text-sm font-semibold text-muted">Close</button></div><div className="mt-6 grid gap-3 sm:grid-cols-2">{[["Email", practitioner.professionalEmail], ["Phone", practitioner.phone ?? "Not provided"], ["Registration", [practitioner.registrationAuthority, practitioner.registrationNumber].filter(Boolean).join(" · ") || "Not provided"], ["Registration expiry", practitioner.registrationExpiryDate ?? "Not provided"], ["Experience", `${practitioner.yearsExperience} years`], ["Profile completeness", `${practitioner.profileCompleteness}%`]].map(([label, value]) => <div key={label} className="rounded-xl border border-card-border p-4"><p className="text-xs text-muted">{label}</p><p className="mt-1 text-sm font-semibold text-navy">{value}</p></div>)}</div><div className="mt-5"><h3 className="text-sm font-semibold text-navy">Approved capabilities</h3><p className="mt-2 text-sm text-muted">{practitioner.capabilities.filter((item) => item.approvalStatus === "Approved").map((item) => item.name).join(", ") || "No approved capabilities"}</p></div></section></div>;
+  return <div className="pulse-modal fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold text-primary">Practitioner details</p><h2 className="mt-2 text-xl font-semibold text-navy">{practitioner.fullName}</h2><p className="mt-1 text-sm text-muted">{practitioner.profession} · {practitioner.specialisation ?? "General practice"}</p></div><button type="button" onClick={onClose} className="text-sm font-semibold text-muted">Close</button></div><div className="mt-6 grid gap-3 sm:grid-cols-2">{[["Email", practitioner.professionalEmail], ["Phone", practitioner.phone ?? "Not provided"], ["Registration", [practitioner.registrationAuthority, practitioner.registrationNumber].filter(Boolean).join(" · ") || "Not provided"], ["Registration expiry", practitioner.registrationExpiryDate ?? "Not provided"], ["Experience", `${practitioner.yearsExperience} years`], ["Profile completeness", `${practitioner.profileCompleteness}%`]].map(([label, value]) => <div key={label} className="rounded-xl border border-card-border p-4"><p className="text-xs text-muted">{label}</p><p className="mt-1 text-sm font-semibold text-navy">{value}</p></div>)}</div><div className="mt-5"><h3 className="text-sm font-semibold text-navy">Approved capabilities</h3><p className="mt-2 text-sm text-muted">{practitioner.capabilities.filter((item) => item.approvalStatus === "Approved").map((item) => item.name).join(", ") || "No approved capabilities"}</p></div></section></div>;
 }
 
 function tone(status: string): "success" | "warning" | "danger" | "neutral" {

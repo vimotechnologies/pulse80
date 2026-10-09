@@ -72,7 +72,8 @@ export function TouchPhotoCropDialog({ file, onCancel, onConfirm }: {
     const context = canvas.getContext("2d");
     if (!context) { setSaving(false); return; }
 
-    const previewSize = 288;
+    const previewSize = image.parentElement?.clientWidth ?? 288;
+    if (!previewSize) { setSaving(false); return; }
     const basePreviewScale = Math.max(previewSize / image.naturalWidth, previewSize / image.naturalHeight);
     const outputScale = (size / previewSize) * basePreviewScale * zoom;
     const outputPanX = pan.x * size / previewSize;
@@ -95,7 +96,7 @@ export function TouchPhotoCropDialog({ file, onCancel, onConfirm }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4" role="dialog" aria-modal="true" aria-label="Adjust profile picture">
+    <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4" role="dialog" aria-modal="true" aria-label="Adjust profile picture">
       <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
         <h2 className="text-lg font-semibold text-navy">Adjust profile picture</h2>
         <p className="mt-1 text-xs text-subtle">Drag the picture to position it. Pinch with two fingers to zoom.</p>

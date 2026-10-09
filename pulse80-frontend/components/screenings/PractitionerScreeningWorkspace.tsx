@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import { useMemo, useRef, useState, useTransition, type DragEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -200,12 +203,12 @@ export function PractitionerScreeningWorkspace({ screenings, assignments }: { sc
       />
       <ToastMessage message={message} />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <MetricCardGroup>
         <ListSummaryMetric metric={{ label: "Captured", value: (screenings.length + importRows.length).toLocaleString("en-BW"), detail: "Screening records", tone: "primary", icon: ClipboardCheck }} />
         <ListSummaryMetric metric={{ label: "Needs correction", value: needsCorrection.toLocaleString("en-BW"), detail: "Require your action", tone: "primary", icon: Activity }} />
         <ListSummaryMetric metric={{ label: "Under Review", value: submitted.toLocaleString("en-BW"), detail: "Awaiting quality assurance", tone: "primary", icon: Microscope }} />
         <ListSummaryMetric metric={{ label: "Escalated", value: escalated.toLocaleString("en-BW"), detail: "Require clinical attention", tone: "primary", icon: HeartPulse }} />
-      </section>
+      </MetricCardGroup>
 
       <UnifiedFilterCard>
         <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_150px_210px_auto]">
@@ -414,7 +417,7 @@ function CaptureModal({ assignments, screenings, pending, serverError, onClose, 
     if (!errorCount) onSave(form);
   }
 
-  return <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4">
+  return <div className="pulse-modal fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4">
     <form onSubmit={submit} noValidate className="my-6 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">Capture screening</h2><button type="button" onClick={onClose} className="text-xs font-semibold text-muted">Close</button></div>
 
