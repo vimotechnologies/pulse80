@@ -112,9 +112,7 @@ div:has(> #practitioner-document) {
 }
 
 .pulse-login-page {
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
 }
 
 .pulse-login-eyebrow {
@@ -228,4 +226,90 @@ div:has(> #practitioner-document) {
   background-image: none !important;
   box-shadow: 0 0 0 1000px var(--surface) inset !important;
   caret-color: var(--dark-navy);
+}
+
+/* Shared responsive boundaries; wide tables keep their own horizontal scrollbar. */
+.pulse-portal :where(.grid > *, fieldset, input, select, textarea) {
+  min-width: 0;
+}
+.pulse-portal :where(p, h1, h2, h3, label) {
+  overflow-wrap: anywhere;
+}
+body:has(.pulse-modal) {
+  overflow: hidden;
+}
+.pulse-modal {
+  z-index: 60;
+}
+@media (max-width: 1023px) {
+  .pulse-portal :where(button):not(.pulse-calendar button),
+  .pulse-login-page button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .pulse-portal :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+  .pulse-login-input,
+  .pulse-login-input::placeholder {
+    font-size: 16px;
+  }
+  .pulse-portal :where(input:not([type="checkbox"]):not([type="radio"]), select) {
+    min-height: 44px;
+    max-width: 100%;
+  }
+  .pulse-portal :where(label:has(input[type="checkbox"]), label:has(input[type="radio"])) {
+    min-height: 44px;
+  }
+  .pulse-modal {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .pulse-modal > :is(div, form, section):not(.absolute) {
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-width: 0;
+    overflow-y: auto;
+    margin-block: 0;
+  }
+  .pulse-modal :where(.flex.justify-end) {
+    flex-wrap: wrap;
+  }
+  .pulse-portal input, .pulse-portal textarea, .pulse-portal select {
+    scroll-margin-block: 6rem;
+  }
+}
+@media (max-width: 639px) {
+  .pulse-popover {
+    position: fixed;
+    inset: auto 12px calc(7rem + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 65dvh;
+    overflow-y: auto;
+    transform: none;
+  }
+  .pulse-calendar { width: 100%; }
+}
+
+/* Show part of the next metric as a swipe cue, without widening the page. */
+@media (max-width: 767px) {
+  .pulse-metric-carousel {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: min(85%, 20rem);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) transparent;
+    padding-block: 4px 12px;
+  }
+  .pulse-metric-carousel > * {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+  .pulse-metric-carousel > :last-child {
+    scroll-snap-align: end;
+  }
+  .pulse-metric-carousel > :only-child {
+    scroll-snap-align: start;
+  }
 }

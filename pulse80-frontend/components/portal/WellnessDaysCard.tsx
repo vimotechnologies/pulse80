@@ -96,8 +96,8 @@ export function ThisWeeksWellnessDaysCard({ events, today }: WellnessProps) {
           </div>
         </div>
 
-        <div>
-          <div className="w-full">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable wellness days">
+          <div className="w-full min-w-[600px] sm:min-w-0">
             <div className="grid grid-cols-[0.58fr_1fr_1.35fr_1fr_1.08fr] gap-2 border-b border-card-border bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold text-black">
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Date</span>
               <span className="min-w-0" style={{ fontSize: "12px", lineHeight: "16px" }}>Organization</span>
@@ -171,7 +171,7 @@ function WellnessCalendarView({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
-      <div className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 border-b border-card-border px-5 py-4">
         <div className="flex gap-3">
           <CalendarDays className="mt-1 h-5 w-5 text-black" aria-hidden="true" />
           <div>
@@ -199,7 +199,7 @@ function WellnessCalendarView({
           </button>
         </div>
       </div>
-      <div className="p-5">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable wellness calendar"><div className="min-w-[540px] p-5">
         {!events.some((event) => event.eventDate.slice(0, 7) === toDateKey(visibleMonth).slice(0, 7)) ? (
           <p role="status" className="mb-4 text-center text-sm text-subtle">No activations to display for this month.</p>
         ) : null}
@@ -237,7 +237,7 @@ function WellnessCalendarView({
             );
           })}
         </div>
-      </div>
+      </div></div>
     </section>
   );
 }
@@ -245,7 +245,7 @@ function WellnessCalendarView({
 function WellnessDayModal({ day, onClose }: { day: WellnessDay; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
+      className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="wellness-day-modal-title"

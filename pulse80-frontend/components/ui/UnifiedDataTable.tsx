@@ -12,7 +12,7 @@ export function UnifiedTableSurface({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]",
+        "min-w-0 max-w-full overflow-hidden rounded-2xl border border-card-border bg-white shadow-[0_12px_32px_rgba(15,23,42,0.07)]",
         className,
       )}
     >
@@ -22,7 +22,7 @@ export function UnifiedTableSurface({
 }
 
 export function UnifiedTableViewport({ children }: { children: ReactNode }) {
-  return <div className="overflow-x-auto">{children}</div>;
+  return <div tabIndex={0} role="region" aria-label="Scrollable data table" className="max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-primary">{children}</div>;
 }
 
 export const unifiedTableHeaderClass =

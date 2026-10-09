@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -50,12 +53,12 @@ export function AdminPractitionerAssignments({ assignments, practitioners, organ
   return <div className="space-y-6">
     <PortalPageHeader eyebrow="Admin Operations" title="Practitioner Assignments" description="Match verified practitioners to wellness work, monitor coverage, and prevent scheduling conflicts." actions={<button type="button" onClick={() => setEditing(null)} className="rounded-lg bg-primary px-4 py-3 text-xs font-semibold text-white shadow-sm">Create assignment</button>} />
     <ToastMessage message={message} />
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <MetricCardGroup>
       <ListSummaryMetric metric={{ label: "Upcoming", value: String(assignments.filter((item) => new Date(item.startsAt).getTime() >= now && item.status !== "Cancelled").length), detail: "Future assignments", tone: "primary", icon: CalendarCheck }} />
       <ListSummaryMetric metric={{ label: "Confirmed", value: String(assignments.filter((item) => item.status === "Confirmed").length), detail: "Ready for delivery", tone: "success", icon: ShieldCheck }} />
       <ListSummaryMetric metric={{ label: "Action required", value: String(assignments.filter((item) => item.status === "Action Required").length), detail: "Need operations review", tone: "warning", icon: ClipboardCheck }} />
       <ListSummaryMetric metric={{ label: "Eligible practitioners", value: String(eligiblePractitioners.length), detail: "Verified and active", tone: "primary", icon: Stethoscope }} />
-    </section>
+    </MetricCardGroup>
     <section className="rounded-2xl border border-card-border bg-surface p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-[1fr_240px]"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search practitioner, organisation, programme, service" className="h-11 rounded-lg border border-card-border bg-white px-4 text-sm text-navy outline-none focus:border-primary" /><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-11 rounded-lg border border-card-border bg-white px-3 text-sm text-navy">{["All", "Scheduled", "Confirmed", "In Progress", "Completed", "Cancelled", "Action Required"].map((option) => <option key={option}>{option}</option>)}</select></div></section>
     <section className="overflow-hidden rounded-2xl border border-card-border bg-surface shadow-sm"><div className="overflow-x-auto"><table className="w-full min-w-[1050px] text-left text-sm"><thead className="border-b border-card-border bg-[#f8fafc] text-xs text-muted"><tr><th className="px-5 py-4">Practitioner</th><th className="px-4 py-4">Organisation</th><th className="px-4 py-4">Programme / Activity</th><th className="px-4 py-4">Service</th><th className="px-4 py-4">Date & Time</th><th className="px-4 py-4">Status</th><th className="px-4 py-4" /></tr></thead><tbody className="divide-y divide-card-border">{filtered.map((assignment) => <tr key={assignment.id} className="hover:bg-[#f8fafc]"><td className="px-5 py-4"><p className="font-semibold text-navy">{assignment.practitionerName}</p><p className="mt-1 text-xs text-muted">{assignment.practitionerProfession}</p></td><td className="px-4 py-4 text-navy">{assignment.organisationName}</td><td className="px-4 py-4"><p className="font-medium text-navy">{assignment.programmeName}</p><p className="mt-1 text-xs text-muted">{assignment.activityName}</p></td><td className="px-4 py-4 text-navy">{assignment.serviceName}</td><td className="px-4 py-4"><p className="text-navy">{formatDate(assignment.startsAt)}</p><p className="mt-1 text-xs text-muted">{assignment.location}</p></td><td className="px-4 py-4"><StatusBadge status={assignment.status} tone={statusTone(assignment.status)} /></td><td className="px-4 py-4"><button type="button" onClick={() => setEditing(assignment)} className="font-semibold text-primary">Edit</button></td></tr>)}</tbody></table></div>{!filtered.length ? <p className="p-8 text-center text-sm text-muted">No assignments match these filters.</p> : null}</section>
     {editing !== undefined ? <AssignmentModal activations={activations} assignment={editing} practitioners={eligiblePractitioners} organisations={organisations.filter((item) => !["Archived", "Contract Expired"].includes(item.status))} pending={isPending} onClose={() => setEditing(undefined)} onSave={(form) => startTransition(async () => { const result = editing ? await updatePractitionerAssignment(editing.id, form) : await createPractitionerAssignment(form); setMessage(result.ok ? `Assignment ${editing ? "updated" : "created"}.` : friendlyError(result.error)); if (result.ok) { setEditing(undefined); router.refresh(); } })} /> : null}
@@ -90,7 +93,7 @@ function AssignmentModal({ assignment, practitioners, organisations, activations
     setForm((current) => ({ ...current, activationId: id, serviceIds: [], serviceName: "", programmeName: event?.programmeName ?? "",
       activityName: event?.title ?? "", location: event?.location ?? "", startsAt: event ? localDateTime(event.startsAt) : "", endsAt: event ? localDateTime(event.endsAt) : "" }));
   }
-  return <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+  return <div className="pulse-modal fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <form onSubmit={(event) => { event.preventDefault(); if (valid) onSave(form); }} className="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
       <div className="flex items-start justify-between"><h2 className="text-xl font-semibold text-navy">{assignment ? "Edit assignment" : "Create assignment"}</h2><button type="button" onClick={onClose}>Close</button></div>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
