@@ -79,7 +79,7 @@ function AssignmentModal({ assignment, practitioners, organisations, activations
   // Approval is still enforced before an assignment can be saved.
   const services = activation?.services ?? [];
   const isApprovedForService = (service: (typeof services)[number]) => Boolean(practitioner?.capabilities.some((capability) =>
-    capability.approvalStatus === "Approved" && (capability.name === service.name || capability.code === service.code)));
+    (capability.name === service.name || capability.code === service.code)));
   const approvedServices = services.filter(isApprovedForService);
   const valid = Boolean(practitioner && activation && form.serviceIds.length && form.serviceIds.every((id) => approvedServices.some((service) => service.id === id)) &&
     form.startsAt && form.endsAt && form.endsAt > form.startsAt &&
@@ -101,7 +101,7 @@ function AssignmentModal({ assignment, practitioners, organisations, activations
         <fieldset className="space-y-2 sm:col-span-2"><legend className="text-xs font-semibold text-navy">Activation services</legend>{services.length ? services.map((service) => { const approved = isApprovedForService(service); return <label key={service.id} className={`flex items-center gap-2 text-sm ${approved ? "" : "text-muted"}`}><input type="checkbox" disabled={!approved} checked={form.serviceIds.includes(service.id)} onChange={(event) => {
           const ids = event.target.checked ? [...form.serviceIds, service.id] : form.serviceIds.filter((id) => id !== service.id);
           set("serviceIds", ids); set("serviceName", services.find((item) => item.id === ids[0])?.name ?? "");
-        }} />{service.name}{!approved ? <span className="text-xs">(practitioner approval required)</span> : null}</label>; }) : <p className="text-sm text-muted">{activation ? "This activation has no screening services configured." : "Select an activation to see its screening services."}</p>}</fieldset>
+        }} />{service.name}{!approved ? <span className="text-xs">(not selected by practitioner)</span> : null}</label>; }) : <p className="text-sm text-muted">{activation ? "This activation has no screening services configured." : "Select an activation to see its screening services."}</p>}</fieldset>
         <Field label="Starts"><input type="datetime-local" step="0.001" value={form.startsAt} onChange={(event) => set("startsAt", event.target.value)} required className={inputClass} /></Field>
         <Field label="Ends"><input type="datetime-local" step="0.001" value={form.endsAt} onChange={(event) => set("endsAt", event.target.value)} required className={inputClass} /></Field>
         <Field label="Status"><select value={form.status} onChange={(event) => set("status", event.target.value as PractitionerAssignmentForm["status"])} className={inputClass}>{["Scheduled", "Confirmed", "In Progress", "Completed", "Cancelled", "Action Required"].map((option) => <option key={option}>{option}</option>)}</select></Field>
