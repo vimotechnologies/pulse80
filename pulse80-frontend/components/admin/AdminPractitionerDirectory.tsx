@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { registerPractitioner, type RegisteredPractitioner } from "@/app/actions/admin-practitioners";
+import { registerPractitioner, setPractitionerRegistrationStatus, inviteRegisteredPractitioner, type RegisteredPractitioner } from "@/app/actions/admin-practitioners";
 import { useRouter } from "next/navigation";
 
 import { Building2, ClipboardCheck, ShieldCheck, Stethoscope } from "@/components/icons/IconsaxIcons";
@@ -76,13 +76,22 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
         </div>
         {!filtered.length ? <p className="p-8 text-center text-sm text-muted">No practitioners match these filters.</p> : null}
       </section>
-      {registrations.length ? <section className="rounded-2xl border border-card-border bg-surface p-5 shadow-sm">
-        <h2 className="mb-3 font-semibold text-navy">Registered practitioners awaiting onboarding</h2>
-        <div className="space-y-2">{registrations.map((item) => <div key={item.id} className="flex flex-wrap justify-between gap-3 border-b border-card-border py-3 text-sm">
-          <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.email} · {item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p></div>
-          <StatusBadge status={item.verificationStatus} tone="warning" />
-        </div>)}</div>
-      </section> : null}
+      {(["Awaiting Onboarding", "Active", "Disabled"] as const).map((status) => {
+        const group = registrations.filter((item) => item.accountStatus === status);
+        if (!group.length) return null;
+        return <section key={status} className="rounded-2xl border border-card-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-3 font-semibold text-navy">{status === "Active" ? "Existing practitioners" : status === "Disabled" ? "Disabled practitioners" : "Practitioners awaiting onboarding"}</h2>
+          <div className="space-y-2">{group.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-card-border py-3 text-sm">
+            <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.email} · {item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p><p className="text-muted">Account: {item.accountStatus} · Verification: {item.verificationStatus} · {item.invitedAt ? "Invitation sent" : "Not invited"}</p></div>
+            <div className="flex flex-wrap gap-2">
+              {status !== "Active" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Activate</button> : null}
+              {status !== "Disabled" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Disabled"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Disable</button> : null}
+              {status === "Active" ? <button type="button" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-white" onClick={() => startSaving(async () => { const result = await inviteRegisteredPractitioner(item.id); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>{item.invitedAt ? "Resend Invitation" : "Send Invitation"}</button> : null}
+            </div>
+          </div>)}</div>
+        </section>;
+      })}
+      {error && !adding ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
       {adding ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
         <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
           const result = await registerPractitioner(draft);
