@@ -16,7 +16,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type Props = { initialProfile: PractitionerProfile };
 
-const professions = ["Neurologist", "Psychiatrist", "Neurosurgeon", "Clinical Psychologist", "Dermatologist", "Endocrinologist", "Nephrologist", "Urologist", "Otolaryngologist", "Oncologist", "Dietitian", "Physical Therapist", "Pulmonologist", "Radiologist", "Podiatrist", "Audiologist", "Dentist", "Optometrist", "Physiotherapist", "Orthotist"];
+const professions = ["Neurologist", "Psychiatrist", "Neurosurgeon", "Clinical Psychologist", "Dermatologist", "Endocrinologist", "Nephrologist", "Urologist", "Otolaryngologist", "Oncologist", "Dietitian", "Physical Therapist", "Pulmonologist", "Radiologist", "Podiatrist", "Audiologist", "Phlebotomist", "Dentist", "Optometrist", "Physiotherapist", "Orthotist"];
 const qualificationOptions = ["MBBS", "BSc Nursing", "Diploma in Nursing", "Midwifery Certificate", "MSc Clinical Psychology", "BSc Physiotherapy", "BSc Occupational Therapy", "BSc Dietetics", "Social Work Degree", "Public Health Diploma"];
 const specialisationOptionsByProfession: Record<string, string[]> = { Physiotherapist: ["Industrial Ergonomics", "Musculoskeletal Risk", "Work Capacity", "Rehabilitation", "Sports Physiotherapy", "Neurological Physiotherapy"] };
 const locations: Record<string, { areaLabel: string; areas: Record<string, string[]> }> = {
@@ -24,7 +24,8 @@ const locations: Record<string, { areaLabel: string; areas: Record<string, strin
   "South Africa": { areaLabel: "Province", areas: { "Eastern Cape": ["Gqeberha", "East London", "Mthatha", "Komani", "Makhanda"], "Free State": ["Bloemfontein", "Welkom", "Bethlehem", "Sasolburg", "Kroonstad"], Gauteng: ["Johannesburg", "Pretoria", "Soweto", "Sandton", "Midrand", "Centurion", "Germiston", "Boksburg", "Benoni", "Vereeniging"], "KwaZulu-Natal": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Ballito"], Limpopo: ["Polokwane", "Tzaneen", "Thohoyandou", "Musina", "Mokopane", "Lephalale"], Mpumalanga: ["Mbombela", "Emalahleni", "Middelburg", "Secunda", "Ermelo", "White River"], "North West": ["Mahikeng", "Rustenburg", "Klerksdorp", "Potchefstroom", "Brits"], "Northern Cape": ["Kimberley", "Upington", "Kuruman", "De Aar", "Springbok"], "Western Cape": ["Cape Town", "Stellenbosch", "Paarl", "George", "Worcester", "Mossel Bay"] } },
 };
 const registrationAuthorities: Record<string, string[]> = { Botswana: ["Botswana Health Professions Council (BHPC)", "Nurses and Midwives Council of Botswana (NMCB)", "Botswana Pharmacy Council (BPC)"], "South Africa": ["Health Professions Council of South Africa (HPCSA)", "South African Nursing Council (SANC)", "South African Pharmacy Council (SAPC)"], "Botswana and South Africa": ["Botswana Health Professions Council (BHPC)", "Health Professions Council of South Africa (HPCSA)"] };
-const serviceOptions = ["Primary healthcare", "Health screening", "Mental health support", "Nutrition counselling", "Physiotherapy", "Occupational health", "Maternal care", "Community outreach", "Health education", "Emergency response"];
+// These names must match the screening services configured for activations.
+const serviceOptions = ["Blood Pressure", "BMI", "Glucose", "Cholesterol", "Primary healthcare", "Health screening", "Mental health support", "Nutrition counselling", "Physiotherapy", "Occupational health", "Maternal care", "Community outreach", "Health education", "Emergency response"];
 
 export function PractitionerProfilePage({ initialProfile }: Props) {
   const [profile, setProfile] = useState(initialProfile);

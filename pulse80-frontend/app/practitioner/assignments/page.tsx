@@ -1,8 +1,14 @@
+import { redirect } from "next/navigation";
+import { loadPractitionerProfile } from "@/app/actions/practitioner-profile";
 import { PractitionerWorkspacePage } from "@/components/practitioner/PractitionerWorkspacePage";
 import { loadPractitionerAssignments, type PractitionerAssignment } from "@/app/actions/practitioner-profile";
 import type { PractitionerRecord } from "@/data/practitioner-portal-ui";
 
 export default async function PractitionerAssignmentsPage() {
+  const profile = await loadPractitionerProfile();
+  if (profile.verificationStatus !== "Verified" || profile.practitionerStatus !== "Active") {
+    redirect("/practitioner/documents");
+  }
   const assignments = await loadPractitionerAssignments();
   return <PractitionerWorkspacePage configId="assignments" records={assignments.map(toAssignmentRecord)} />;
 }

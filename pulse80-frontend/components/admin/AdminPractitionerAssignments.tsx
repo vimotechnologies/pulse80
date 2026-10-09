@@ -75,9 +75,13 @@ function AssignmentModal({ assignment, practitioners, organisations, activations
   } : emptyForm);
   const practitioner = practitioners.find((item) => item.userId === form.practitionerUserId);
   const activation = activations.find((item) => item.id === form.activationId && item.organisationId === form.organisationId);
-  const services = activation?.services.filter((service) => practitioner?.capabilities.some((capability) =>
-    capability.approvalStatus === "Approved" && (capability.name === service.name || capability.code === service.code))) ?? [];
-  const valid = Boolean(practitioner && activation && form.serviceIds.length && form.serviceIds.every((id) => services.some((service) => service.id === id)) &&
+  // Activation services are visible independently of practitioner approval.
+  // Approval is still enforced before an assignment can be saved.
+  const services = activation?.services ?? [];
+  const isApprovedForService = (service: (typeof services)[number]) => Boolean(practitioner?.capabilities.some((capability) =>
+    (capability.name === service.name || capability.code === service.code)));
+  const approvedServices = services.filter(isApprovedForService);
+  const valid = Boolean(practitioner && activation && form.serviceIds.length && form.serviceIds.every((id) => approvedServices.some((service) => service.id === id)) &&
     form.startsAt && form.endsAt && form.endsAt > form.startsAt &&
     Date.parse(form.startsAt) >= Date.parse(activation.startsAt) && Date.parse(form.endsAt) <= Date.parse(activation.endsAt));
   function set<K extends keyof PractitionerAssignmentForm>(key: K, value: PractitionerAssignmentForm[K]) { setForm((current) => ({ ...current, [key]: value })); }
@@ -94,10 +98,10 @@ function AssignmentModal({ assignment, practitioners, organisations, activations
         <Field label="Organisation"><select value={form.organisationId} onChange={(event) => { set("organisationId", event.target.value); selectActivation(""); }} required className={inputClass}><option value="">Select organisation</option>{organisations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
         <Field label="Activation"><select value={form.activationId} onChange={(event) => selectActivation(event.target.value)} required className={inputClass}><option value="">Select event</option>{activations.filter((item) => item.organisationId === form.organisationId).map((item) => <option key={item.id} value={item.id}>{item.programmeName} · {item.title} · {formatDate(item.startsAt)}</option>)}</select></Field>
         <Field label="Location"><input value={form.location} readOnly className={inputClass} /></Field>
-        <fieldset className="space-y-2 sm:col-span-2"><legend className="text-xs font-semibold text-navy">Services</legend>{services.length ? services.map((service) => <label key={service.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.serviceIds.includes(service.id)} onChange={(event) => {
+        <fieldset className="space-y-2 sm:col-span-2"><legend className="text-xs font-semibold text-navy">Activation services</legend>{services.length ? services.map((service) => { const approved = isApprovedForService(service); return <label key={service.id} className={`flex items-center gap-2 text-sm ${approved ? "" : "text-muted"}`}><input type="checkbox" disabled={!approved} checked={form.serviceIds.includes(service.id)} onChange={(event) => {
           const ids = event.target.checked ? [...form.serviceIds, service.id] : form.serviceIds.filter((id) => id !== service.id);
           set("serviceIds", ids); set("serviceName", services.find((item) => item.id === ids[0])?.name ?? "");
-        }} />{service.name}</label>) : <p className="text-sm text-muted">No approved services available for this practitioner and event.</p>}</fieldset>
+        }} />{service.name}{!approved ? <span className="text-xs">(not selected by practitioner)</span> : null}</label>; }) : <p className="text-sm text-muted">{activation ? "This activation has no screening services configured." : "Select an activation to see its screening services."}</p>}</fieldset>
         <Field label="Starts"><input type="datetime-local" step="0.001" value={form.startsAt} onChange={(event) => set("startsAt", event.target.value)} required className={inputClass} /></Field>
         <Field label="Ends"><input type="datetime-local" step="0.001" value={form.endsAt} onChange={(event) => set("endsAt", event.target.value)} required className={inputClass} /></Field>
         <Field label="Status"><select value={form.status} onChange={(event) => set("status", event.target.value as PractitionerAssignmentForm["status"])} className={inputClass}>{["Scheduled", "Confirmed", "In Progress", "Completed", "Cancelled", "Action Required"].map((option) => <option key={option}>{option}</option>)}</select></Field>

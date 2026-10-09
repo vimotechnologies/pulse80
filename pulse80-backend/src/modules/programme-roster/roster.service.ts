@@ -98,6 +98,29 @@ export class ProgrammeRosterService {
     return data;
   }
 
+  // Pre-authorize anonymous codes before the event; no arrival-time activation required.
+  async generateWalkInCodes(programmeId: string, count: number) {
+    await this.programme(programmeId);
+    const codes: string[] = [];
+    for (let remaining = count; remaining > 0; remaining -= 500) {
+      const batch = await this.withGeneratedCodes(programmeId, Array.from({ length: Math.min(remaining, 500) }, () => ({ eligibilityStatus: "Eligible" as const, registrationStatus: "Registered" as const })));
+      const ids = await this.import(programmeId, batch);
+      if (ids.length !== batch.length) throw new Error("Could not generate the complete code batch.");
+      codes.push(...batch.map(row => row.screeningReference!));
+    }
+    return codes;
+  }
+
+  async activateWalkInCode(programmeId: string, code: string) {
+    const programme = await this.programme(programmeId);
+    const { data, error } = await this.db.from("programme_participants").select(fields)
+      .eq("programme_id", programme.id).eq("screening_reference", code.trim().toUpperCase()).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new GraphQLError("This code was not issued for the selected programme.", { extensions: { code: "BAD_USER_INPUT" } });
+    if (data.registration_status !== "Invited") throw new GraphQLError("This code has already been used or is unavailable.", { extensions: { code: "BAD_USER_INPUT" } });
+    return this.updateStatus(programmeId, data.id, { eligibilityStatus: "Eligible", registrationStatus: "Registered" });
+  }
+
   async updateStatus(programmeId: string, id: string, status: z.infer<typeof rosterStatusSchema>) {
     const programme = await this.programme(programmeId);
     const { data, error } = await this.db.rpc("set_programme_roster_status", {

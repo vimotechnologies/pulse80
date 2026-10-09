@@ -88,7 +88,7 @@ export async function graphqlRequest<T>(
     const graphQLError = payload.errors?.[0];
     const errorCode = graphQLError?.extensions?.code ?? "GRAPHQL_REQUEST_FAILED";
     if (errorCode === "UNAUTHENTICATED") redirect("/login");
-    throw new Error(errorCode === "BAD_USER_INPUT" && graphQLError?.message ? graphQLError.message : errorCode);
+    throw new Error(graphQLError?.message ?? `GraphQL request failed (HTTP ${response.status}).`);
   }
 
   return payload.data;

@@ -31,6 +31,10 @@ export const rosterResolvers = {
     },
   },
   Mutation: {
+    generateWalkInCodes: (_: unknown, args: { programmeId: string; count: number }, context: GraphQLContext) =>
+      service(context).generateWalkInCodes(id(args.programmeId), parseRoster(z.number().int().min(1).max(2000), args.count)),
+    activateWalkInCode: (_: unknown, args: { programmeId: string; code: string }, context: GraphQLContext) =>
+      service(context).activateWalkInCode(id(args.programmeId), parseRoster(z.string().trim().regex(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/i), args.code)),
     createProgrammeParticipant: async (_: unknown, args: { programmeId: string; input: unknown }, context: GraphQLContext) => {
       const roster = service(context);
       const ids = await roster.import(id(args.programmeId), [parseRoster(rosterEntrySchema, args.input)]);

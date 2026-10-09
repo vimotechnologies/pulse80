@@ -68,23 +68,25 @@ function inputFromForm(form: OrganizationForm) {
     logoDataUrl: form.logo ?? null,
     contacts: [
       {
-        name: form.contact1Name,
-        roleLabel: contactRole("contact1"),
-        email: form.contact1Email,
-        phone: form.contact1Phone || null,
+        name: form.contact1Name.trim(),
+        roleLabel: contactRole("contact1").trim(),
+        email: form.contact1Email.trim(),
+        phone: form.contact1Phone.trim() || null,
         method: form.contact1Method,
         primary: true,
         notes: "Primary organisation contact.",
       },
-      {
-        name: form.contact2Name,
-        roleLabel: contactRole("contact2"),
-        email: form.contact2Email,
-        phone: form.contact2Phone || null,
-        method: form.contact2Method,
-        primary: false,
-        notes: "Secondary organisation contact.",
-      },
+      ...(form.contact2Name.trim() || form.contact2Email.trim() || form.contact2Phone.trim()
+        ? [{
+            name: form.contact2Name.trim(),
+            roleLabel: contactRole("contact2").trim(),
+            email: form.contact2Email.trim(),
+            phone: form.contact2Phone.trim() || null,
+            method: form.contact2Method,
+            primary: false,
+            notes: "Secondary organisation contact.",
+          }]
+        : []),
     ],
   };
 }

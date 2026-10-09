@@ -1,5 +1,7 @@
 import { GraphQLError } from "graphql";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { env } from "../../config/env.js";
 
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
@@ -11,6 +13,15 @@ import {
   type PractitionerVerificationUpdate,
 } from "./practitioner.service.js";
 
+const registrationSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+  fullName: z.string().trim().min(2).max(160),
+  profession: z.string().trim().min(2).max(120),
+  country: z.string().trim().min(2).max(100),
+  city: z.string().trim().min(2).max(120),
+  capabilities: z.array(z.string().trim().min(2).max(120)).min(1).max(30)
+    .refine((values) => new Set(values).size === values.length, "Duplicate capabilities are not allowed."),
+});
 const contactMethods = ["Email", "Phone", "WhatsApp"] as const;
 const updateSchema = z.object({
   fullName: z.string().trim().min(2).max(160).optional(),
@@ -124,7 +135,10 @@ async function loadProfile(context: GraphQLContext) {
 export const practitionerResolvers = {
   Query: {
     practitionerDashboard: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
-      const { userId } = await loadProfile(context);
+      const { userId, profile } = await loadProfile(context);
+      if (profile.verification_status !== "Verified" || profile.practitioner_status !== "Active") {
+        throw new GraphQLError("Practitioner verification is required before accessing the dashboard.", { extensions: { code: "FORBIDDEN" } });
+      }
       return new PractitionerDashboardService(context.adminSupabase).getDashboard(userId);
     },
     practitionerProfile: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
@@ -135,7 +149,40 @@ export const practitionerResolvers = {
       requirePlatformPermission(context, "provider:manage");
       const service = new PractitionerService(context.adminSupabase);
       const practitioners = await service.listForAdmin();
-      return practitioners.map((practitioner) => adminProfileShape(service, practitioner));
+      // Provider registrations own the public-facing admin identity; the linked
+      // user retains their personal name on the practitioner profile.
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data: registrations, error } = await db.from("practitioner_registrations")
+        .select("invited_user_id,full_name").not("invited_user_id", "is", null);
+      if (error) throw new Error(error.message);
+      const providerNames = new Map((registrations ?? []).map((registration) => [registration.invited_user_id, registration.full_name]));
+      return practitioners.map((practitioner) => ({
+        ...adminProfileShape(service, practitioner),
+        fullName: providerNames.get(practitioner.user_id) ?? adminProfileShape(service, practitioner).fullName,
+      }));
+    },
+    registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data, error } = await db.from("practitioner_registrations")
+        .select("id,full_name,email,account_status,invited_at,invited_user_id,profession,country,city,capabilities,verification_status")
+        .order("created_at", { ascending: false });
+      if (error) throw new GraphQLError(error.message);
+      const userIds = [...new Set((data ?? []).map((row) => row.invited_user_id).filter((id): id is string => Boolean(id)))];
+      const { data: representatives, error: representativesError } = userIds.length
+        ? await db.from("practitioner_profiles").select("user_id,verification_status,practitioner_status").in("user_id", userIds)
+        : { data: [], error: null };
+      if (representativesError) throw new GraphQLError(representativesError.message);
+      const representativeById = new Map((representatives ?? []).map((row) => [row.user_id, row]));
+      return (data ?? []).map((row) => {
+        const representative = row.invited_user_id ? representativeById.get(row.invited_user_id) : null;
+        return {
+          id: row.id, fullName: row.full_name, email: row.email, accountStatus: row.account_status,
+          invitedAt: row.invited_at, profession: row.profession, country: row.country,
+          city: row.city, capabilities: row.capabilities,
+          verificationStatus: representative?.verification_status ?? row.verification_status,
+        };
+      });
     },
     adminPractitionerAssignments: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
@@ -159,7 +206,10 @@ export const practitionerResolvers = {
     selectedServices: (parent: { selectedServices?: unknown[] }) => parent.selectedServices ?? [],
     specialisations: (parent: { specialisations?: unknown[] }) => parent.specialisations ?? [],
     assignments: async (_parent: unknown, arguments_: { limit?: number }, context: GraphQLContext) => {
-      const { service, userId } = await loadProfile(context);
+      const { service, userId, profile } = await loadProfile(context);
+      if (profile.verification_status !== "Verified" || profile.practitioner_status !== "Active") {
+        throw new GraphQLError("Practitioner verification is required before accessing assignments.", { extensions: { code: "FORBIDDEN" } });
+      }
       return service.getAssignments(userId, Math.min(Math.max(arguments_.limit ?? 5, 1), 20));
     },
     documents: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
@@ -288,6 +338,74 @@ export const practitionerResolvers = {
       const { service, userId } = await loadProfile(context);
       const input = parse(uploadDocumentSchema, arguments_);
       return service.uploadDocument(userId, input.documentType, input.expiryDate ?? null, input.file);
+    },
+    registerPractitioner: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const input = parse(registrationSchema, arguments_.input);
+      const { data, error } = await (context.adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
+        .insert({
+          full_name: input.fullName, email: input.email, profession: input.profession, country: input.country,
+          city: input.city, capabilities: input.capabilities,
+        }).select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return {
+        id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status, invitedAt: data.invited_at, profession: data.profession,
+        country: data.country, city: data.city, capabilities: data.capabilities,
+        verificationStatus: data.verification_status,
+      };
+    },
+    setPractitionerRegistrationStatus: async (_parent: unknown, args: { id: string; status: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const id = parse(idSchema, args.id);
+      if (!["Active", "Disabled"].includes(args.status)) throw new GraphQLError("Invalid account status.");
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data, error } = await db.from("practitioner_registrations")
+        .update({ account_status: args.status }).eq("id", id)
+        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return { id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status,
+        invitedAt: data.invited_at, profession: data.profession, country: data.country,
+        city: data.city, capabilities: data.capabilities, verificationStatus: data.verification_status };
+    },
+    inviteRegisteredPractitioner: async (_parent: unknown, args: { id: string; fullName: string; email: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const id = parse(idSchema, args.id);
+      const { data: registration, error: readError } = await db.from("practitioner_registrations")
+        .select("id,full_name,email,account_status,invited_user_id,profession,country,city,capabilities")
+        .eq("id", id).single();
+      if (readError || !registration) throw new GraphQLError("Registration not found.");
+      if (registration.account_status !== "Active") throw new GraphQLError("Activate the practitioner before inviting them.");
+      const details = parse(z.object({ fullName: z.string().trim().min(2).max(160), email: z.email().trim().toLowerCase() }), args);
+      if (registration.invited_user_id && registration.email !== details.email) throw new GraphQLError("Email cannot be changed after an invitation. Please use the existing address.");
+      const redirectTo = new URL("/auth/setup", env.FRONTEND_URL).toString();
+      let userId: string;
+      if (registration.invited_user_id) {
+        const resend = await db.auth.resetPasswordForEmail(details.email, { redirectTo });
+        if (resend.error) throw new GraphQLError(resend.error.message);
+        userId = registration.invited_user_id;
+      } else {
+        const invitation = await db.auth.admin.inviteUserByEmail(details.email, {
+          redirectTo, data: { full_name: details.fullName, practitioner_registration_id: registration.id },
+        });
+        if (invitation.error) throw new GraphQLError(invitation.error.message);
+        userId = invitation.data.user.id;
+      }
+      const { error: profileError } = await db.from("practitioner_profiles").upsert({
+        user_id: userId, professional_email: details.email, profession: registration.profession,
+        country: registration.country, city: registration.city,
+        practitioner_status: "Active", verification_status: "Pending Verification",
+      }, { onConflict: "user_id", ignoreDuplicates: true });
+      if (profileError) throw new GraphQLError(profileError.message);
+      const { error: nameError } = await db.from("profiles").update({ full_name: details.fullName }).eq("id", userId);
+      if (nameError) throw new GraphQLError(nameError.message);
+      const { data, error } = await db.from("practitioner_registrations")
+        .update({ email: details.email, invited_user_id: userId, invited_at: new Date().toISOString() }).eq("id", id)
+        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return { id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status,
+        invitedAt: data.invited_at, profession: data.profession, country: data.country,
+        city: data.city, capabilities: data.capabilities, verificationStatus: data.verification_status };
     },
     updatePractitionerVerification: async (
       _parent: unknown,

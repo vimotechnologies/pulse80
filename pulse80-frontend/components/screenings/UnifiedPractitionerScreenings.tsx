@@ -37,9 +37,10 @@ export function UnifiedPractitionerScreenings({ screenings, assignments }: { scr
         <DynamicScreeningCapture
           assignments={assignments}
           onClose={() => setCaptureOpen(false)}
+          onError={(error) => setMessage(error)}
           onSaved={() => {
             setCaptureOpen(false);
-            setMessage("Screening submitted for quality assurance.");
+            setMessage("Screening results saved successfully. Refreshing records…");
             router.refresh();
           }}
         />

@@ -73,3 +73,70 @@ export async function reviewPractitionerDocument(
     return { ok: false as const, error: error instanceof Error ? error.message : "UPDATE_FAILED" };
   }
 }
+
+export type RegisteredPractitioner = {
+  id: string;
+  fullName: string;
+  email: string;
+  accountStatus: string;
+  invitedAt: string | null;
+  profession: string;
+  country: string;
+  city: string;
+  capabilities: string[];
+  verificationStatus: string;
+};
+
+export async function loadRegisteredPractitioners(): Promise<RegisteredPractitioner[]> {
+  const result = await graphqlRequest<{ registeredPractitioners: RegisteredPractitioner[] }>(
+    `query RegisteredPractitioners { registeredPractitioners { id fullName email accountStatus invitedAt profession country city capabilities verificationStatus } }`,
+  );
+  return result.registeredPractitioners;
+}
+
+export async function registerPractitioner(input: {
+  fullName: string; email: string; profession: string; country: string; city: string; capabilities: string[];
+}) {
+  try {
+    await graphqlRequest(
+      `mutation RegisterPractitioner($input: RegisterPractitionerInput!) {
+        registerPractitioner(input: $input) { id }
+      }`,
+      { variables: { input } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not save practitioner." };
+  }
+}
+
+export async function setPractitionerRegistrationStatus(id: string, status: "Active" | "Disabled") {
+  try {
+    await graphqlRequest(
+      `mutation SetPractitionerRegistrationStatus($id: ID!, $status: String!) {
+        setPractitionerRegistrationStatus(id: $id, status: $status) { id accountStatus }
+      }`,
+      { variables: { id, status } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not change account status." };
+  }
+}
+
+export async function inviteRegisteredPractitioner(id: string, fullName: string, email: string) {
+  try {
+    await graphqlRequest(
+      `mutation InviteRegisteredPractitioner($id: ID!, $fullName: String!, $email: String!) {
+        inviteRegisteredPractitioner(id: $id, fullName: $fullName, email: $email) { id invitedAt }
+      }`,
+      { variables: { id, fullName, email } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not send invitation." };
+  }
+}
