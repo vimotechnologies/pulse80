@@ -79,6 +79,7 @@ export type RegisteredPractitioner = {
   fullName: string;
   email: string;
   accountStatus: string;
+  invitedAt: string | null;
   profession: string;
   country: string;
   city: string;
@@ -88,7 +89,7 @@ export type RegisteredPractitioner = {
 
 export async function loadRegisteredPractitioners(): Promise<RegisteredPractitioner[]> {
   const result = await graphqlRequest<{ registeredPractitioners: RegisteredPractitioner[] }>(
-    `query RegisteredPractitioners { registeredPractitioners { id fullName email accountStatus profession country city capabilities verificationStatus } }`,
+    `query RegisteredPractitioners { registeredPractitioners { id fullName email accountStatus invitedAt profession country city capabilities verificationStatus } }`,
   );
   return result.registeredPractitioners;
 }
@@ -107,5 +108,35 @@ export async function registerPractitioner(input: {
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not save practitioner." };
+  }
+}
+
+export async function setPractitionerRegistrationStatus(id: string, status: "Active" | "Disabled") {
+  try {
+    await graphqlRequest(
+      `mutation SetPractitionerRegistrationStatus($id: ID!, $status: String!) {
+        setPractitionerRegistrationStatus(id: $id, status: $status) { id accountStatus }
+      }`,
+      { variables: { id, status } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not change account status." };
+  }
+}
+
+export async function inviteRegisteredPractitioner(id: string) {
+  try {
+    await graphqlRequest(
+      `mutation InviteRegisteredPractitioner($id: ID!) {
+        inviteRegisteredPractitioner(id: $id) { id invitedAt }
+      }`,
+      { variables: { id } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not send invitation." };
   }
 }
