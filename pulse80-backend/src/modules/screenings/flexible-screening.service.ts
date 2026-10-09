@@ -55,6 +55,10 @@ export class FlexibleScreeningService {
       if (valueError) throw new Error(valueError.message);
       const { error: outcomeError } = await this.db.from("screening_outcomes").insert({ screening_id: screening.id, outcome_summary: input.outcomeSummary || null, referral_required: input.referralRequired ?? false, escalation_required: input.escalationRequired ?? false, reporting_risk_category: input.reportingRiskCategory || null });
       if (outcomeError) throw new Error(outcomeError.message);
+      // Mark completed only after measurements and outcomes have been persisted.
+      const { data: completed, error: completionError } = await this.db.from("screenings").update({ status: "Completed" }).eq("id", screening.id).eq("status", "Under Review").select("id").single();
+      if (completionError) throw new Error(completionError.message);
+      if (!completed) throw new Error("Screening could not be marked Completed.");
       return screening.id as string;
     } catch (captureError) {
       await this.db.from("screenings").delete().eq("id", screening.id);
