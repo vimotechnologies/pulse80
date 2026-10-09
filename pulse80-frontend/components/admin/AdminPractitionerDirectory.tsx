@@ -16,7 +16,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
   const [inviting, setInviting] = useState<RegisteredPractitioner | null>(null);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const openInvitation = (item: RegisteredPractitioner) => { setError(""); setInviteName(item.fullName); setInviteEmail(item.email ?? ""); setInviting(item); };
+  const openInvitation = (item: RegisteredPractitioner) => { setError(""); setInviteName(""); setInviteEmail(item.email ?? ""); setInviting(item); };
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState("");
   const [draft, setDraft] = useState({ fullName: "", email: "", profession: "", country: "Botswana", city: "", capabilities: [] as string[] });
@@ -113,8 +113,8 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           setInviting(null); router.refresh();
         }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl">
           <h2 className="text-xl font-semibold text-navy">{inviting.invitedAt ? "Resend Practitioner Invitation" : "Invite Practitioner"}</h2>
-          <p className="text-sm text-muted">Enter the practitioner's actual name and email address. They will receive a secure account setup link.</p>
-          <label className="block text-sm font-medium">Practitioner's full name<input required minLength={2} maxLength={160} value={inviteName} onChange={e => setInviteName(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
+          <p className="text-sm text-muted">Enter the name and email of the person who will access this practitioner account. The registered provider name will not change.</p>
+          <label className="block text-sm font-medium">Invited user's full name<input required minLength={2} maxLength={160} value={inviteName} onChange={e => setInviteName(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Email address<input type="email" required readOnly={Boolean(inviting.invitedAt)} value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-3 read-only:bg-gray-100" /></label>
           {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => { setInviting(null); setError(""); }} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !inviteName.trim() || !inviteEmail.trim()} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Sending..." : "Send Invitation"}</button></div>
