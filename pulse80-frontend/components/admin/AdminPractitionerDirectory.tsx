@@ -15,7 +15,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
   const [adding, setAdding] = useState(false);
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState("");
-  const [draft, setDraft] = useState({ fullName: "", profession: "", country: "Botswana", city: "", capabilities: [] as string[] });
+  const [draft, setDraft] = useState({ fullName: "", email: "", profession: "", country: "Botswana", city: "", capabilities: [] as string[] });
   const options = ["Blood Pressure", "BMI", "Glucose", "Cholesterol", "HIV Testing", "Eye Screening", "Dental Screening", "Physiotherapy"];
   const [query, setQuery] = useState("");
   const [verification, setVerification] = useState("All");
@@ -87,11 +87,12 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
         <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
           const result = await registerPractitioner(draft);
           if (!result.ok) { setError(result.error); return; }
-          setAdding(false); setDraft({ fullName: "", profession: "", country: "Botswana", city: "", capabilities: [] }); router.refresh();
+          setAdding(false); setDraft({ fullName: "", email: "", profession: "", country: "Botswana", city: "", capabilities: [] }); router.refresh();
         }); }} className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <h2 className="text-xl font-semibold text-navy">Add Practitioner</h2>
           <p className="text-sm text-muted">Register a practitioner without creating a login or granting screening access.</p>
           <label className="block text-sm font-medium">Name<input required minLength={2} maxLength={160} value={draft.fullName} onChange={e => setDraft({ ...draft, fullName: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
+          <label className="block text-sm font-medium">Email<input type="email" required value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Profession<select required value={draft.profession} onChange={e => setDraft({ ...draft, profession: e.target.value })} className="mt-1 w-full rounded-lg border p-3"><option value="">Select profession</option>{["Nurse","Doctor","Physiotherapist","Phlebotomist","Optometrist","Dentist","Dietitian","Psychologist","Counsellor","Fitness Coach","Occupational Health Practitioner"].map(v => <option key={v}>{v}</option>)}</select></label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm font-medium">Country<input required value={draft.country} onChange={e => setDraft({ ...draft, country: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
