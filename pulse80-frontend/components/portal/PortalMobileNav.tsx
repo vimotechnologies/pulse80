@@ -122,7 +122,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
         inert={!expanded}
         aria-hidden={!expanded}
         className={cn(
-          "fixed inset-x-3 bottom-[calc(6.75rem+env(safe-area-inset-bottom))] z-50 max-h-[calc(100dvh-8rem-env(safe-area-inset-bottom))] overflow-y-auto rounded-2xl border border-card-border bg-surface shadow-[0_20px_60px_rgba(7,22,51,0.18)] transition lg:hidden",
+          "fixed inset-x-3 bottom-[calc(6.75rem+env(safe-area-inset-bottom))] z-50 overflow-hidden rounded-2xl border border-card-border bg-surface shadow-[0_20px_60px_rgba(7,22,51,0.18)] transition lg:hidden",
           expanded
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
@@ -177,7 +177,7 @@ export function PortalMobileNav({ portalKey, portalName }: PortalMobileNavProps)
         </nav>
       </div>
 
-      <nav aria-label="Mobile portal navigation" className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 grid h-[76px] grid-cols-5 items-center rounded-[24px] border border-card-border bg-surface/95 px-2 shadow-[0_18px_55px_rgba(7,22,51,0.16)] backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 grid h-[76px] grid-cols-5 items-center rounded-[24px] border border-card-border bg-surface/95 px-2 shadow-[0_18px_55px_rgba(7,22,51,0.16)] backdrop-blur lg:hidden">
         {quickItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
