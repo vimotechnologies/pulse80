@@ -68,7 +68,7 @@ export function PopoverContent({ align = "start", className, children }: { align
       role="dialog"
       aria-modal="false"
       className={cn(
-        "absolute top-[calc(100%+0.5rem)] z-50 rounded-xl border border-card-border bg-white p-3 text-navy shadow-xl outline-none",
+        "pulse-popover absolute top-[calc(100%+0.5rem)] z-50 rounded-xl border border-card-border bg-white p-3 text-navy shadow-xl outline-none",
         align === "center" && "left-1/2 -translate-x-1/2",
         align === "end" ? "right-0" : align === "start" ? "left-0" : null,
         className,

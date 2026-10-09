@@ -1,3 +1,4 @@
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
 import type { PortalConfig, PortalDashboardData } from "@/data/portal-phase-two";
 import { MetricWidget } from "@/components/portal/MetricWidget";
 
@@ -20,11 +21,11 @@ export function PortalDashboard({ data }: PortalDashboardProps) {
         </div>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <MetricCardGroup>
         {data.metrics.map((metric) => (
           <MetricWidget key={metric.label} {...metric} />
         ))}
-      </section>
+      </MetricCardGroup>
     </div>
   );
 }

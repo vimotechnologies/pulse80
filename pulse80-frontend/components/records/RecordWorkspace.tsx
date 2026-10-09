@@ -54,7 +54,7 @@ function RecordEditor({ kind, record, workspace, pending, onClose, onSave, error
   onClose: () => void; onSave: (input: RecordInput) => void; error: string | null;
 }) {
   const financial = kind === "invoice" || kind === "payment";
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form role="dialog" aria-modal="true" aria-labelledby="record-editor-title" className="max-h-[90vh] w-full max-w-xl space-y-4 overflow-y-auto rounded-xl bg-white p-6" onSubmit={event => {
+  return <div className="pulse-modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form role="dialog" aria-modal="true" aria-labelledby="record-editor-title" className="max-h-[90vh] w-full max-w-xl space-y-4 overflow-y-auto rounded-xl bg-white p-6" onSubmit={event => {
     event.preventDefault(); const data = new FormData(event.currentTarget);
     onSave({ title: String(data.get("title")), organisationId: String(data.get("organisationId")),
       description: String(data.get("description")), status: String(data.get("status")),

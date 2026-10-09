@@ -32,7 +32,7 @@ export function Calendar({ selected, onSelect, className }: { selected?: Date; o
   }
 
   return (
-    <div className={cn("w-[292px] select-none", className)}>
+    <div className={cn("pulse-calendar w-[292px] max-w-full select-none", className)}>
       <div className="flex items-center justify-between gap-2">
         <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-card-border text-subtle hover:bg-soft-bg hover:text-navy"><ArrowLeft2 className="h-4 w-4" /></button>
         <div className="flex min-w-0 flex-1 gap-2">
@@ -62,7 +62,7 @@ export function Calendar({ selected, onSelect, className }: { selected?: Date; o
               aria-pressed={isSelected}
               onClick={() => onSelect?.(date)}
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg text-xs transition hover:bg-soft-bg",
+                "flex h-11 w-full min-w-0 items-center justify-center rounded-lg text-xs transition hover:bg-soft-bg",
                 isOutside && "text-muted/45",
                 isToday && !isSelected && "border border-primary/30 font-semibold text-primary",
                 isSelected && "bg-primary font-semibold text-white hover:bg-primary",

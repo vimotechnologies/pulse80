@@ -1,5 +1,8 @@
 "use client";
 
+import { MetricCardGroup } from "@/components/ui/MetricCardGroup";
+
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -50,9 +53,9 @@ export function PractitionerDashboard({ dashboard }: { dashboard: PractitionerDa
 
       {message ? <p className="rounded-lg border border-card-border bg-white px-4 py-3 text-sm text-navy">{message}</p> : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <MetricCardGroup>
         {metrics.map((metric) => <UnifiedMetricCard key={metric.label} {...metric} />)}
-      </section>
+      </MetricCardGroup>
 
       {dashboard.assignmentAlert ? (
         <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -153,7 +156,7 @@ function CorrectionModal({ correction, onClose }: { correction: Correction; onCl
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section role="dialog" aria-modal="true" aria-label={title} className="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl"><div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">{title}</h2><button type="button" onClick={onClose} className="text-sm font-semibold text-muted">Close</button></div>{children}</section></div>;
+  return <div className="pulse-modal fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-navy/45 p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section role="dialog" aria-modal="true" aria-label={title} className="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl"><div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold text-navy">{title}</h2><button type="button" onClick={onClose} className="text-sm font-semibold text-muted">Close</button></div>{children}</section></div>;
 }
 
 function Detail({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-medium text-muted">{label}</p><p className="mt-1 text-sm font-medium text-navy">{value}</p></div>; }

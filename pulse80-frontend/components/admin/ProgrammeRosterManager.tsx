@@ -56,7 +56,7 @@ export function ProgrammeRosterManager({ initialRoster }: { initialRoster: Progr
       <p className="text-sm text-muted">CSV, XLS or XLSX · up to 500 rows and 2 MB. This import creates roster entries only; upload screening results separately. If a code is omitted, Pulse80 generates a 4-character anonymous code automatically.</p>
       <p className="text-sm">Columns: <code>{rosterHeaders.join(", ")}</code>. Optional: <code>screening_reference</code>, <code>employee_id</code>.</p>
       <p className="text-sm text-muted">Existing supplied codes are rejected if duplicated. Use Edit status to update an existing participant. Any invalid row cancels the entire import.</p>
-      <label className="block text-sm">Choose roster file<input className="mt-2 block" type="file" accept=".csv,.xls,.xlsx" disabled={pending} onChange={event => {
+      <label className="block text-sm">Choose roster file<input className="mt-2 block w-full min-w-0" type="file" accept=".csv,.xls,.xlsx" disabled={pending} onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ""; setPreview([]);
         if (file) run(async () => { setPreview(await readRosterFile(file)); });
       }} /></label>
@@ -73,7 +73,7 @@ export function ProgrammeRosterManager({ initialRoster }: { initialRoster: Progr
     <section className="space-y-3 rounded-xl border border-card-border bg-white p-5">
       <h2 className="font-semibold">Programme participants ({roster.total})</h2>
       {roster.participants.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-2">Code</th><th>Eligibility</th><th>Registration</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{roster.participants.map(row => <tr key={row.id} className="border-t border-card-border"><td className="p-2">{row.screeningReference ?? "Code not assigned"}</td><td>{row.eligibilityStatus}</td><td>{row.registrationStatus}</td><td><button disabled={pending} className="text-primary" onClick={() => setEditing(row)}>Edit status</button></td></tr>)}</tbody></table></div> : <p className="text-sm text-muted">No participants have been added to this programme.</p>}
-      <div className="flex items-center gap-3"><button className={buttonClass} disabled={pending || offset === 0} onClick={() => run(() => refresh(Math.max(0, offset - 100)))}>Previous</button><span className="text-sm">{roster.total ? offset + 1 : 0}–{offset + roster.participants.length} of {roster.total}</span><button className={buttonClass} disabled={pending || offset + roster.participants.length >= roster.total} onClick={() => run(() => refresh(offset + roster.participants.length))}>Next</button></div>
+      <div className="flex flex-wrap items-center gap-3"><button className={buttonClass} disabled={pending || offset === 0} onClick={() => run(() => refresh(Math.max(0, offset - 100)))}>Previous</button><span className="text-sm">{roster.total ? offset + 1 : 0}–{offset + roster.participants.length} of {roster.total}</span><button className={buttonClass} disabled={pending || offset + roster.participants.length >= roster.total} onClick={() => run(() => refresh(offset + roster.participants.length))}>Next</button></div>
     </section>
   </div>;
 }
