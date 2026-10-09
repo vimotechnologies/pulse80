@@ -93,7 +93,18 @@ export class PractitionerService {
     ]);
     if (profileError) throw new Error(profileError.message);
     if (identityError) throw new Error(identityError.message);
-    return { ...profile, full_name: identity.full_name };
+    const { data: registration, error: registrationError } = await (this.supabase as unknown as SupabaseClient)
+      .from("practitioner_registrations")
+      .select("full_name")
+      .eq("invited_user_id", userId)
+      .eq("account_status", "Active")
+      .maybeSingle();
+    if (registrationError) throw new Error(registrationError.message);
+    return {
+      ...profile,
+      full_name: identity.full_name,
+      clinic_hospital: registration?.full_name ?? profile.clinic_hospital,
+    };
   }
 
   async listForAdmin() {
