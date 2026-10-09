@@ -75,22 +75,32 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
                   <td className="px-4 py-4"><button type="button" onClick={() => setSelected(practitioner)} className="font-semibold text-primary">View</button></td>
                 </tr>
               ))}
+              {registrations.filter((item) => item.accountStatus === "Active").map((item) => (
+                <tr key={item.id} className="hover:bg-[#f8fafc]">
+                  <td className="px-5 py-4"><p className="font-semibold text-navy">{item.fullName}</p><p className="mt-1 text-xs text-muted">{item.email}</p></td>
+                  <td className="px-4 py-4 text-navy">{item.profession}</td>
+                  <td className="px-4 py-4 text-navy">{item.city}, {item.country}</td>
+                  <td className="px-4 py-4 text-navy">{item.capabilities.length}</td>
+                  <td className="px-4 py-4"><StatusBadge status={item.verificationStatus} tone="warning" /></td>
+                  <td className="px-4 py-4 text-navy">0</td>
+                  <td className="px-4 py-4"><button type="button" onClick={() => openInvitation(item)} className="font-semibold text-primary">{item.invitedAt ? "Resend Invitation" : "Send Invitation"}</button></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-        {!filtered.length ? <p className="p-8 text-center text-sm text-muted">No practitioners match these filters.</p> : null}
+        {!filtered.length && !registrations.some((item) => item.accountStatus === "Active") ? <p className="p-8 text-center text-sm text-muted">No practitioners match these filters.</p> : null}
       </section>
-      {(["Awaiting Onboarding", "Active", "Disabled"] as const).map((status) => {
+      {(["Awaiting Onboarding", "Disabled"] as const).map((status) => {
         const group = registrations.filter((item) => item.accountStatus === status);
         if (!group.length) return null;
         return <section key={status} className="rounded-2xl border border-card-border bg-surface p-5 shadow-sm">
-          <h2 className="mb-3 font-semibold text-navy">{status === "Active" ? "Existing practitioners" : status === "Disabled" ? "Disabled practitioners" : "Practitioners awaiting onboarding"}</h2>
+          <h2 className="mb-3 font-semibold text-navy">{status === "Disabled" ? "Disabled practitioners" : "Practitioners awaiting onboarding"}</h2>
           <div className="space-y-2">{group.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-card-border py-3 text-sm">
             <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.email} · {item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p><p className="text-muted">Account: {item.accountStatus} · Verification: {item.verificationStatus} · {item.invitedAt ? "Invitation sent" : "Not invited"}</p></div>
             <div className="flex flex-wrap gap-2">
-              {status !== "Active" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Activate</button> : null}
+              {status !== "Active" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Active</button> : null}
               {status !== "Disabled" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Disabled"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Disable</button> : null}
-              {status === "Active" ? <button type="button" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-white" onClick={() => openInvitation(item)}>{item.invitedAt ? "Resend Invitation" : "Send Invitation"}</button> : null}
             </div>
           </div>)}</div>
         </section>;
