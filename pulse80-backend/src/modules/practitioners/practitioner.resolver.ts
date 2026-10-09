@@ -1,4 +1,5 @@
 import { GraphQLError } from "graphql";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import type { GraphQLContext } from "../../graphql/context.js";
@@ -147,7 +148,7 @@ export const practitionerResolvers = {
     },
     registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
-      const { data, error } = await context.adminSupabase.from("practitioner_registrations")
+      const { data, error } = await (context.adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
         .select("id,full_name,profession,country,city,capabilities,verification_status")
         .order("created_at", { ascending: false });
       if (error) throw new GraphQLError(error.message);
@@ -312,7 +313,7 @@ export const practitionerResolvers = {
     registerPractitioner: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
       const input = parse(registrationSchema, arguments_.input);
-      const { data, error } = await context.adminSupabase.from("practitioner_registrations")
+      const { data, error } = await (context.adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
         .insert({
           full_name: input.fullName, profession: input.profession, country: input.country,
           city: input.city, capabilities: input.capabilities,
