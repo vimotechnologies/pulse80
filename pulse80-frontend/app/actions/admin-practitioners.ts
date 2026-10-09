@@ -88,13 +88,13 @@ export type RegisteredPractitioner = {
 
 export async function loadRegisteredPractitioners(): Promise<RegisteredPractitioner[]> {
   const result = await graphqlRequest<{ registeredPractitioners: RegisteredPractitioner[] }>(
-    `query RegisteredPractitioners { registeredPractitioners { id fullName profession country city capabilities verificationStatus } }`,
+    `query RegisteredPractitioners { registeredPractitioners { id fullName email accountStatus profession country city capabilities verificationStatus } }`,
   );
   return result.registeredPractitioners;
 }
 
 export async function registerPractitioner(input: {
-  fullName: string; profession: string; country: string; city: string; capabilities: string[];
+  fullName: string; email: string; profession: string; country: string; city: string; capabilities: string[];
 }) {
   try {
     await graphqlRequest(
