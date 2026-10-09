@@ -112,7 +112,7 @@ export async function createGraphQLContext({
   const organisationAccess = organisationId
     ? await authorizationService.getOrganisationAccess(user.id, organisationId)
     : null;
-  const { data: registration } = await adminSupabase.from("practitioner_registrations")
+  const { data: registration } = await (adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
     .select("account_status").eq("invited_user_id", user.id).maybeSingle();
   const practitionerActive = registration?.account_status === "Active";
   const { data: practitionerProfile } = await adminSupabase.from("practitioner_profiles")
