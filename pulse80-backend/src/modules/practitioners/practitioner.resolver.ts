@@ -13,6 +13,7 @@ import {
 } from "./practitioner.service.js";
 
 const registrationSchema = z.object({
+  email: z.email().trim().toLowerCase(),
   fullName: z.string().trim().min(2).max(160),
   profession: z.string().trim().min(2).max(120),
   country: z.string().trim().min(2).max(100),
