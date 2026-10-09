@@ -134,6 +134,24 @@ export const practitionerTypeDefs = /* GraphQL */ `
     documents: [PractitionerDocument!]!
   }
 
+  type RegisteredPractitioner {
+    id: ID!
+    fullName: String!
+    profession: String!
+    country: String!
+    city: String!
+    capabilities: [String!]!
+    verificationStatus: String!
+  }
+
+  input RegisterPractitionerInput {
+    fullName: String!
+    profession: String!
+    country: String!
+    city: String!
+    capabilities: [String!]!
+  }
+
   type AdminPractitionerDocument {
     id: ID!
     documentType: String!
@@ -248,6 +266,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     practitionerDashboard: PractitionerDashboard!
     practitionerProfile: PractitionerProfile!
     adminPractitioners: [AdminPractitioner!]!
+    registeredPractitioners: [RegisteredPractitioner!]!
     adminPractitionerAssignments: [AdminPractitionerAssignment!]!
   }
 
@@ -260,6 +279,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
     uploadPractitionerPhoto(file: PractitionerFileInput!): PractitionerProfile!
     deletePractitionerPhoto: PractitionerProfile!
     uploadPractitionerDocument(documentType: String!, expiryDate: String, file: PractitionerFileInput!): PractitionerDocument!
+    registerPractitioner(input: RegisterPractitionerInput!): RegisteredPractitioner!
     updatePractitionerVerification(userId: ID!, input: PractitionerVerificationInput!): AdminPractitioner!
     reviewPractitionerDocument(documentId: ID!, status: String!): AdminPractitioner!
     createPractitionerAssignment(input: PractitionerAssignmentInput!): AdminPractitionerAssignment!
