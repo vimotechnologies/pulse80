@@ -353,7 +353,7 @@ export const practitionerResolvers = {
       const redirectTo = new URL("/auth/setup", env.FRONTEND_URL).toString();
       let userId: string;
       if (registration.invited_user_id) {
-        const resend = await db.auth.resend({ type: "invite", email: registration.email, options: { emailRedirectTo: redirectTo } });
+        const resend = await db.auth.resetPasswordForEmail(registration.email, { redirectTo });
         if (resend.error) throw new GraphQLError(resend.error.message);
         userId = registration.invited_user_id;
       } else {
