@@ -373,7 +373,7 @@ export const practitionerResolvers = {
       const { error: nameError } = await db.from("profiles").update({ full_name: details.fullName }).eq("id", userId);
       if (nameError) throw new GraphQLError(nameError.message);
       const { data, error } = await db.from("practitioner_registrations")
-        .update({ full_name: details.fullName, email: details.email, invited_user_id: userId, invited_at: new Date().toISOString() }).eq("id", id)
+        .update({ email: details.email, invited_user_id: userId, invited_at: new Date().toISOString() }).eq("id", id)
         .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
       if (error) throw new GraphQLError(error.message);
       return { id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status,
