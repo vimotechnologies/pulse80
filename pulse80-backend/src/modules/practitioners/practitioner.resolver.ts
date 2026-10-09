@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { env } from "../../config/env.js";
 
 import type { GraphQLContext } from "../../graphql/context.js";
 import { requireAuthenticatedUser, requirePlatformPermission } from "../auth/auth.guard.js";
