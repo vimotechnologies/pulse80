@@ -74,7 +74,20 @@ export const screeningResolvers = {
  },
  Mutation: {
   captureScreening: async (_p:unknown,a:{input:unknown},c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return shape(await new ScreeningService(c.adminSupabase).capture(user.id,parse(captureSchema,a.input) as ScreeningCaptureInput));},
-  captureFlexibleScreening: async (_p:unknown,a:{input:unknown},c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);const id=await flexible(c).capture(user.id,parse(flexibleSchema,a.input));return{id};},
+  captureFlexibleScreening: async (_p:unknown,a:{input:unknown},c:GraphQLContext)=>{
+   const {user}=requireAuthenticatedUser(c);
+   try {
+    const id=await flexible(c).capture(user.id,parse(flexibleSchema,a.input));
+    return {id};
+   } catch(error) {
+    // Preserve validation errors while recording unexpected failures in the local backend logs.
+    if (error instanceof GraphQLError) throw error;
+    console.error("captureFlexibleScreening failed", {assignmentId: typeof a.input === "object" && a.input !== null && "assignmentId" in a.input ? a.input.assignmentId : undefined, error});
+    const message=error instanceof Error ? error.message : "Screening could not be saved.";
+    const isKnownError=/^(Participant|The screening|This assignment|Screenings|Assignment|This service|Choose a service|Enter |BMI |Invalid |A submitted|Could not|Height|Weight|Systolic|Diastolic|Glucose|Cholesterol)/i.test(message);
+    throw new GraphQLError(isKnownError ? message : "Screening could not be saved. Check the backend logs for details.", {extensions:{code:isKnownError?"BAD_USER_INPUT":"INTERNAL_SERVER_ERROR"}});
+   }
+  },
   resubmitScreening: async (_p:unknown,a:{id:string;input:unknown},c:GraphQLContext)=>{const{user}=requireAuthenticatedUser(c);return shape(await new ScreeningService(c.adminSupabase).resubmit(z.uuid().parse(a.id),user.id,parse(correctionSchema,a.input)));},
   reviewScreening: async (_p:unknown,a:{id:string;input:unknown},c:GraphQLContext)=>{const{user}=requirePlatformPermission(c,"screening:review");const input=parse(reviewSchema,a.input);return shape(await new ScreeningService(c.adminSupabase).review(z.uuid().parse(a.id),user.id,input.status,input.reviewNote,input.errors));}
  }
