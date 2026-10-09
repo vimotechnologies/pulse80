@@ -150,11 +150,11 @@ export const practitionerResolvers = {
     registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
       const { data, error } = await (context.adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
-        .select("id,full_name,email,account_status,profession,country,city,capabilities,verification_status")
+        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status")
         .order("created_at", { ascending: false });
       if (error) throw new GraphQLError(error.message);
       return (data ?? []).map((row) => ({
-        id: row.id, fullName: row.full_name, email: row.email, accountStatus: row.account_status, profession: row.profession,
+        id: row.id, fullName: row.full_name, email: row.email, accountStatus: row.account_status, invitedAt: row.invited_at, profession: row.profession,
         country: row.country, city: row.city, capabilities: row.capabilities,
         verificationStatus: row.verification_status,
       }));
@@ -318,10 +318,10 @@ export const practitionerResolvers = {
         .insert({
           full_name: input.fullName, email: input.email, profession: input.profession, country: input.country,
           city: input.city, capabilities: input.capabilities,
-        }).select("id,full_name,email,account_status,profession,country,city,capabilities,verification_status").single();
+        }).select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
       if (error) throw new GraphQLError(error.message);
       return {
-        id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status, profession: data.profession,
+        id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status, invitedAt: data.invited_at, profession: data.profession,
         country: data.country, city: data.city, capabilities: data.capabilities,
         verificationStatus: data.verification_status,
       };
