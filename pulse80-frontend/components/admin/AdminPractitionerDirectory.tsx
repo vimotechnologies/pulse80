@@ -13,6 +13,10 @@ import type { AdminPractitioner } from "@/types/admin-practitioner";
 export function AdminPractitionerDirectory({ practitioners, registrations }: { practitioners: AdminPractitioner[]; registrations: RegisteredPractitioner[] }) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
+  const [inviting, setInviting] = useState<RegisteredPractitioner | null>(null);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const openInvitation = (item: RegisteredPractitioner) => { setError(""); setInviteName(item.fullName); setInviteEmail(item.email ?? ""); setInviting(item); };
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState("");
   const [draft, setDraft] = useState({ fullName: "", email: "", profession: "", country: "Botswana", city: "", capabilities: [] as string[] });
@@ -86,12 +90,26 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
             <div className="flex flex-wrap gap-2">
               {status !== "Active" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Activate</button> : null}
               {status !== "Disabled" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Disabled"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Disable</button> : null}
-              {status === "Active" ? <button type="button" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-white" onClick={() => startSaving(async () => { const result = await inviteRegisteredPractitioner(item.id); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>{item.invitedAt ? "Resend Invitation" : "Send Invitation"}</button> : null}
+              {status === "Active" ? <button type="button" disabled={saving} className="rounded-lg bg-primary px-3 py-2 text-white" onClick={() => openInvitation(item)}>{item.invitedAt ? "Resend Invitation" : "Send Invitation"}</button> : null}
             </div>
           </div>)}</div>
         </section>;
       })}
       {error && !adding ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+      {inviting ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
+        <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
+          const result = await inviteRegisteredPractitioner(inviting.id, inviteName.trim(), inviteEmail.trim());
+          if (!result.ok) { setError(result.error); return; }
+          setInviting(null); router.refresh();
+        }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-navy">{inviting.invitedAt ? "Resend Practitioner Invitation" : "Invite Practitioner"}</h2>
+          <p className="text-sm text-muted">Enter the practitioner's actual name and email address. They will receive a secure account setup link.</p>
+          <label className="block text-sm font-medium">Practitioner's full name<input required minLength={2} maxLength={160} value={inviteName} onChange={e => setInviteName(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
+          <label className="block text-sm font-medium">Email address<input type="email" required readOnly={Boolean(inviting.invitedAt)} value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-3 read-only:bg-gray-100" /></label>
+          {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+          <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => { setInviting(null); setError(""); }} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !inviteName.trim() || !inviteEmail.trim()} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Sending..." : "Send Invitation"}</button></div>
+        </form>
+      </div> : null}
       {adding ? <div className="fixed inset-0 z-50 grid place-items-center bg-navy/45 p-4">
         <form onSubmit={(event) => { event.preventDefault(); setError(""); startSaving(async () => {
           const result = await registerPractitioner(draft);
