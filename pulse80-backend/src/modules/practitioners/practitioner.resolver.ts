@@ -349,7 +349,6 @@ export const practitionerResolvers = {
         .eq("id", id).single();
       if (readError || !registration) throw new GraphQLError("Registration not found.");
       if (registration.account_status !== "Active") throw new GraphQLError("Activate the practitioner before inviting them.");
-      if (!registration.email) throw new GraphQLError("An email address is required.");
       const details = parse(z.object({ fullName: z.string().trim().min(2).max(160), email: z.email().trim().toLowerCase() }), args);
       if (registration.invited_user_id && registration.email !== details.email) throw new GraphQLError("Email cannot be changed after an invitation. Please use the existing address.");
       const redirectTo = new URL("/auth/setup", env.FRONTEND_URL).toString();
