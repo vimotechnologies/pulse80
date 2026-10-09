@@ -11,6 +11,14 @@ import {
   type PractitionerVerificationUpdate,
 } from "./practitioner.service.js";
 
+const registrationSchema = z.object({
+  fullName: z.string().trim().min(2).max(160),
+  profession: z.string().trim().min(2).max(120),
+  country: z.string().trim().min(2).max(100),
+  city: z.string().trim().min(2).max(120),
+  capabilities: z.array(z.string().trim().min(2).max(120)).min(1).max(30)
+    .refine((values) => new Set(values).size === values.length, "Duplicate capabilities are not allowed."),
+});
 const contactMethods = ["Email", "Phone", "WhatsApp"] as const;
 const updateSchema = z.object({
   fullName: z.string().trim().min(2).max(160).optional(),
@@ -136,6 +144,18 @@ export const practitionerResolvers = {
       const service = new PractitionerService(context.adminSupabase);
       const practitioners = await service.listForAdmin();
       return practitioners.map((practitioner) => adminProfileShape(service, practitioner));
+    },
+    registeredPractitioners: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const { data, error } = await context.adminSupabase.from("practitioner_registrations")
+        .select("id,full_name,profession,country,city,capabilities,verification_status")
+        .order("created_at", { ascending: false });
+      if (error) throw new GraphQLError(error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id, fullName: row.full_name, profession: row.profession,
+        country: row.country, city: row.city, capabilities: row.capabilities,
+        verificationStatus: row.verification_status,
+      }));
     },
     adminPractitionerAssignments: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
       requirePlatformPermission(context, "provider:manage");
@@ -288,6 +308,21 @@ export const practitionerResolvers = {
       const { service, userId } = await loadProfile(context);
       const input = parse(uploadDocumentSchema, arguments_);
       return service.uploadDocument(userId, input.documentType, input.expiryDate ?? null, input.file);
+    },
+    registerPractitioner: async (_parent: unknown, arguments_: { input: unknown }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const input = parse(registrationSchema, arguments_.input);
+      const { data, error } = await context.adminSupabase.from("practitioner_registrations")
+        .insert({
+          full_name: input.fullName, profession: input.profession, country: input.country,
+          city: input.city, capabilities: input.capabilities,
+        }).select("id,full_name,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return {
+        id: data.id, fullName: data.full_name, profession: data.profession,
+        country: data.country, city: data.city, capabilities: data.capabilities,
+        verificationStatus: data.verification_status,
+      };
     },
     updatePractitionerVerification: async (
       _parent: unknown,
