@@ -102,7 +102,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           <div className="space-y-2">{group.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-card-border py-3 text-sm">
             <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.email} · {item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p><p className="text-muted">Account: {item.accountStatus} · Verification: {item.verificationStatus} · {item.invitedAt ? "Invitation sent" : "Not invited"}</p></div>
             <div className="flex flex-wrap gap-2">
-              {status !== "Active" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Active</button> : null}
+              <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Active"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Active</button>
               {status !== "Disabled" ? <button type="button" disabled={saving} className="rounded-lg border px-3 py-2" onClick={() => startSaving(async () => { const result = await setPractitionerRegistrationStatus(item.id, "Disabled"); if (!result.ok) setError(result.error); else { setError(""); router.refresh(); } })}>Disable</button> : null}
             </div>
           </div>)}</div>
@@ -117,7 +117,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
         }); }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl">
           <h2 className="text-xl font-semibold text-navy">{inviting.invitedAt ? "Resend Practitioner Invitation" : "Invite Practitioner"}</h2>
           <p className="text-sm text-muted">Enter the name and email of the person who will access this practitioner account. The registered provider name will not change.</p>
-          <label className="block text-sm font-medium">Invited user's full name<input required minLength={2} maxLength={160} value={inviteName} onChange={e => setInviteName(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
+          <label className="block text-sm font-medium">Invited user&apos;s full name<input required minLength={2} maxLength={160} value={inviteName} onChange={e => setInviteName(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Email address<input type="email" required readOnly={Boolean(inviting.invitedAt)} value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-3 read-only:bg-gray-100" /></label>
           {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-3"><button type="button" disabled={saving} onClick={() => { setInviting(null); setError(""); }} className="rounded-lg border px-4 py-2">Cancel</button><button type="submit" disabled={saving || !inviteName.trim() || !inviteEmail.trim()} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Sending..." : "Send Invitation"}</button></div>

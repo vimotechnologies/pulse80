@@ -390,7 +390,7 @@ export class PractitionerService {
         const code = aliases[normalized] ?? selection;
         const service = catalogue.data.find((item) => item.code.toLowerCase() === code.toLowerCase() || item.name.toLowerCase() === normalized);
         const previous = existing.find((item) => item.service_code.toLowerCase() === (service?.code ?? code).toLowerCase());
-        return { practitioner_user_id: userId, service_id: service?.id ?? null, service_code: service?.code ?? code, service_name: service?.name ?? selection, approval_status: "Approved" };
+        return { practitioner_user_id: userId, service_code: service?.code ?? code, service_name: service?.name ?? selection, approval_status: "Approved" };
       });
       if (rows.length) { const { error: insertError } = await this.supabase.from("practitioner_capabilities").insert(rows); if (insertError) throw new Error(insertError.message); }
     }

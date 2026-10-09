@@ -47,7 +47,7 @@ export function PortalLayout({
       />
       <main
         className={cn(
-          "px-4 pb-28 pt-6 transition-[margin] duration-300 sm:px-6 lg:px-8 lg:py-8",
+          "min-w-0 px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 transition-[margin] duration-300 sm:px-6 lg:px-8 lg:py-8",
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64",
         )}
       >
