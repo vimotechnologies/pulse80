@@ -98,13 +98,12 @@ export class ProgrammeRosterService {
     return data;
   }
 
-  // Pre-issue anonymous codes without names or employee records. Invited means
-  // unused; only registration staff can mark a code Registered on arrival.
+  // Pre-authorize anonymous codes before the event; no arrival-time activation required.
   async generateWalkInCodes(programmeId: string, count: number) {
     await this.programme(programmeId);
     const codes: string[] = [];
     for (let remaining = count; remaining > 0; remaining -= 500) {
-      const batch = await this.withGeneratedCodes(programmeId, Array.from({ length: Math.min(remaining, 500) }, () => ({ eligibilityStatus: "Eligible" as const, registrationStatus: "Invited" as const })));
+      const batch = await this.withGeneratedCodes(programmeId, Array.from({ length: Math.min(remaining, 500) }, () => ({ eligibilityStatus: "Eligible" as const, registrationStatus: "Registered" as const })));
       const ids = await this.import(programmeId, batch);
       if (ids.length !== batch.length) throw new Error("Could not generate the complete code batch.");
       codes.push(...batch.map(row => row.screeningReference!));
