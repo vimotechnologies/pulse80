@@ -326,6 +326,58 @@ export const practitionerResolvers = {
         verificationStatus: data.verification_status,
       };
     },
+    setPractitionerRegistrationStatus: async (_parent: unknown, args: { id: string; status: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const id = parse(idSchema, args.id);
+      if (!["Active", "Disabled"].includes(args.status)) throw new GraphQLError("Invalid account status.");
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const { data, error } = await db.from("practitioner_registrations")
+        .update({ account_status: args.status }).eq("id", id)
+        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return { id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status,
+        invitedAt: data.invited_at, profession: data.profession, country: data.country,
+        city: data.city, capabilities: data.capabilities, verificationStatus: data.verification_status };
+    },
+    inviteRegisteredPractitioner: async (_parent: unknown, args: { id: string }, context: GraphQLContext) => {
+      requirePlatformPermission(context, "provider:manage");
+      const db = context.adminSupabase as unknown as SupabaseClient;
+      const id = parse(idSchema, args.id);
+      const { data: registration, error: readError } = await db.from("practitioner_registrations")
+        .select("id,full_name,email,account_status,invited_user_id,profession,country,city,capabilities")
+        .eq("id", id).single();
+      if (readError || !registration) throw new GraphQLError("Registration not found.");
+      if (registration.account_status !== "Active") throw new GraphQLError("Activate the practitioner before inviting them.");
+      if (!registration.email) throw new GraphQLError("An email address is required.");
+      const redirectTo = new URL("/auth/setup", env.FRONTEND_URL).toString();
+      let userId: string;
+      if (registration.invited_user_id) {
+        const resend = await db.auth.resend({ type: "invite", email: registration.email, options: { emailRedirectTo: redirectTo } });
+        if (resend.error) throw new GraphQLError(resend.error.message);
+        userId = registration.invited_user_id;
+      } else {
+        const invitation = await db.auth.admin.inviteUserByEmail(registration.email, {
+          redirectTo, data: { full_name: registration.full_name, practitioner_registration_id: registration.id },
+        });
+        if (invitation.error) throw new GraphQLError(invitation.error.message);
+        userId = invitation.data.user.id;
+      }
+      const { error: profileError } = await db.from("practitioner_profiles").upsert({
+        user_id: userId, professional_email: registration.email, profession: registration.profession,
+        country: registration.country, city: registration.city,
+        practitioner_status: "Active", verification_status: "Pending Verification",
+      }, { onConflict: "user_id", ignoreDuplicates: true });
+      if (profileError) throw new GraphQLError(profileError.message);
+      const { error: nameError } = await db.from("profiles").update({ full_name: registration.full_name }).eq("id", userId);
+      if (nameError) throw new GraphQLError(nameError.message);
+      const { data, error } = await db.from("practitioner_registrations")
+        .update({ invited_user_id: userId, invited_at: new Date().toISOString() }).eq("id", id)
+        .select("id,full_name,email,account_status,invited_at,profession,country,city,capabilities,verification_status").single();
+      if (error) throw new GraphQLError(error.message);
+      return { id: data.id, fullName: data.full_name, email: data.email, accountStatus: data.account_status,
+        invitedAt: data.invited_at, profession: data.profession, country: data.country,
+        city: data.city, capabilities: data.capabilities, verificationStatus: data.verification_status };
+    },
     updatePractitionerVerification: async (
       _parent: unknown,
       arguments_: { userId: string; input: unknown },
