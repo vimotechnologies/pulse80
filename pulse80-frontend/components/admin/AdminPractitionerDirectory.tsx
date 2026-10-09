@@ -79,7 +79,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
       {registrations.length ? <section className="rounded-2xl border border-card-border bg-surface p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-navy">Registered practitioners awaiting onboarding</h2>
         <div className="space-y-2">{registrations.map((item) => <div key={item.id} className="flex flex-wrap justify-between gap-3 border-b border-card-border py-3 text-sm">
-          <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p></div>
+          <div><p className="font-semibold text-navy">{item.fullName}</p><p className="text-muted">{item.email} · {item.profession} · {item.city}, {item.country}</p><p className="text-muted">{item.capabilities.join(", ")}</p></div>
           <StatusBadge status={item.verificationStatus} tone="warning" />
         </div>)}</div>
       </section> : null}
@@ -90,7 +90,7 @@ export function AdminPractitionerDirectory({ practitioners, registrations }: { p
           setAdding(false); setDraft({ fullName: "", email: "", profession: "", country: "Botswana", city: "", capabilities: [] }); router.refresh();
         }); }} className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <h2 className="text-xl font-semibold text-navy">Add Practitioner</h2>
-          <p className="text-sm text-muted">Register a practitioner without creating a login or granting screening access.</p>
+          <p className="text-sm text-muted">Register an active practitioner pending credential verification. Invitation and login access are managed separately.</p>
           <label className="block text-sm font-medium">Name<input required minLength={2} maxLength={160} value={draft.fullName} onChange={e => setDraft({ ...draft, fullName: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Email<input type="email" required value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} className="mt-1 w-full rounded-lg border p-3" /></label>
           <label className="block text-sm font-medium">Profession<select required value={draft.profession} onChange={e => setDraft({ ...draft, profession: e.target.value })} className="mt-1 w-full rounded-lg border p-3"><option value="">Select profession</option>{["Nurse","Doctor","Physiotherapist","Phlebotomist","Optometrist","Dentist","Dietitian","Psychologist","Counsellor","Fitness Coach","Occupational Health Practitioner"].map(v => <option key={v}>{v}</option>)}</select></label>
