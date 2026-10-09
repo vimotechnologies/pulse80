@@ -104,8 +104,8 @@ export async function updatePractitionerProfile(input: unknown) {
     });
     revalidatePath("/practitioner/profile");
     return { ok: true as const, profile: { ...result.updatePractitionerProfile, profilePhotoUrl: freshPhotoUrl(result.updatePractitionerProfile.profilePhotoUrl) } };
-  } catch {
-    return { ok: false as const, error: "Your profile could not be saved. Please try again." };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Your profile could not be saved. Please try again." };
   }
 }
 

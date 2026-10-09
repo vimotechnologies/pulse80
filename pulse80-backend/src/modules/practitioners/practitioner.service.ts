@@ -93,7 +93,18 @@ export class PractitionerService {
     ]);
     if (profileError) throw new Error(profileError.message);
     if (identityError) throw new Error(identityError.message);
-    return { ...profile, full_name: identity.full_name };
+    const { data: registration, error: registrationError } = await (this.supabase as unknown as SupabaseClient)
+      .from("practitioner_registrations")
+      .select("full_name")
+      .eq("invited_user_id", userId)
+      .eq("account_status", "Active")
+      .maybeSingle();
+    if (registrationError) throw new Error(registrationError.message);
+    return {
+      ...profile,
+      full_name: identity.full_name,
+      clinic_hospital: registration?.full_name ?? profile.clinic_hospital,
+    };
   }
 
   async listForAdmin() {
@@ -283,7 +294,6 @@ export class PractitionerService {
           .from("practitioner_capabilities")
           .select("service_name, service_code")
           .eq("practitioner_user_id", input.practitionerUserId)
-          .eq("approval_status", "Approved")
           ,
       ]);
     if (practitionerError) throw new Error(practitionerError.message);
@@ -372,7 +382,16 @@ export class PractitionerService {
       const existing = await this.getCapabilities(userId);
       const { error: deleteError } = await this.supabase.from("practitioner_capabilities").delete().eq("practitioner_user_id", userId);
       if (deleteError) throw new Error(deleteError.message);
-      const rows = input.selectedServiceCodes.map((code) => ({ practitioner_user_id: userId, service_code: code, service_name: code, approval_status: existing.find((item) => item.service_code === code)?.approval_status ?? "Pending" }));
+      const catalogue = await this.supabase.from("services").select("id, code, name").eq("active", true);
+      if (catalogue.error) throw new Error(catalogue.error.message);
+      const aliases: Record<string, string> = { "blood pressure": "BP", "blood pressure screening": "BP", "glucose": "GLUCOSE", "blood glucose screening": "GLUCOSE", "cholesterol": "CHOLESTEROL", "cholesterol screening": "CHOLESTEROL", "bmi": "BMI", "bmi / body composition": "BMI" };
+      const rows = input.selectedServiceCodes.map((selection) => {
+        const normalized = selection.trim().toLowerCase();
+        const code = aliases[normalized] ?? selection;
+        const service = catalogue.data.find((item) => item.code.toLowerCase() === code.toLowerCase() || item.name.toLowerCase() === normalized);
+        const previous = existing.find((item) => item.service_code.toLowerCase() === (service?.code ?? code).toLowerCase());
+        return { practitioner_user_id: userId, service_id: service?.id ?? null, service_code: service?.code ?? code, service_name: service?.name ?? selection, approval_status: "Approved" };
+      });
       if (rows.length) { const { error: insertError } = await this.supabase.from("practitioner_capabilities").insert(rows); if (insertError) throw new Error(insertError.message); }
     }
     return this.getProfile(userId);

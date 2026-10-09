@@ -44,16 +44,21 @@ export class FlexibleScreeningService {
     if (!services.some((service: any) => service.id === input.serviceId)) throw new Error("This service is not part of the selected assignment.");
     const fields = await this.fieldsForService(input.serviceId);
     if (!fields.length) throw new Error("This service does not have screening fields configured yet.");
-    validateValues(fields, input.values);
+    const safeValues = calculateBmiValues(fields, input.values);
+    validateValues(fields, safeValues);
 
     const { data: screening, error: screeningError } = await this.db.from("screenings").insert({ organisation_id: a.organisation_id, activation_id: a.activation_id, assignment_id: a.id, practitioner_user_id: userId, service_id: input.serviceId, programme_participant_id: participantId, participant_reference: input.participantReference.trim(), department: input.department || null, consent_confirmed: true, practitioner_note: input.practitionerNote || null, status: "Under Review", submitted_at: new Date().toISOString() }).select("id").single();
     if (screeningError) throw new Error(screeningError.message);
     try {
-      const rows = input.values.map((value) => ({ screening_id: screening.id, service_result_field_id: value.fieldId, value_number: value.valueNumber ?? null, value_text: value.valueText ?? null, value_boolean: value.valueBoolean ?? null, value_code: value.valueCode ?? null }));
+      const rows = safeValues.map((value) => ({ screening_id: screening.id, service_result_field_id: value.fieldId, value_number: value.valueNumber ?? null, value_text: value.valueText ?? null, value_boolean: value.valueBoolean ?? null, value_code: value.valueCode ?? null }));
       const { error: valueError } = await this.db.from("screening_result_values").insert(rows);
       if (valueError) throw new Error(valueError.message);
       const { error: outcomeError } = await this.db.from("screening_outcomes").insert({ screening_id: screening.id, outcome_summary: input.outcomeSummary || null, referral_required: input.referralRequired ?? false, escalation_required: input.escalationRequired ?? false, reporting_risk_category: input.reportingRiskCategory || null });
       if (outcomeError) throw new Error(outcomeError.message);
+      // Mark completed only after measurements and outcomes have been persisted.
+      const { data: completed, error: completionError } = await this.db.from("screenings").update({ status: "Completed" }).eq("id", screening.id).eq("status", "Under Review").select("id").single();
+      if (completionError) throw new Error(completionError.message);
+      if (!completed) throw new Error("Screening could not be marked Completed.");
       return screening.id as string;
     } catch (captureError) {
       await this.db.from("screenings").delete().eq("id", screening.id);
@@ -82,4 +87,18 @@ function validateValues(fields: FieldRow[], values: FlexibleResultValue[]) {
       if (!value.valueCode || !options.includes(value.valueCode)) throw new Error(`${field.label} has an invalid option.`);
     }
   }
+}
+function calculateBmiValues(fields: FieldRow[], values: FlexibleResultValue[]): FlexibleResultValue[] {
+  const bmi = fields.find(field => /^(bmi|body_mass_index)$/i.test(field.code) || /^(bmi|body mass index)$/i.test(field.label));
+  if (!bmi) return values;
+  const height = fields.find(field => /height/i.test(field.code + " " + field.label));
+  const weight = fields.find(field => /weight/i.test(field.code + " " + field.label));
+  if (!height || !weight) throw new Error("BMI requires height and weight fields.");
+  const h = values.find(value => value.fieldId === height.id)?.valueNumber;
+  const w = values.find(value => value.fieldId === weight.id)?.valueNumber;
+  if (h === undefined || h === null || w === undefined || w === null || h <= 0 || w <= 0) throw new Error("Enter valid height and weight to calculate BMI.");
+  const metres = /\\bcm\\b/i.test(height.unit ?? "") || h > 3 ? h / 100 : h;
+  const result = Math.round((w / (metres * metres)) * 10) / 10;
+  if (!Number.isFinite(result) || result <= 0) throw new Error("Invalid height or weight for BMI.");
+  return [...values.filter(value => value.fieldId !== bmi.id), { fieldId: bmi.id, valueNumber: result }];
 }
