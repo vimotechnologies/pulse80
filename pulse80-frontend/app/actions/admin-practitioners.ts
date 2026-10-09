@@ -77,6 +77,8 @@ export async function reviewPractitionerDocument(
 export type RegisteredPractitioner = {
   id: string;
   fullName: string;
+  email: string;
+  accountStatus: string;
   profession: string;
   country: string;
   city: string;
