@@ -137,6 +137,8 @@ export const practitionerTypeDefs = /* GraphQL */ `
   type RegisteredPractitioner {
     id: ID!
     fullName: String!
+    email: String
+    accountStatus: String!
     profession: String!
     country: String!
     city: String!
@@ -146,6 +148,7 @@ export const practitionerTypeDefs = /* GraphQL */ `
 
   input RegisterPractitionerInput {
     fullName: String!
+    email: String!
     profession: String!
     country: String!
     city: String!
