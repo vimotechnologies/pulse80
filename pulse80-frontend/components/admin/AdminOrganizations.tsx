@@ -401,7 +401,7 @@ export function AdminOrganizations({ initialOrganizations }: { initialOrganizati
   async function addOrganization(form: OrganizationForm) {
     const result = await createAdminOrganisation(form);
     if (!result.ok) {
-      showToast("The organization could not be saved. Please check the fields and try again.");
+      showToast(result.error || "The organization could not be saved. Please try again.");
       return false;
     }
     setOrganizations((current) => [result.organisation, ...current]);
@@ -1091,7 +1091,7 @@ function DetailTile({ label, value }: { label: string; value: string }) {
 function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (form: OrganizationForm) => Promise<boolean> }) {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canSubmit = form.name.trim() && form.industry && form.country && form.region && form.town && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && form.contact2Name.trim() && form.contact2Email.trim();
+  const canSubmit = form.name.trim() && form.industry && form.country && form.region && form.town && form.employees.trim() && form.contact1Name.trim() && form.contact1Email.trim() && (!form.contact2Name.trim() && !form.contact2Email.trim() && !form.contact2Phone.trim() || Boolean(form.contact2Name.trim() && form.contact2Email.trim()));
 
   return (
     <Modal title="Add Organization" onClose={onClose}>
@@ -1120,7 +1120,7 @@ function AddOrganizationModal({ onClose, onSubmit }: { onClose: () => void; onSu
           <TextInput label="Custom package notes" value={form.customPackageNotes} onChange={(customPackageNotes) => setForm((current) => ({ ...current, customPackageNotes }))} />
         </div>
         <ContactFields title="Contact 1" prefix="contact1" form={form} setForm={setForm} />
-        <ContactFields title="Contact 2" prefix="contact2" form={form} setForm={setForm} />
+        <ContactFields title="Contact 2 (optional)" prefix="contact2" form={form} setForm={setForm} />
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 rounded-2xl border border-card-border px-4 text-[12px] font-semibold text-black">Cancel</button>
           <button type="submit" disabled={!canSubmit || isSubmitting} className="h-9 rounded-2xl bg-primary px-4 text-[12px] font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-45">{isSubmitting ? "Saving..." : "Create organization"}</button>

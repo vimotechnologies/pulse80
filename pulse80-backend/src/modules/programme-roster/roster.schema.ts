@@ -45,5 +45,7 @@ export const rosterTypeDefs = /* GraphQL */ `
     createProgrammeParticipant(programmeId: ID!, input: RosterParticipantInput!): ID!
     importProgrammeParticipants(programmeId: ID!, rows: [RosterParticipantInput!]!): [ID!]!
     updateProgrammeParticipantStatus(programmeId: ID!, id: ID!, input: ParticipantStatusInput!): ProgrammeParticipant!
+    generateWalkInCodes(programmeId: ID!, count: Int!): [String!]!
+    activateWalkInCode(programmeId: ID!, code: String!): ProgrammeParticipant!
   }
 `;
