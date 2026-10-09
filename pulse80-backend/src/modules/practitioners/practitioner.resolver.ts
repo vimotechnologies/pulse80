@@ -135,7 +135,10 @@ async function loadProfile(context: GraphQLContext) {
 export const practitionerResolvers = {
   Query: {
     practitionerDashboard: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
-      const { userId } = await loadProfile(context);
+      const { userId, profile } = await loadProfile(context);
+      if (profile.verification_status !== "Verified" || profile.practitioner_status !== "Active") {
+        throw new GraphQLError("Practitioner verification is required before accessing the dashboard.", { extensions: { code: "FORBIDDEN" } });
+      }
       return new PractitionerDashboardService(context.adminSupabase).getDashboard(userId);
     },
     practitionerProfile: async (_parent: unknown, _arguments: unknown, context: GraphQLContext) => {
