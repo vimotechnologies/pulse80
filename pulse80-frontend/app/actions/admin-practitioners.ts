@@ -73,3 +73,37 @@ export async function reviewPractitionerDocument(
     return { ok: false as const, error: error instanceof Error ? error.message : "UPDATE_FAILED" };
   }
 }
+
+export type RegisteredPractitioner = {
+  id: string;
+  fullName: string;
+  profession: string;
+  country: string;
+  city: string;
+  capabilities: string[];
+  verificationStatus: string;
+};
+
+export async function loadRegisteredPractitioners(): Promise<RegisteredPractitioner[]> {
+  const result = await graphqlRequest<{ registeredPractitioners: RegisteredPractitioner[] }>(
+    `query RegisteredPractitioners { registeredPractitioners { id fullName profession country city capabilities verificationStatus } }`,
+  );
+  return result.registeredPractitioners;
+}
+
+export async function registerPractitioner(input: {
+  fullName: string; profession: string; country: string; city: string; capabilities: string[];
+}) {
+  try {
+    await graphqlRequest(
+      `mutation RegisterPractitioner($input: RegisterPractitionerInput!) {
+        registerPractitioner(input: $input) { id }
+      }`,
+      { variables: { input } },
+    );
+    revalidatePath("/admin/practitioners");
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not save practitioner." };
+  }
+}
