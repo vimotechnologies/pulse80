@@ -91,8 +91,31 @@ export class PractitionerService {
       this.supabase.from("practitioner_profiles").select(profileSelect).eq("user_id", userId).single(),
       this.supabase.from("profiles").select("full_name").eq("id", userId).single(),
     ]);
-    if (profileError) throw new Error(profileError.message);
     if (identityError) throw new Error(identityError.message);
+    // Invitations can create the auth account before the practitioner profile exists.
+    // Recover only accounts explicitly linked to an active practitioner registration.
+    if (profileError && profileError.code === "PGRST116") {
+      const { data: registration, error: registrationError } = await (this.supabase as unknown as SupabaseClient)
+        .from("practitioner_registrations")
+        .select("email,profession,country,city")
+        .eq("invited_user_id", userId)
+        .eq("account_status", "Active")
+        .maybeSingle();
+      if (registrationError) throw new Error(registrationError.message);
+      if (!registration?.email) throw new Error("Practitioner onboarding is incomplete. Contact your administrator.");
+      const { error: createError } = await this.supabase.from("practitioner_profiles").upsert({
+        user_id: userId,
+        professional_email: registration.email,
+        profession: registration.profession,
+        country: registration.country,
+        city: registration.city,
+        verification_status: "Pending Verification",
+        practitioner_status: "Pending Verification",
+      }, { onConflict: "user_id", ignoreDuplicates: true });
+      if (createError) throw new Error(createError.message);
+      return this.getProfile(userId);
+    }
+    if (profileError) throw new Error(profileError.message);
     const { data: registration, error: registrationError } = await (this.supabase as unknown as SupabaseClient)
       .from("practitioner_registrations")
       .select("full_name")
