@@ -115,8 +115,6 @@ export async function createGraphQLContext({
   const { data: registration } = await (adminSupabase as unknown as SupabaseClient).from("practitioner_registrations")
     .select("account_status").eq("invited_user_id", user.id).maybeSingle();
   const practitionerActive = registration?.account_status === "Active";
-  const { data: practitionerProfile } = await adminSupabase.from("practitioner_profiles")
-    .select("user_id").eq("user_id", user.id).maybeSingle();
 
   return {
     request: req,
@@ -128,7 +126,7 @@ export async function createGraphQLContext({
     identity: {
       platformRole,
       organisationId,
-      organisationRole: registration && !practitionerActive ? null : organisationAccess?.role ?? (practitionerActive && practitionerProfile ? "practitioner" : null),
+      organisationRole: registration && !practitionerActive ? null : organisationAccess?.role ?? (practitionerActive ? "practitioner" : null),
     },
   };
 }
